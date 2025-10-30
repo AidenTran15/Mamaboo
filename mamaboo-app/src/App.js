@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
+
+function ProtectedRoute({ children }) {
+  const loggedIn = !!localStorage.getItem('userName');
+  if (!loggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
+}
 
 function LoginForm() {
   const [username, setUsername] = useState('');
@@ -44,6 +52,8 @@ function LoginForm() {
       console.log('Dữ liệu trả về:', data);
       if (data.success) {
         setMessage('Đăng nhập thành công! Đang chuyển trang...');
+        // Lưu tên user vào localStorage
+        localStorage.setItem('userName', data.user.Name || data.user.User_Name);
         setTimeout(() => {
           const tenDangNhap = (data.user && data.user.User_Name) ? data.user.User_Name : username;
           if (tenDangNhap === 'admin') {
@@ -102,28 +112,42 @@ function LoginForm() {
 }
 
 function NhanVien() {
+  const userName = localStorage.getItem('userName');
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('userName');
+    navigate('/login');
+  };
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
       <div className="login-container">
         <h2 className="login-title" style={{color: '#2ecc71'}}>Nhân Viên</h2>
         <div className="login-underline" style={{ background: '#2ecc71' }}></div>
         <div style={{textAlign: 'center', fontSize: 20, marginTop: 30, marginBottom: 20}}>
-          Chào mừng! Đây là trang Nhân Viên.
+          Xin chào {userName ? userName : 'bạn'}!
         </div>
+        <button style={{marginTop: 32}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
   );
 }
 
 function Admin() {
+  const userName = localStorage.getItem('userName');
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.removeItem('userName');
+    navigate('/login');
+  };
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
       <div className="login-container">
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản trị viên</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
         <div style={{textAlign: 'center', fontSize: 20, marginTop: 30, marginBottom: 20}}>
-          Xin chào Admin!
+          Xin chào {userName || 'Admin'}!
         </div>
+        <button style={{marginTop: 32}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
   );
@@ -135,9 +159,22 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginForm />} />
         <Route path="/login" element={<LoginForm />} />
-        <Route path="/home" element={<NhanVien />} />
-        <Route path="/nhan-vien" element={<NhanVien />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route
+          path="/nhan-vien"
+          element={
+            <ProtectedRoute>
+              <NhanVien />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <Admin />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
