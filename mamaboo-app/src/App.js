@@ -45,7 +45,12 @@ function LoginForm() {
       if (data.success) {
         setMessage('Đăng nhập thành công! Đang chuyển trang...');
         setTimeout(() => {
-          navigate('/nhan-vien');
+          const tenDangNhap = (data.user && data.user.User_Name) ? data.user.User_Name : username;
+          if (tenDangNhap === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/nhan-vien');
+          }
         }, 1200);
       } else {
         setMessage(data.message || 'Đăng nhập thất bại.');
@@ -110,6 +115,20 @@ function NhanVien() {
   );
 }
 
+function Admin() {
+  return (
+    <div className="login-page" style={{justifyContent: 'flex-start'}}>
+      <div className="login-container">
+        <h2 className="login-title" style={{color: '#e67e22'}}>Quản trị viên</h2>
+        <div className="login-underline" style={{ background: '#e67e22' }}></div>
+        <div style={{textAlign: 'center', fontSize: 20, marginTop: 30, marginBottom: 20}}>
+          Xin chào Admin!
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -118,6 +137,7 @@ function App() {
         <Route path="/login" element={<LoginForm />} />
         <Route path="/home" element={<NhanVien />} />
         <Route path="/nhan-vien" element={<NhanVien />} />
+        <Route path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );
