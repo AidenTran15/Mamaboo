@@ -1,0 +1,130 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+body, html, #root, .login-page {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: #b3e6ff;
+}
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.login-container {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 6px 32px 0 rgba(49, 158, 219, 0.2);
+  padding: 38px 36px 32px;
+  width: 400px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.login-title {
+  color: #43a8ef;
+  font-size: 2.2rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.login-underline {
+  width: 70px;
+  height: 4px;
+  background: #43a8ef;
+  border-radius: 2px;
+  margin: 0 0 32px 0;
+}
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-label {
+  font-size: 1rem;
+  color: #323232;
+  font-weight: 600;
+  text-align: left;
+  margin-bottom: 6px;
+  margin-left: 2px;
+}
+
+.login-input {
+  width: 100%;
+  min-height: 40px;
+  color: #1c222f;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 7px;
+  padding: 9px 14px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+.login-input:focus {
+  border: 1.5px solid #43a8ef;
+}
+
+.login-button {
+  background: #66d1fa;
+  color: #fff;
+  padding: 11px 0;
+  width: 100%;
+  border: none;
+  border-radius: 9px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.2s;
+}
+.login-button:hover, .login-button:focus {
+  background: #43a8ef;
+}
