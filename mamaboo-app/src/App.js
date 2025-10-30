@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import './App.css';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 
-function App() {
+function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +33,6 @@ function App() {
       let data;
       try {
         data = JSON.parse(text);
-        // Nếu body là chuỗi, parse lần nữa
         if (typeof data.body === 'string') {
           data = JSON.parse(data.body);
         }
@@ -42,7 +43,10 @@ function App() {
       }
       console.log('Dữ liệu trả về:', data);
       if (data.success) {
-        setMessage(`Đăng nhập thành công! Xin chào, ${data.user.Name || data.user.User_Name}`);
+        setMessage('Đăng nhập thành công! Đang chuyển trang...');
+        setTimeout(() => {
+          navigate('/nhan-vien');
+        }, 1200);
       } else {
         setMessage(data.message || 'Đăng nhập thất bại.');
       }
@@ -71,7 +75,6 @@ function App() {
             onChange={e => setUsername(e.target.value)}
             required
           />
-
           <label className="login-label" htmlFor="password">Mật Khẩu:</label>
           <input
             className="login-input"
@@ -83,7 +86,6 @@ function App() {
             onChange={e => setPassword(e.target.value)}
             required
           />
-
           <button className="login-button" type="submit" disabled={loading}>
             {loading ? 'Đang kiểm tra...' : 'ĐĂNG NHẬP'}
           </button>
@@ -91,6 +93,33 @@ function App() {
         {message && <div style={{ marginTop: '18px', color: message.includes('thành công') ? '#43a8ef' : 'red', fontWeight: 600 }}>{message}</div>}
       </div>
     </div>
+  );
+}
+
+function NhanVien() {
+  return (
+    <div className="login-page" style={{justifyContent: 'flex-start'}}>
+      <div className="login-container">
+        <h2 className="login-title" style={{color: '#2ecc71'}}>Nhân Viên</h2>
+        <div className="login-underline" style={{ background: '#2ecc71' }}></div>
+        <div style={{textAlign: 'center', fontSize: 20, marginTop: 30, marginBottom: 20}}>
+          Chào mừng! Đây là trang Nhân Viên.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/home" element={<NhanVien />} />
+        <Route path="/nhan-vien" element={<NhanVien />} />
+      </Routes>
+    </Router>
   );
 }
 
