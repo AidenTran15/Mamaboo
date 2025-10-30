@@ -136,34 +136,154 @@ function Admin() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
   const [roster, setRoster] = useState([]);
+  const [staffs, setStaffs] = useState([]); // danh sách nhân viên
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState([]);
+  const [updating, setUpdating] = useState(false);
+  const [message, setMessage] = useState('');
 
-  React.useEffect(() => {
-    async function fetchRoster() {
+  // APIs
+  const rosterApi = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
+  const staffApi = 'https://rgnp5b26d5.execute-api.ap-southeast-2.amazonaws.com/prod/';
+  const updateRosterApi = 'https://your-update-roster-endpoint'; // Replace với endpoint update thực tế của bạn
+
+  // Helper: hợp nhất tên NV từ roster
+  const deriveStaffFromRoster = (rosterItems) => {
+    const setNames = new Set();
+    rosterItems.forEach(r => {
+      ['sang','trua','toi'].forEach(ca => {
+        const val = r[ca];
+        if (Array.isArray(val)) val.forEach(n => n && setNames.add(n));
+        else if (val) setNames.add(val);
+      });
+    });
+    return Array.from(setNames);
+  };
+
+  // Helper: fetch danh sách nhân viên (có hợp nhất từ roster nếu cần)
+  const fetchStaffList = async (fallbackRoster = []) => {
+    let staffList = [];
+    try {
+      const rs = await fetch(staffApi, { cache: 'no-store' });
+      const rsText = await rs.text();
+      console.log('==> API staff raw', rsText);
+      let data = {};
       try {
-        const response = await fetch("https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod");
-        const text = await response.text();
+        data = JSON.parse(rsText);
+        if (typeof data.body === 'string') {
+          data = JSON.parse(data.body);
+        }
+      } catch { data = {}; }
+      if (Array.isArray(data.items) && data.items.length > 0) {
+        console.log('Nhân viên mẫu:', data.items[0]);
+      }
+      staffList = (Array.isArray(data.items) ? data.items : []).map(staff => {
+        const nameVal = staff.name || staff.Name || staff.User_Name || staff['Tên'] || staff['ten'] || staff['HoTen'] || Object.values(staff)[0] || '';
+        return typeof nameVal === 'string' ? nameVal.trim() : '';
+      }).filter(Boolean);
+    } catch (err) {
+      staffList = [];
+    }
+    // Hợp nhất với tên suy ra từ roster để đảm bảo luôn có đầy đủ (kể cả người mới vừa có ca)
+    const union = new Set(staffList);
+    if (fallbackRoster.length > 0) {
+      deriveStaffFromRoster(fallbackRoster).forEach(n => n && union.add((typeof n === 'string') ? n.trim() : n));
+    }
+    const finalList = Array.from(union).filter(Boolean).sort((a,b)=>a.localeCompare(b,'vi'));
+    setStaffs(finalList);
+  };
+
+  // Load roster + staff ban đầu
+  React.useEffect(() => {
+    async function fetchAll() {
+      setLoading(true);
+      let rosterItems = [];
+      try {
+        const rs = await fetch(rosterApi);
+        const rsText = await rs.text();
         let data = {};
         try {
-          data = JSON.parse(text);
+          data = JSON.parse(rsText);
           if (typeof data.body === 'string') {
             data = JSON.parse(data.body);
           }
-        } catch (err) {
-          data = { items: [] };
-        }
-        setRoster(Array.isArray(data.items) ? data.items : []);
-      } catch (err) {
-        setRoster([]);
+        } catch { data = {}; }
+        rosterItems = Array.isArray(data.items) ? data.items : [];
+        setRoster(rosterItems);
+        setEditData(JSON.parse(JSON.stringify(rosterItems)));
+      } catch {
+        rosterItems = [];
+        setRoster([]); setEditData([]);
       }
+      await fetchStaffList(rosterItems);
       setLoading(false);
     }
-    fetchRoster();
+    fetchAll();
   }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('userName');
     navigate('/login');
+  };
+
+  const handleEdit = async () => {
+    // Khi vào chế độ chỉnh sửa, làm mới danh sách NV để thấy nhân viên mới thêm
+    await fetchStaffList(editData);
+    setEditMode(true);
+  };
+  const handleRefreshStaff = async () => {
+    await fetchStaffList(editData);
+    setMessage('Đã làm mới danh sách nhân viên.');
+  };
+  const handleCancel = () => {
+    setEditData(JSON.parse(JSON.stringify(roster)));
+    setEditMode(false);
+    setMessage('');
+  };
+  
+  const handleChangeCa = (rowIdx, ca, e) => {
+    const options = Array.from(e.target.selectedOptions).map(o => o.value);
+    setEditData(ed => ed.map((row, i) => i===rowIdx ? { ...row, [ca]: options } : row));
+  };
+
+  const handleSaveUpdate = async () => {
+    setUpdating(true);
+    setMessage('');
+    let okCount = 0;
+    for (let i = 0; i < editData.length; ++i) {
+      const orig = roster[i];
+      const edited = editData[i];
+      for (let ca of ['sang','trua','toi']) {
+        if (JSON.stringify(orig[ca]) !== JSON.stringify(edited[ca])) {
+          try {
+            await fetch(updateRosterApi, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ date: edited.date, ca, nhan_vien: edited[ca] })
+            });
+            okCount++;
+          } catch {}
+        }
+      }
+    }
+    setUpdating(false);
+    setEditMode(false);
+    setMessage(okCount > 0 ? `Đã cập nhật ${okCount} thay đổi!` : 'Không có thay đổi nào mới.');
+    try {
+      const rs = await fetch(rosterApi);
+      const rsText = await rs.text();
+      let data = {};
+      try {
+        data = JSON.parse(rsText);
+        if (typeof data.body === 'string') {
+          data = JSON.parse(data.body);
+        }
+      } catch { data = {}; }
+      const newRoster = Array.isArray(data.items) ? data.items : [];
+      setRoster(newRoster);
+      setEditData(JSON.parse(JSON.stringify(newRoster)));
+    } catch {}
   };
 
   return (
@@ -178,6 +298,7 @@ function Admin() {
         {loading ? (
           <div>Đang tải...</div>
         ) : (
+          <form style={{margin:0}} onSubmit={e => {e.preventDefault();handleSaveUpdate();}}>
           <table style={{ width:'100%', borderCollapse: 'collapse', marginBottom:24 }}>
             <thead>
               <tr>
@@ -188,16 +309,36 @@ function Admin() {
               </tr>
             </thead>
             <tbody>
-              {roster.map((row, i) => (
+              {(editMode ? editData : roster).map((row, i) => (
                 <tr key={i}>
                   <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{row.date}</td>
-                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{Array.isArray(row.sang) ? row.sang.join(', ') : row.sang}</td>
-                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{Array.isArray(row.trua) ? row.trua.join(', ') : row.trua}</td>
-                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{Array.isArray(row.toi) ? row.toi.join(', ') : row.toi}</td>
+                  {['sang','trua','toi'].map(ca => (
+                    <td style={{border:'1px solid #ddd', padding:'4px 6px'}} key={ca}>
+                      {editMode ? (
+                        <select multiple value={row[ca] || []} onChange={e => handleChangeCa(i, ca, e)} style={{minWidth:'120px', minHeight:'34px'}}>
+                          {staffs.length === 0 ? (
+                            <option disabled>(Chưa có nhân viên)</option>
+                          ) : (
+                            staffs.map(staff => <option value={staff} key={staff}>{staff}</option>)
+                          )}
+                        </select>
+                      ) : (
+                        Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]
+                      )}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
           </table>
+          {!editMode && <button type="button" style={{marginRight:16}} className="login-button" onClick={handleEdit}>Chỉnh sửa</button>}
+          {editMode && <>
+            <button type="submit" className="login-button" disabled={updating}>{updating?'Đang cập nhật...':'Cập nhật'}</button>
+            <button type="button" style={{marginLeft:16}} className="login-button" onClick={handleCancel}>Hủy</button>
+            <button type="button" style={{marginLeft:16}} className="login-button" onClick={handleRefreshStaff}>Làm mới danh sách NV</button>
+          </>}
+          {message && <div style={{marginTop:12, color:'#2ecc71', fontWeight:500}}>{message}</div>}
+          </form>
         )}
         <button style={{marginTop: 32}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
