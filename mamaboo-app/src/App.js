@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'r
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
 const UPDATE_ROSTER_API = 'https://rgnp5b26d5.execute-api.ap-southeast-2.amazonaws.com/prod/';
+const STAFF_API = 'https://4j10nn65m6.execute-api.ap-southeast-2.amazonaws.com/prod';
 
 function ProtectedRoute({ children }) {
   const loggedIn = !!localStorage.getItem('userName');
@@ -115,25 +116,30 @@ function Admin() {
     let isMounted = true;
     (async () => {
       try {
+        // Fetch roster
         const res = await fetch(ROSTER_API);
         const text = await res.text();
         let data = {};
-        try {
-          data = JSON.parse(text);
-          if (typeof data.body === 'string') data = JSON.parse(data.body);
-        } catch { data = {}; }
+        try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
         if (!isMounted) return;
         const items = Array.isArray(data.items) ? data.items : [];
         setRoster(items);
         setEditData(JSON.parse(JSON.stringify(items)));
-        // derive staffs from roster names
+        // derive names from roster
         const setNames = new Set();
-        items.forEach(r => ['sang','trua','toi'].forEach(ca => {
-          const v = r[ca];
-          if (Array.isArray(v)) v.forEach(n => n && setNames.add(n.trim()));
-          else if (v) setNames.add(String(v).trim());
-        }));
-        setStaffs(Array.from(setNames).sort((a,b)=>a.localeCompare(b,'vi')));
+        items.forEach(r => ['sang','trua','toi'].forEach(ca => { const v = r[ca]; if (Array.isArray(v)) v.forEach(n => n && setNames.add(n.trim())); else if (v) setNames.add(String(v).trim()); }));
+        let list = Array.from(setNames);
+        // Fetch staff API and merge
+        try {
+          const rs = await fetch(STAFF_API);
+          const rsText = await rs.text();
+          let parsed = {};
+          try { parsed = JSON.parse(rsText); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { parsed = {}; }
+          const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
+          const namesFromApi = itemsStaff.map(s => (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim()).filter(Boolean);
+          list = Array.from(new Set([...list, ...namesFromApi]));
+        } catch {}
+        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
       } catch (e) {
         if (isMounted) setError('Không tải được roster.');
       } finally {
@@ -170,9 +176,7 @@ function Admin() {
               body: JSON.stringify({ date: after.date, ca, nhan_vien: after[ca] || [] })
             });
             changed++;
-          } catch (e) {
-            console.log('Update error', e);
-          }
+          } catch (e) { console.log('Update error', e); }
         }
       }
     }
@@ -221,8 +225,7 @@ function Admin() {
                       <td style={{border:'1px solid #ddd', padding:'4px 6px'}} key={ca}>
                         {editMode ? (
                           <select multiple value={row[ca] || []} onChange={(e)=>handleChange(idx, ca, e)} style={{minWidth:'140px', minHeight:'36px'}}>
-                            {staffs.length === 0 ? <option disabled>(Chưa có NV)</option> :
-                              staffs.map(n => <option key={n} value={n}>{n}</option>)}
+                            {staffs.length === 0 ? <option disabled>(Chưa có NV)</option> : staffs.map(n => <option key={n} value={n}>{n}</option>)}
                           </select>
                         ) : (
                           Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]
@@ -234,12 +237,10 @@ function Admin() {
               </tbody>
             </table>
             {!editMode && <button type="button" className="login-button" onClick={handleEdit}>Chỉnh sửa</button>}
-            {editMode && (
-              <>
-                <button type="submit" className="login-button" disabled={saving}>{saving ? 'Đang cập nhật...' : 'Cập nhật'}</button>
-                <button type="button" className="login-button" style={{marginTop: 12}} onClick={handleCancel}>Hủy</button>
-              </>
-            )}
+            {editMode && (<>
+              <button type="submit" className="login-button" disabled={saving}>{saving ? 'Đang cập nhật...' : 'Cập nhật'}</button>
+              <button type="button" className="login-button" style={{marginTop: 12}} onClick={handleCancel}>Hủy</button>
+            </>)}
             {info && <div style={{marginTop:12, color:'#2ecc71', fontWeight:600}}>{info}</div>}
           </form>
         )}
