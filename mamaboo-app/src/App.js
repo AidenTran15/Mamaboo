@@ -227,6 +227,12 @@ function Admin() {
   };
 
   const monthLabel = new Date(year, month, 1).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+  const getWeekdayVi = (dateStr) => {
+    const [yy, mm, dd] = dateStr.split('-').map(Number);
+    const d = new Date(yy, mm - 1, dd);
+    const names = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+    return names[d.getDay()];
+  };
 
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
@@ -252,6 +258,7 @@ function Admin() {
               <thead>
                 <tr style={{background:'#f5fbff'}}>
                   <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
+                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Thứ</th>
                   <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Sáng</th>
                   <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Trưa</th>
                   <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Tối</th>
@@ -261,6 +268,7 @@ function Admin() {
                 {(editMode ? monthEdit : monthData).map((row, idx) => (
                   <tr key={idx} style={{background: idx%2===0 ? '#ffffff' : '#fbfdff'}}>
                     <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color:'#2b4c66'}}>{row.date}</td>
+                    <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color:'#6b7a86'}}>{getWeekdayVi(row.date)}</td>
                     {['sang','trua','toi'].map(ca => (
                       <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px'}} key={ca}>
                         {editMode ? (
