@@ -135,18 +135,70 @@ function NhanVien() {
 function Admin() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
+  const [roster, setRoster] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  React.useEffect(() => {
+    async function fetchRoster() {
+      try {
+        const response = await fetch("https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod");
+        const text = await response.text();
+        let data = {};
+        try {
+          data = JSON.parse(text);
+          if (typeof data.body === 'string') {
+            data = JSON.parse(data.body);
+          }
+        } catch (err) {
+          data = { items: [] };
+        }
+        setRoster(Array.isArray(data.items) ? data.items : []);
+      } catch (err) {
+        setRoster([]);
+      }
+      setLoading(false);
+    }
+    fetchRoster();
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('userName');
     navigate('/login');
   };
+
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
       <div className="login-container">
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản trị viên</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
-        <div style={{textAlign: 'center', fontSize: 20, marginTop: 30, marginBottom: 20}}>
+        <div style={{textAlign:'center', fontSize:20, margin:'18px 0'}}>
           Xin chào {userName || 'Admin'}!
         </div>
+        <h3>Lịch phân ca (roster)</h3>
+        {loading ? (
+          <div>Đang tải...</div>
+        ) : (
+          <table style={{ width:'100%', borderCollapse: 'collapse', marginBottom:24 }}>
+            <thead>
+              <tr>
+                <th style={{border:'1px solid #ddd'}}>Ngày</th>
+                <th style={{border:'1px solid #ddd'}}>Ca Sáng</th>
+                <th style={{border:'1px solid #ddd'}}>Ca Trưa</th>
+                <th style={{border:'1px solid #ddd'}}>Ca Tối</th>
+              </tr>
+            </thead>
+            <tbody>
+              {roster.map((row, i) => (
+                <tr key={i}>
+                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{row.date}</td>
+                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{Array.isArray(row.sang) ? row.sang.join(', ') : row.sang}</td>
+                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{Array.isArray(row.trua) ? row.trua.join(', ') : row.trua}</td>
+                  <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{Array.isArray(row.toi) ? row.toi.join(', ') : row.toi}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         <button style={{marginTop: 32}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
