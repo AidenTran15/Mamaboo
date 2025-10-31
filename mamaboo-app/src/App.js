@@ -110,6 +110,7 @@ function Admin() {
   const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState('');
   const [staffs, setStaffs] = useState([]);
+  const [staffSalary, setStaffSalary] = useState({});
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-11
@@ -134,15 +135,23 @@ function Admin() {
         setRoster(items);
         // Lấy danh sách nhân viên từ STAFF_API (không trộn dữ liệu ảo từ roster)
         let list = [];
+        const salaryMap = {};
         try {
           const rs = await fetch(STAFF_API);
           const rsText = await rs.text();
           let parsed = {};
           try { parsed = JSON.parse(rsText); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { parsed = {}; }
           const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
-          list = itemsStaff.map(s => (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim()).filter(Boolean);
+          itemsStaff.forEach(s => {
+            const name = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
+            if (!name) return;
+            list.push(name);
+            const sal = Number(s.Salary || s.salary || 0);
+            salaryMap[name] = isNaN(sal) ? 0 : sal;
+          });
         } catch {}
         setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+        setStaffSalary(salaryMap);
       } catch (e) {
         if (isMounted) setError('Không tải được roster.');
       } finally {
@@ -247,7 +256,12 @@ function Admin() {
         }
       });
     });
-    return Array.from(map.entries()).sort((a,b)=> b[1]-a[1]);
+    const arr = Array.from(map.entries()).map(([name, hours]) => {
+      const salary = Number(staffSalary[name] || 0);
+      const total = hours * salary;
+      return [name, hours, salary, total];
+    });
+    return arr.sort((a,b)=> b[3]-a[3]);
   };
 
   return (
@@ -315,14 +329,18 @@ function Admin() {
               <thead>
                 <tr style={{background:'#f7fafc'}}>
                   <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:140}}>Tổng giờ</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tổng giờ</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:140}}>Lương/giờ</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền</th>
                 </tr>
               </thead>
               <tbody>
-                {computeTotals(editMode ? monthEdit : monthData).map(([name, hours]) => (
+                {computeTotals(editMode ? monthEdit : monthData).map(([name, hours, salary, total]) => (
                   <tr key={name} style={{background:'#fff'}}>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{hours}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right'}}>{salary.toLocaleString('vi-VN')}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{total.toLocaleString('vi-VN')}</td>
                   </tr>
                 ))}
               </tbody>
