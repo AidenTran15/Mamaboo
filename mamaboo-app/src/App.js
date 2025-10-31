@@ -107,16 +107,24 @@ function Admin() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [editMode, setEditMode] = useState(false);
-  const [editData, setEditData] = useState([]);
   const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState('');
   const [staffs, setStaffs] = useState([]);
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth()); // 0-11
+  const [monthData, setMonthData] = useState([]); // [{date: 'YYYY-MM-DD', sang:[], trua:[], toi:[]}] hiện tại tháng
+  const [monthEdit, setMonthEdit] = useState([]);
+
+  const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
+  const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
 
   React.useEffect(() => {
     let isMounted = true;
     (async () => {
       try {
-        // Fetch roster
+        // Fetch roster (to get all days we have)
         const res = await fetch(ROSTER_API);
         const text = await res.text();
         let data = {};
@@ -124,22 +132,22 @@ function Admin() {
         if (!isMounted) return;
         const items = Array.isArray(data.items) ? data.items : [];
         setRoster(items);
-        setEditData(JSON.parse(JSON.stringify(items)));
         // derive names from roster
         const setNames = new Set();
         items.forEach(r => ['sang','trua','toi'].forEach(ca => { const v = r[ca]; if (Array.isArray(v)) v.forEach(n => n && setNames.add(n.trim())); else if (v) setNames.add(String(v).trim()); }));
-        let list = Array.from(setNames);
-        // Fetch staff API and merge
+        // fetch staff list and merge
         try {
           const rs = await fetch(STAFF_API);
           const rsText = await rs.text();
           let parsed = {};
           try { parsed = JSON.parse(rsText); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { parsed = {}; }
           const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
-          const namesFromApi = itemsStaff.map(s => (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim()).filter(Boolean);
-          list = Array.from(new Set([...list, ...namesFromApi]));
+          itemsStaff.forEach(s => {
+            const nm = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
+            if (nm) setNames.add(nm);
+          });
         } catch {}
-        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+        setStaffs(Array.from(setNames).sort((a,b)=>a.localeCompare(b,'vi')));
       } catch (e) {
         if (isMounted) setError('Không tải được roster.');
       } finally {
@@ -149,21 +157,45 @@ function Admin() {
     return () => { isMounted = false; };
   }, []);
 
+  // Xây dựng dữ liệu cho tháng hiện tại từ roster
+  const rebuildMonthData = React.useCallback(() => {
+    const dim = daysInMonth(year, month);
+    const byDate = new Map();
+    roster.forEach(r => { byDate.set(r.date, r); });
+    const arr = [];
+    for (let d = 1; d <= dim; d++) {
+      const dateStr = `${year}-${pad(month+1)}-${pad(d)}`;
+      const base = byDate.get(dateStr) || { date: dateStr, sang: [], trua: [], toi: [] };
+      arr.push({
+        date: dateStr,
+        sang: Array.isArray(base.sang) ? base.sang : (base.sang ? [base.sang] : []),
+        trua: Array.isArray(base.trua) ? base.trua : (base.trua ? [base.trua] : []),
+        toi: Array.isArray(base.toi) ? base.toi : (base.toi ? [base.toi] : []),
+      });
+    }
+    setMonthData(arr);
+    setMonthEdit(JSON.parse(JSON.stringify(arr)));
+  }, [roster, year, month]);
+
+  React.useEffect(() => { rebuildMonthData(); }, [rebuildMonthData]);
+
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
+  const prevMonth = () => { const m = month - 1; if (m < 0) { setMonth(11); setYear(y => y-1); } else setMonth(m); };
+  const nextMonth = () => { const m = month + 1; if (m > 11) { setMonth(0); setYear(y => y+1); } else setMonth(m); };
 
   const handleEdit = () => { setEditMode(true); setInfo(''); };
-  const handleCancel = () => { setEditData(JSON.parse(JSON.stringify(roster))); setEditMode(false); setInfo(''); };
+  const handleCancel = () => { setMonthEdit(JSON.parse(JSON.stringify(monthData))); setEditMode(false); setInfo(''); };
   const handleChange = (rowIdx, ca, e) => {
     const values = Array.from(e.target.selectedOptions).map(o => o.value);
-    setEditData(prev => prev.map((r,i)=> i===rowIdx ? { ...r, [ca]: values } : r));
+    setMonthEdit(prev => prev.map((r,i)=> i===rowIdx ? { ...r, [ca]: values } : r));
   };
 
   const handleSave = async () => {
     setSaving(true); setInfo('');
     let changed = 0;
-    for (let i=0;i<editData.length;i++) {
-      const before = roster[i];
-      const after = editData[i];
+    for (let i=0;i<monthEdit.length;i++) {
+      const before = monthData[i];
+      const after = monthEdit[i];
       if (!before || !after) continue;
       for (const ca of ['sang','trua','toi']) {
         const a = JSON.stringify(before[ca]||[]);
@@ -183,7 +215,7 @@ function Admin() {
     setSaving(false);
     setInfo(changed ? `Đã cập nhật ${changed} thay đổi!` : 'Không có thay đổi.');
     setEditMode(false);
-    // reload roster
+    // cập nhật lại roster và monthData
     try {
       const res = await fetch(ROSTER_API);
       const text = await res.text();
@@ -191,44 +223,52 @@ function Admin() {
       try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
       const items = Array.isArray(data.items) ? data.items : [];
       setRoster(items);
-      setEditData(JSON.parse(JSON.stringify(items)));
     } catch {}
   };
 
+  const monthLabel = new Date(year, month, 1).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
-      <div className="login-container">
+      <div className="login-container" style={{width: 750, maxWidth: '95vw'}}>
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản trị viên</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
-        <div style={{textAlign:'center', fontSize:20, margin:'18px 0'}}>Xin chào {userName || 'Admin'}!</div>
-        <h3>Lịch phân ca (roster)</h3>
+        <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
+
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
+          <button className="login-button" style={{width:120}} onClick={prevMonth}>{'← Tháng trước'}</button>
+          <div style={{fontWeight:700, color:'#1c222f'}}>{monthLabel}</div>
+          <button className="login-button" style={{width:120}} onClick={nextMonth}>{'Tháng sau →'}</button>
+        </div>
+
+        <h3 style={{alignSelf:'flex-start', margin:'8px 0 6px'}}>Lịch phân ca theo tháng</h3>
         {loading ? (
           <div>Đang tải...</div>
         ) : error ? (
           <div style={{color:'red'}}>{error}</div>
         ) : (
-          <form onSubmit={(e)=>{e.preventDefault(); handleSave();}} style={{margin:0}}>
-            <table style={{ width:'100%', borderCollapse: 'collapse', marginBottom:24 }}>
+          <form onSubmit={(e)=>{e.preventDefault(); handleSave();}} style={{margin:0, width:'100%'}}>
+            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:12, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.08)' }}>
               <thead>
-                <tr>
-                  <th style={{border:'1px solid #ddd'}}>Ngày</th>
-                  <th style={{border:'1px solid #ddd'}}>Ca Sáng</th>
-                  <th style={{border:'1px solid #ddd'}}>Ca Trưa</th>
-                  <th style={{border:'1px solid #ddd'}}>Ca Tối</th>
+                <tr style={{background:'#f5fbff'}}>
+                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
+                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Sáng</th>
+                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Trưa</th>
+                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Tối</th>
                 </tr>
               </thead>
               <tbody>
-                {(editMode ? editData : roster).map((row, idx) => (
-                  <tr key={idx}>
-                    <td style={{border:'1px solid #ddd', padding:'4px 6px'}}>{row.date}</td>
+                {(editMode ? monthEdit : monthData).map((row, idx) => (
+                  <tr key={idx} style={{background: idx%2===0 ? '#ffffff' : '#fbfdff'}}>
+                    <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color:'#2b4c66'}}>{row.date}</td>
                     {['sang','trua','toi'].map(ca => (
-                      <td style={{border:'1px solid #ddd', padding:'4px 6px'}} key={ca}>
+                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px'}} key={ca}>
                         {editMode ? (
-                          <select multiple value={row[ca] || []} onChange={(e)=>handleChange(idx, ca, e)} style={{minWidth:'140px', minHeight:'36px'}}>
+                          <select multiple value={row[ca] || []} onChange={(e)=>handleChange(idx, ca, e)} style={{minWidth:'170px', minHeight:'38px', padding:6, border:'1px solid #d6e9f5', borderRadius:8}}>
                             {staffs.length === 0 ? <option disabled>(Chưa có NV)</option> : staffs.map(n => <option key={n} value={n}>{n}</option>)}
                           </select>
                         ) : (
-                          Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]
+                          <div style={{minHeight:24, color:'#1c222f'}}>{Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]}</div>
                         )}
                       </td>
                     ))}
@@ -236,15 +276,18 @@ function Admin() {
                 ))}
               </tbody>
             </table>
-            {!editMode && <button type="button" className="login-button" onClick={handleEdit}>Chỉnh sửa</button>}
-            {editMode && (<>
-              <button type="submit" className="login-button" disabled={saving}>{saving ? 'Đang cập nhật...' : 'Cập nhật'}</button>
-              <button type="button" className="login-button" style={{marginTop: 12}} onClick={handleCancel}>Hủy</button>
-            </>)}
+
+            {!editMode && <button type="button" className="login-button" style={{marginTop:16}} onClick={handleEdit}>Chỉnh sửa</button>}
+            {editMode && (
+              <>
+                <button type="submit" className="login-button" style={{marginTop:16}} disabled={saving}>{saving ? 'Đang cập nhật...' : 'Cập nhật'}</button>
+                <button type="button" className="login-button" style={{marginTop:12}} onClick={handleCancel}>Hủy</button>
+              </>
+            )}
             {info && <div style={{marginTop:12, color:'#2ecc71', fontWeight:600}}>{info}</div>}
           </form>
         )}
-        <button style={{marginTop: 32}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
+        <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
   );
