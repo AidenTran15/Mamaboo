@@ -132,22 +132,17 @@ function Admin() {
         if (!isMounted) return;
         const items = Array.isArray(data.items) ? data.items : [];
         setRoster(items);
-        // derive names from roster
-        const setNames = new Set();
-        items.forEach(r => ['sang','trua','toi'].forEach(ca => { const v = r[ca]; if (Array.isArray(v)) v.forEach(n => n && setNames.add(n.trim())); else if (v) setNames.add(String(v).trim()); }));
-        // fetch staff list and merge
+        // Lấy danh sách nhân viên từ STAFF_API (không trộn dữ liệu ảo từ roster)
+        let list = [];
         try {
           const rs = await fetch(STAFF_API);
           const rsText = await rs.text();
           let parsed = {};
           try { parsed = JSON.parse(rsText); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { parsed = {}; }
           const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
-          itemsStaff.forEach(s => {
-            const nm = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
-            if (nm) setNames.add(nm);
-          });
+          list = itemsStaff.map(s => (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim()).filter(Boolean);
         } catch {}
-        setStaffs(Array.from(setNames).sort((a,b)=>a.localeCompare(b,'vi')));
+        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
       } catch (e) {
         if (isMounted) setError('Không tải được roster.');
       } finally {
