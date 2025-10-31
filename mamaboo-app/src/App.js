@@ -228,6 +228,27 @@ function Admin() {
     const names = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
     return names[d.getDay()];
   };
+  const computeTotals = (rows) => {
+    const hoursByShift = { sang: 4, trua: 5, toi: 4 };
+    const map = new Map();
+    rows.forEach(r => {
+      ['sang','trua','toi'].forEach(ca => {
+        const v = r[ca];
+        const h = hoursByShift[ca];
+        if (Array.isArray(v)) {
+          v.forEach(n => {
+            const name = (n || '').toString().trim();
+            if (!name) return;
+            map.set(name, (map.get(name) || 0) + h);
+          });
+        } else if (v) {
+          const name = (v || '').toString().trim();
+          if (name) map.set(name, (map.get(name) || 0) + h);
+        }
+      });
+    });
+    return Array.from(map.entries()).sort((a,b)=> b[1]-a[1]);
+  };
 
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
@@ -288,6 +309,24 @@ function Admin() {
               </>
             )}
             {info && <div style={{marginTop:12, color:'#2ecc71', fontWeight:600}}>{info}</div>}
+
+            <h3 style={{textAlign:'left', margin:'18px 0 8px'}}>Tổng số giờ trong tháng</h3>
+            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:10, overflow:'hidden', boxShadow:'0 3px 14px rgba(0,0,0,0.06)' }}>
+              <thead>
+                <tr style={{background:'#f7fafc'}}>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:140}}>Tổng giờ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {computeTotals(editMode ? monthEdit : monthData).map(([name, hours]) => (
+                  <tr key={name} style={{background:'#fff'}}>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{hours}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </form>
         )}
         <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
