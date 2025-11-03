@@ -211,23 +211,24 @@ function NhanVien() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'flex-start'}}>
-      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 24, alignItems:'stretch'}}>
-        <h2 className="login-title" style={{color: '#2ecc71'}}>Nhân Viên</h2>
-        <div className="login-underline" style={{ background: '#2ecc71' }}></div>
+    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
+        <h2 className="login-title" style={{color: '#2ecc71', alignSelf:'center'}}>Nhân Viên</h2>
+        <div className="login-underline" style={{ background: '#2ecc71', alignSelf:'center' }}></div>
         <div style={{textAlign: 'center', fontSize: 20, marginTop: 10, marginBottom: 16}}>Xin chào {userName ? userName : 'bạn'}!</div>
 
-        <h3 style={{alignSelf:'flex-start', margin:'6px 0 14px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
+        <h3 style={{alignSelf:'center', margin:'12px 0 14px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
         {loading ? (
-          <div>Đang tải...</div>
+          <div style={{textAlign:'center', width:'100%'}}>Đang tải...</div>
         ) : (
-          <div style={{display:'flex', flexDirection:'column', gap:12}}>
+          <div style={{display:'flex', flexDirection:'column', gap:12, width:'100%', maxWidth: 720, margin:'0 auto 12px'}}>
             {rows.length === 0 ? (
               <div style={{textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</div>
             ) : rows.map((r) => (
               <div key={r.date} style={{
                 background:'#fff', border:'1px solid #e9f2f8', borderRadius:14,
-                boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px'
+                boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px',
+                width:'100%', margin:'0 auto'
               }}>
                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}>
                   <div style={{fontWeight:700, color:'#2b4c66'}}>{r.weekday}</div>
@@ -243,7 +244,7 @@ function NhanVien() {
           </div>
         )}
 
-        <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
+        <button style={{marginTop: 24, alignSelf:'center'}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
   );
