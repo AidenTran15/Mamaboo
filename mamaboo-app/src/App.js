@@ -152,9 +152,32 @@ function NhanVien() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState([]); // [{date, weekday, shifts:[{text,type}]}]
+  const [rows, setRows] = useState([]); // [{date, weekday, shifts:[{text,type,canCheckIn}], isToday}]
+  const [checkins, setCheckins] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('checkins') || '{}'); } catch { return {}; }
+  });
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
+
+  const canCheckInNow = (dateStr, type) => {
+    // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
+    const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
+    const d = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    if (d.toDateString() !== now.toDateString()) return false; // only today
+    const { h, m } = startMap[type] || { h: 0, m: 0 };
+    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0);
+    return now.getTime() >= start.getTime();
+  };
+
+  const handleCheckIn = (dateStr, type) => {
+    const key = `${userName}__${dateStr}__${type}`;
+    if (checkins[key]) return;
+    const next = { ...checkins, [key]: { at: new Date().toISOString() } };
+    setCheckins(next);
+    localStorage.setItem('checkins', JSON.stringify(next));
+    alert('Check-in thành công!');
+  };
 
   React.useEffect(() => {
     let mounted = true;
@@ -174,26 +197,30 @@ function NhanVien() {
 
         const result = [];
         const norm = (s) => (s || '').toString().trim();
-        const build = (nameArr, tag, type) => {
+        const build = (nameArr, tag, type, ds, isToday) => {
           const members = Array.isArray(nameArr) ? nameArr.filter(Boolean).map(norm) : (nameArr ? [norm(nameArr)] : []);
           if (members.length === 0) return null;
           if (!members.includes(norm(userName))) return null;
           const mates = members.filter(n => n !== norm(userName));
-          if (mates.length === 0) return { text: `${tag} · một mình`, type };
-          return { text: `${tag} · cùng: ${mates.join(', ')}`, type };
+          const text = mates.length === 0 ? `${tag} · một mình` : `${tag} · cùng: ${mates.join(', ')}`;
+          const canCheckIn = isToday && canCheckInNow(ds, type);
+          const key = `${userName}__${ds}__${type}`;
+          const checked = !!checkins[key];
+          return { text, type, canCheckIn, checked };
         };
 
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
           const ds = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
           const r = byDate.get(ds);
           if (!r) continue;
+          const isToday = new Date(ds).toDateString() === new Date().toDateString();
           const shifts = [];
-          const morning = build(r.sang, 'Ca sáng', 'sang'); if (morning) shifts.push(morning);
-          const noon = build(r.trua, 'Ca trưa', 'trua'); if (noon) shifts.push(noon);
-          const night = build(r.toi, 'Ca tối', 'toi'); if (night) shifts.push(night);
+          const morning = build(r.sang, 'Ca sáng', 'sang', ds, isToday); if (morning) shifts.push(morning);
+          const noon = build(r.trua, 'Ca trưa', 'trua', ds, isToday); if (noon) shifts.push(noon);
+          const night = build(r.toi, 'Ca tối', 'toi', ds, isToday); if (night) shifts.push(night);
           if (shifts.length) {
             const weekday = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()];
-            result.push({ date: ds, weekday, shifts });
+            result.push({ date: ds, weekday, shifts, isToday });
           }
         }
         if (mounted) setRows(result);
@@ -202,7 +229,7 @@ function NhanVien() {
       }
     })();
     return () => { mounted = false; };
-  }, [userName]);
+  }, [userName, checkins]);
 
   const chipStyle = (type) => {
     const colors = { sang: '#e9f8ef', trua: '#fff5e5', toi: '#f3eaff' };
@@ -226,7 +253,7 @@ function NhanVien() {
               <div style={{textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</div>
             ) : rows.map((r) => (
               <div key={r.date} style={{
-                background:'#fff', border:'1px solid #e9f2f8', borderRadius:14,
+                background:r.isToday ? '#f0fbff' : '#fff', border:'1px solid #e9f2f8', borderRadius:14,
                 boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px',
                 width:'100%', margin:'0 auto'
               }}>
@@ -234,9 +261,16 @@ function NhanVien() {
                   <div style={{fontWeight:700, color:'#2b4c66'}}>{r.weekday}</div>
                   <div style={{opacity:0.8}}>{r.date}</div>
                 </div>
-                <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
                   {r.shifts.map((s, idx) => (
                     <span key={idx} style={chipStyle(s.type)}>{s.text}</span>
+                  ))}
+                  {r.shifts.map((s, idx) => (
+                    s.canCheckIn && !s.checked ? (
+                      <button key={`btn-${idx}`} className="login-button" style={{width:'auto', padding:'8px 12px'}} onClick={()=>handleCheckIn(r.date, s.type)}>Bắt đầu ca ({s.type})</button>
+                    ) : s.checked ? (
+                      <span key={`done-${idx}`} style={{fontWeight:600, color:'#2ecc71'}}>Đã check-in ({s.type})</span>
+                    ) : null
                   ))}
                 </div>
               </div>
