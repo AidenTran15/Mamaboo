@@ -225,14 +225,17 @@ function Admin() {
     return () => { isMounted = false; };
   }, []);
 
-  // Xây dựng dữ liệu cho tháng hiện tại từ roster
+  // Xây dựng dữ liệu cho chu kỳ lương: từ ngày 15 tháng hiện tại đến 15 tháng sau
   const rebuildMonthData = React.useCallback(() => {
-    const dim = daysInMonth(year, month);
     const byDate = new Map();
     roster.forEach(r => { byDate.set(r.date, r); });
+
+    const start = new Date(year, month, 15); // inclusive
+    const end = new Date(year, month + 1, 15); // exclusive
+
     const arr = [];
-    for (let d = 1; d <= dim; d++) {
-      const dateStr = `${year}-${pad(month+1)}-${pad(d)}`;
+    for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+      const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
       const base = byDate.get(dateStr) || { date: dateStr, sang: [], trua: [], toi: [] };
       arr.push({
         date: dateStr,
@@ -294,7 +297,12 @@ function Admin() {
     } catch {}
   };
 
-  const monthLabel = new Date(year, month, 1).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
+  const monthLabel = (() => {
+    const start = new Date(year, month, 15);
+    const end = new Date(year, month + 1, 15);
+    const fmtLabel = (d) => `${d.toLocaleDateString('vi-VN', { day:'2-digit', month:'long', year:'numeric' })}`;
+    return `${fmtLabel(start)} → ${fmtLabel(new Date(end.getFullYear(), end.getMonth(), 14))}`;
+  })();
   const getWeekdayVi = (dateStr) => {
     const [yy, mm, dd] = dateStr.split('-').map(Number);
     const d = new Date(yy, mm - 1, dd);
