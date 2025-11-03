@@ -151,14 +151,92 @@ function LoginForm() {
 function NhanVien() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState([]);
+
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
+
+  React.useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        // fetch roster
+        const res = await fetch(ROSTER_API);
+        const text = await res.text();
+        let data = {};
+        try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
+        const all = Array.isArray(data.items) ? data.items : [];
+
+        // payroll period: 15 this month -> 15 next month
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 15);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+        const byDate = new Map();
+        all.forEach(r => byDate.set(r.date, r));
+
+        const result = [];
+        const norm = (s) => (s || '').toString().trim();
+        for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+          const ds = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+          const r = byDate.get(ds);
+          if (!r) continue;
+          const shifts = [];
+          const inShift = (arr) => {
+            const a = Array.isArray(arr) ? arr : (arr ? [arr] : []);
+            return a.some(n => norm(n) === norm(userName));
+          };
+          if (inShift(r.sang)) shifts.push('Ca sáng');
+          if (inShift(r.trua)) shifts.push('Ca trưa');
+          if (inShift(r.toi)) shifts.push('Ca tối');
+          if (shifts.length) {
+            const weekday = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()];
+            result.push({ date: ds, weekday, shifts: shifts.join(', ') });
+          }
+        }
+        if (mounted) setRows(result);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, [userName]);
+
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
-      <div className="login-container">
+      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 24}}>
         <h2 className="login-title" style={{color: '#2ecc71'}}>Nhân Viên</h2>
         <div className="login-underline" style={{ background: '#2ecc71' }}></div>
-        <div style={{textAlign: 'center', fontSize: 20, marginTop: 30, marginBottom: 20}}>Xin chào {userName ? userName : 'bạn'}!</div>
-        <button style={{marginTop: 32}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
+        <div style={{textAlign: 'center', fontSize: 20, marginTop: 10, marginBottom: 16}}>Xin chào {userName ? userName : 'bạn'}!</div>
+
+        <h3 style={{alignSelf:'flex-start', margin:'6px 0 10px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
+        {loading ? (
+          <div>Đang tải...</div>
+        ) : (
+          <div className="roster-scroll">
+            <table className="roster-table" style={{ borderCollapse:'separate', borderSpacing:0, borderRadius:12, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
+              <thead>
+                <tr style={{background:'#f5fbff'}}>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8', textAlign:'left'}}>Ngày</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Thứ</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Ca</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 ? (
+                  <tr><td colSpan={3} style={{padding:12, textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</td></tr>
+                ) : rows.map((r) => (
+                  <tr key={r.date}>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.date}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.weekday}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.shifts}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
   );
@@ -194,7 +272,6 @@ function Admin() {
         const text = await res.text();
         let data = {};
         try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
-        if (!isMounted) return;
         const items = Array.isArray(data.items) ? data.items : [];
         setRoster(items);
         // Lấy danh sách nhân viên từ STAFF_API (không trộn dữ liệu ảo từ roster)
