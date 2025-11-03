@@ -160,14 +160,12 @@ function NhanVien() {
     let mounted = true;
     (async () => {
       try {
-        // fetch roster
         const res = await fetch(ROSTER_API);
         const text = await res.text();
         let data = {};
         try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
         const all = Array.isArray(data.items) ? data.items : [];
 
-        // payroll period: 15 this month -> 15 next month
         const now = new Date();
         const start = new Date(now.getFullYear(), now.getMonth(), 15);
         const end = new Date(now.getFullYear(), now.getMonth() + 1, 15);
@@ -176,21 +174,26 @@ function NhanVien() {
 
         const result = [];
         const norm = (s) => (s || '').toString().trim();
+        const labelFor = (nameArr, tag) => {
+          const members = Array.isArray(nameArr) ? nameArr.filter(Boolean).map(norm) : (nameArr ? [norm(nameArr)] : []);
+          if (members.length === 0) return null;
+          if (!members.includes(norm(userName))) return null;
+          const mates = members.filter(n => n !== norm(userName));
+          if (mates.length === 0) return `${tag} (một mình)`;
+          return `${tag} (cùng: ${mates.join(', ')})`;
+        };
+
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
           const ds = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
           const r = byDate.get(ds);
           if (!r) continue;
-          const shifts = [];
-          const inShift = (arr) => {
-            const a = Array.isArray(arr) ? arr : (arr ? [arr] : []);
-            return a.some(n => norm(n) === norm(userName));
-          };
-          if (inShift(r.sang)) shifts.push('Ca sáng');
-          if (inShift(r.trua)) shifts.push('Ca trưa');
-          if (inShift(r.toi)) shifts.push('Ca tối');
-          if (shifts.length) {
+          const parts = [];
+          const morning = labelFor(r.sang, 'Ca sáng'); if (morning) parts.push(morning);
+          const noon = labelFor(r.trua, 'Ca trưa'); if (noon) parts.push(noon);
+          const night = labelFor(r.toi, 'Ca tối'); if (night) parts.push(night);
+          if (parts.length) {
             const weekday = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()];
-            result.push({ date: ds, weekday, shifts: shifts.join(', ') });
+            result.push({ date: ds, weekday, detail: parts.join(' | ') });
           }
         }
         if (mounted) setRows(result);
@@ -218,7 +221,7 @@ function NhanVien() {
                 <tr style={{background:'#f5fbff'}}>
                   <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8', textAlign:'left'}}>Ngày</th>
                   <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Thứ</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Ca</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Chi tiết</th>
                 </tr>
               </thead>
               <tbody>
@@ -228,7 +231,7 @@ function NhanVien() {
                   <tr key={r.date}>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.date}</td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.weekday}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.shifts}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.detail}</td>
                   </tr>
                 ))}
               </tbody>
