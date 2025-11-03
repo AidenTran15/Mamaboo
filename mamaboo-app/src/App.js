@@ -6,6 +6,7 @@ const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/pro
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
 const UPDATE_ROSTER_API = 'https://rgnp5b26d5.execute-api.ap-southeast-2.amazonaws.com/prod/';
 const STAFF_API = 'https://4j10nn65m6.execute-api.ap-southeast-2.amazonaws.com/prod';
+const CHECKLIST_GET_API = 'https://4qwg9i4he0.execute-api.ap-southeast-2.amazonaws.com/prod';
 
 function ProtectedRoute({ children }) {
   const loggedIn = !!localStorage.getItem('userName');
@@ -321,6 +322,12 @@ function Admin() {
   const [info, setInfo] = useState('');
   const [staffs, setStaffs] = useState([]);
   const [staffSalary, setStaffSalary] = useState({});
+  // Checklist state
+  const [ckFrom, setCkFrom] = useState('');
+  const [ckTo, setCkTo] = useState('');
+  const [ckUser, setCkUser] = useState('');
+  const [ckLoading, setCkLoading] = useState(false);
+  const [ckItems, setCkItems] = useState([]);
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth()); // 0-11
@@ -369,6 +376,26 @@ function Admin() {
     })();
     return () => { isMounted = false; };
   }, []);
+
+  const fetchChecklist = async () => {
+    setCkLoading(true);
+    try {
+      const url = new URL(CHECKLIST_GET_API);
+      if (ckFrom) url.searchParams.set('from', ckFrom);
+      if (ckTo) url.searchParams.set('to', ckTo);
+      if (ckUser) url.searchParams.set('user', ckUser);
+      const res = await fetch(url.toString());
+      const text = await res.text();
+      let data = {};
+      try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch {}
+      const items = Array.isArray(data.items) ? data.items : [];
+      setCkItems(items);
+    } catch (e) {
+      console.log('Fetch checklist error', e);
+    } finally {
+      setCkLoading(false);
+    }
+  };
 
   // Xây dựng dữ liệu cho chu kỳ lương: từ ngày 15 tháng hiện tại đến 15 tháng sau
   const rebuildMonthData = React.useCallback(() => {
@@ -506,6 +533,12 @@ function Admin() {
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
         <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
 
+        <div style={{display:'flex', justifyContent:'center', gap:12, marginBottom:16}}>
+          <button className="login-button" onClick={() => navigate('/checklist-report')}>
+            📋 Xem báo cáo checklist
+          </button>
+        </div>
+
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
           <button className="login-button" style={{width:120}} onClick={prevMonth}>{'← Tháng trước'}</button>
           <div style={{fontWeight:700, color:'#1c222f'}}>{monthLabel}</div>
@@ -588,6 +621,49 @@ function Admin() {
                 </tbody>
               </table>
             </div>
+
+            {/* Checklist viewer */}
+            <h3 style={{textAlign:'left', margin:'22px 0 8px'}}>Checklist đã lưu</h3>
+            <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
+              <input type="date" value={ckFrom} onChange={(e)=>setCkFrom(e.target.value)} />
+              <span>đến</span>
+              <input type="date" value={ckTo} onChange={(e)=>setCkTo(e.target.value)} />
+              <input placeholder="Lọc theo nhân viên" value={ckUser} onChange={(e)=>setCkUser(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+              <button type="button" className="login-button" onClick={fetchChecklist} disabled={ckLoading}>
+                {ckLoading ? 'Đang tải...' : 'Tải checklist'}
+              </button>
+            </div>
+            <div className="roster-scroll" style={{marginTop:10}}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, margin:'0 auto' }}>
+                <thead>
+                  <tr style={{background:'#f5fbff'}}>
+                    <th>Ngày</th>
+                    <th>Ca</th>
+                    <th>Loại</th>
+                    <th>Nhân viên</th>
+                    <th>Số task hoàn thành</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ckItems.length === 0 ? (
+                    <tr><td colSpan={5} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>Chưa có dữ liệu</td></tr>
+                  ) : ckItems.map((it, i) => {
+                    const tasks = it.tasks || {};
+                    const doneCount = Object.values(tasks).filter((t)=>t && (t.done === true || t.done === 'true')).length;
+                    const type = it.checklistType || (String(it.date_shift||'').endsWith('#ket_ca') ? 'ket_ca' : 'bat_dau');
+                    return (
+                      <tr key={i}>
+                        <td>{it.date}</td>
+                        <td>{it.shift}</td>
+                        <td>{type}</td>
+                        <td>{it.user}</td>
+                        <td>{doneCount}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </form>
         )}
         <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
@@ -609,8 +685,28 @@ function Checkin() {
   const shift = query.get('shift') || '';
   const userName = localStorage.getItem('userName') || '';
 
-  // checklist mặc định
-  const defaultTasks = [
+  // checklist mẫu theo từng ca
+  const SHIFT_TASK_TEMPLATES = {
+    sang: [
+      { id: 'open_bar', label: 'Mở máy/chuẩn bị quầy Barista' },
+      { id: 'clean_tables', label: 'Vệ sinh bàn ghế khu vực khách' },
+      { id: 'fridge_morning', label: 'Kiểm tra & vệ sinh tủ lạnh sáng' },
+      { id: 'cash_open', label: 'Kiểm két đầu ca' }
+    ],
+    trua: [
+      { id: 'stock_mid', label: 'Bổ sung nguyên liệu giữa ca' },
+      { id: 'wc_mid', label: 'Vệ sinh nhà vệ sinh giữa ca' },
+      { id: 'bar_mid', label: 'Vệ sinh quầy Barista giữa ca' }
+    ],
+    toi: [
+      { id: 'clean_bar_close', label: 'Vệ sinh quầy Barista cuối ca' },
+      { id: 'trash', label: 'Đổ rác & thay túi rác' },
+      { id: 'fridge_close', label: 'Vệ sinh tủ lạnh cuối ca' },
+      { id: 'cash_close', label: 'Kiểm két & chốt tiền cuối ca' }
+    ]
+  };
+
+  const defaultTasks = SHIFT_TASK_TEMPLATES[shift] || [
     { id: 'bar', label: 'Vệ sinh quầy Barista' },
     { id: 'wc', label: 'Vệ sinh nhà vệ sinh' },
     { id: 'fridge', label: 'Vệ sinh tủ lạnh' },
@@ -656,16 +752,77 @@ function Checkin() {
 
   const allDone = tasks.every(t => t.done && t.image);
 
-  const endShift = () => {
-    if (!allDone && !window.confirm('Một số task chưa hoàn thành/thiếu ảnh. Vẫn kết ca?')) {
+  const saveCheckinChecklist = async () => {
+    const tasksMap = tasks.reduce((acc, t) => {
+      acc[t.id] = { done: !!t.done, imageUrl: t.image || '' };
+      return acc;
+    }, {});
+    if (!allDone && !window.confirm('Một số task chưa hoàn thành/thiếu ảnh. Vẫn lưu và tiếp tục?')) {
       return;
     }
-    const checkKey = `${userName}__${dateStr}__${shift}`;
-    const saved = JSON.parse(localStorage.getItem('checkins') || '{}');
-    saved[checkKey] = { ...(saved[checkKey] || {}), doneAt: new Date().toISOString() };
-    localStorage.setItem('checkins', JSON.stringify(saved));
-    alert('Đã kết ca!');
-    navigate('/nhan-vien');
+
+    // Gọi API để lưu checklist bắt đầu ca
+    const CHECKLIST_API = 'https://5q97j7q6ce.execute-api.ap-southeast-2.amazonaws.com/prod/';
+    const payload = { user: userName, date: dateStr, shift, tasks: tasksMap, checklistType: 'bat_dau' };
+    
+    console.log('=== BẮT ĐẦU CA - GỬI REQUEST ===');
+    console.log('API URL:', CHECKLIST_API);
+    console.log('Payload:', payload);
+    console.log('Payload JSON:', JSON.stringify(payload));
+    
+    try {
+      const resp = await fetch(CHECKLIST_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Response status:', resp.status);
+      console.log('Response statusText:', resp.statusText);
+      console.log('Response headers:', [...resp.headers.entries()]);
+      
+      const txt = await resp.text();
+      console.log('Response raw text:', txt);
+      
+      let data = {};
+      try { 
+        data = JSON.parse(txt);
+        if (typeof data.body === 'string') {
+          data = JSON.parse(data.body);
+        }
+        console.log('Response parsed data:', data);
+      } catch (parseErr) { 
+        console.error('JSON parse error:', parseErr);
+        data = {};
+      }
+      
+      if (!resp.ok) {
+        console.error('HTTP Error - Status:', resp.status);
+        console.error('Response body:', txt);
+        alert(`Lưu checklist thất bại. Status: ${resp.status}`);
+        return;
+      }
+      
+      if (data.success === false) {
+        console.error('API returned success=false:', data);
+        alert(`Lưu checklist thất bại: ${data.message || 'Unknown error'}`);
+        return;
+      }
+      
+      console.log('✅ Lưu checklist bắt đầu ca thành công!');
+      console.log('Saved key:', data.key);
+      
+    } catch (e) {
+      console.error('=== LỖI KẾT NỐI ===');
+      console.error('Error type:', e.constructor.name);
+      console.error('Error message:', e.message);
+      console.error('Error stack:', e.stack);
+      alert(`Không thể kết nối máy chủ lưu checklist: ${e.message}`);
+      return;
+    }
+
+    // Chuyển đến trang checklist kết ca
+    navigate(`/checkout?date=${encodeURIComponent(dateStr)}&shift=${encodeURIComponent(shift)}`);
   };
 
   return (
@@ -694,9 +851,423 @@ function Checkin() {
             </div>
           ))}
         </div>
-        <button className="login-button" style={{marginTop:18}} onClick={endShift}>
-          Kết ca
+        <button className="login-button" style={{marginTop:18}} onClick={saveCheckinChecklist}>
+          Lưu và chuyển đến checklist kết ca
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Trang checklist kết ca
+function Checkout() {
+  const navigate = useNavigate();
+  const query = useQuery();
+  const dateStr = query.get('date') || '';
+  const shift = query.get('shift') || '';
+  const userName = localStorage.getItem('userName') || '';
+
+  // checklist kết ca theo từng ca
+  const END_SHIFT_TASK_TEMPLATES = {
+    sang: [
+      { id: 'clean_bar_end', label: 'Vệ sinh quầy Barista cuối ca sáng' },
+      { id: 'check_inventory_sang', label: 'Kiểm tra tồn kho cuối ca sáng' },
+      { id: 'handover_sang', label: 'Bàn giao ca cho ca trưa' }
+    ],
+    trua: [
+      { id: 'clean_bar_end_trua', label: 'Vệ sinh quầy Barista cuối ca trưa' },
+      { id: 'check_inventory_trua', label: 'Kiểm tra tồn kho cuối ca trưa' },
+      { id: 'handover_trua', label: 'Bàn giao ca cho ca tối' }
+    ],
+    toi: [
+      { id: 'clean_bar_close', label: 'Vệ sinh quầy Barista cuối ca' },
+      { id: 'trash_close', label: 'Đổ rác & thay túi rác cuối ca' },
+      { id: 'fridge_close', label: 'Vệ sinh tủ lạnh cuối ca' },
+      { id: 'cash_close', label: 'Kiểm két & chốt tiền cuối ca' },
+      { id: 'lock_doors', label: 'Khóa cửa & tắt đèn' },
+      { id: 'security_check', label: 'Kiểm tra an ninh cuối ca' }
+    ]
+  };
+
+  const defaultTasks = END_SHIFT_TASK_TEMPLATES[shift] || [
+    { id: 'clean_bar', label: 'Vệ sinh quầy Barista cuối ca' },
+    { id: 'cash', label: 'Kiểm két & chốt tiền' },
+    { id: 'lock', label: 'Khóa cửa' }
+  ];
+
+  const storageKey = `checklist_ket_ca__${userName}__${dateStr}__${shift}`;
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      return defaultTasks.map(t => ({
+        ...t,
+        done: !!(saved.tasks?.[t.id]?.done),
+        image: saved.tasks?.[t.id]?.image || ''
+      }));
+    } catch {
+      return defaultTasks.map(t => ({ ...t, done: false, image: '' }));
+    }
+  });
+
+  const saveState = (nextTasks) => {
+    const payload = { tasks: {} };
+    nextTasks.forEach(t => { payload.tasks[t.id] = { done: t.done, image: t.image }; });
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+  };
+
+  const toggleTask = (id) => {
+    const next = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    setTasks(next);
+    saveState(next);
+  };
+
+  const onUpload = (id, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const next = tasks.map(t => t.id === id ? { ...t, image: reader.result } : t);
+      setTasks(next);
+      saveState(next);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const allDone = tasks.every(t => t.done && t.image);
+
+  const endShift = async () => {
+    const tasksMap = tasks.reduce((acc, t) => {
+      acc[t.id] = { done: !!t.done, imageUrl: t.image || '' };
+      return acc;
+    }, {});
+    if (!allDone && !window.confirm('Một số task chưa hoàn thành/thiếu ảnh. Vẫn kết ca và lưu?')) {
+      return;
+    }
+
+    // Gọi API để lưu checklist kết ca
+    const CHECKLIST_API = 'https://5q97j7q6ce.execute-api.ap-southeast-2.amazonaws.com/prod/';
+    const payload = { user: userName, date: dateStr, shift, tasks: tasksMap, checklistType: 'ket_ca' };
+    
+    console.log('=== KẾT CA - GỬI REQUEST ===');
+    console.log('API URL:', CHECKLIST_API);
+    console.log('Payload:', payload);
+    console.log('Payload JSON:', JSON.stringify(payload));
+    
+    try {
+      const resp = await fetch(CHECKLIST_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      console.log('Response status:', resp.status);
+      console.log('Response statusText:', resp.statusText);
+      console.log('Response headers:', [...resp.headers.entries()]);
+      
+      const txt = await resp.text();
+      console.log('Response raw text:', txt);
+      
+      let data = {};
+      try { 
+        data = JSON.parse(txt);
+        if (typeof data.body === 'string') {
+          data = JSON.parse(data.body);
+        }
+        console.log('Response parsed data:', data);
+      } catch (parseErr) { 
+        console.error('JSON parse error:', parseErr);
+        data = {};
+      }
+      
+      if (!resp.ok) {
+        console.error('HTTP Error - Status:', resp.status);
+        console.error('Response body:', txt);
+        alert(`Lưu checklist kết ca thất bại. Status: ${resp.status}`);
+        return;
+      }
+      
+      if (data.success === false) {
+        console.error('API returned success=false:', data);
+        alert(`Lưu checklist kết ca thất bại: ${data.message || 'Unknown error'}`);
+        return;
+      }
+      
+      console.log('✅ Lưu checklist kết ca thành công!');
+      console.log('Saved key:', data.key);
+
+    } catch (e) {
+      console.error('=== LỖI KẾT NỐI ===');
+      console.error('Error type:', e.constructor.name);
+      console.error('Error message:', e.message);
+      console.error('Error stack:', e.stack);
+      alert(`Không thể kết nối máy chủ lưu checklist: ${e.message}`);
+      return;
+    }
+
+    const checkKey = `${userName}__${dateStr}__${shift}`;
+    const saved = JSON.parse(localStorage.getItem('checkins') || '{}');
+    saved[checkKey] = { ...(saved[checkKey] || {}), doneAt: new Date().toISOString() };
+    localStorage.setItem('checkins', JSON.stringify(saved));
+    alert('Đã kết ca và lưu checklist kết ca!');
+    navigate('/nhan-vien');
+  };
+
+  return (
+    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
+      <div className="login-container" style={{width: 800, maxWidth: '96vw', marginTop: 28, marginBottom: 28, alignItems:'stretch'}}>
+        <h2 className="login-title" style={{color:'#e67e22', alignSelf:'center'}}>Kết ca</h2>
+        <div className="login-underline" style={{ background: '#e67e22', alignSelf:'center' }}></div>
+        <div style={{textAlign:'center', marginBottom:16}}>Ngày {dateStr} · {shift === 'sang' ? 'Ca sáng' : shift === 'trua' ? 'Ca trưa' : 'Ca tối'}</div>
+        <div style={{display:'flex', flexDirection:'column', gap:12}}>
+          {tasks.map(t => (
+            <div key={t.id} style={{background:'#fff', border:'1px solid #e6eef5', borderRadius:12, padding:'12px 14px', boxShadow:'0 6px 16px rgba(0,0,0,0.06)'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
+                <label style={{display:'flex', alignItems:'center', gap:10}}>
+                  <input type="checkbox" checked={t.done} onChange={()=>toggleTask(t.id)} />
+                  <span style={{fontWeight:600}}>{t.label}</span>
+                </label>
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <input type="file" accept="image/*" onChange={(e)=>onUpload(t.id, e.target.files?.[0])} />
+                </div>
+              </div>
+              {t.image && (
+                <div style={{marginTop:10}}>
+                  <img src={t.image} alt={t.label} style={{maxWidth:'100%', borderRadius:8, border:'1px solid #eef5fa'}} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <button className="login-button" style={{marginTop:18}} onClick={endShift}>
+          Kết ca và lưu
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Trang báo cáo checklist cho Admin
+function ChecklistReport() {
+  const navigate = useNavigate();
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [filterUser, setFilterUser] = useState('');
+  const [filterType, setFilterType] = useState('all'); // 'all', 'bat_dau', 'ket_ca'
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
+
+  const fetchChecklist = async () => {
+    setLoading(true);
+    try {
+      const url = new URL(CHECKLIST_GET_API);
+      if (fromDate) url.searchParams.set('from', fromDate);
+      if (toDate) url.searchParams.set('to', toDate);
+      if (filterUser) url.searchParams.set('user', filterUser);
+      
+      const res = await fetch(url.toString());
+      const text = await res.text();
+      let data = {};
+      try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch {}
+      let fetched = Array.isArray(data.items) ? data.items : [];
+      
+      // Filter by type
+      if (filterType !== 'all') {
+        fetched = fetched.filter(it => {
+          const type = it.checklistType || (String(it.date_shift||'').endsWith('#ket_ca') ? 'ket_ca' : 'bat_dau');
+          return type === filterType;
+        });
+      }
+      
+      setItems(fetched);
+    } catch (e) {
+      console.error('Fetch checklist error', e);
+      alert('Không thể tải checklist');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    // Auto-fetch với current pay period
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = today.getMonth();
+    const day = today.getDate();
+    
+    let fromY = y, fromM = m, fromD = 15;
+    if (day < 15) {
+      fromM = m - 1;
+      if (fromM < 0) {
+        fromM = 11;
+        fromY = y - 1;
+      }
+    }
+    
+    const toY = fromM === 11 ? fromY + 1 : fromY;
+    const toM = (fromM + 1) % 12;
+    
+    const pad = (n) => n.toString().padStart(2, '0');
+    setFromDate(`${fromY}-${pad(fromM + 1)}-15`);
+    setToDate(`${toY}-${pad(toM + 1)}-14`);
+  }, []);
+
+  React.useEffect(() => {
+    if (fromDate && toDate) {
+      fetchChecklist();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only on mount - fetch initial data
+
+  const getWeekdayVi = (dateStr) => {
+    const [yy, mm, dd] = dateStr.split('-').map(Number);
+    const d = new Date(yy, mm - 1, dd);
+    const names = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
+    return names[d.getDay()];
+  };
+
+  const getShiftName = (shift) => {
+    const map = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
+    return map[shift] || shift;
+  };
+
+  return (
+    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
+      <div className="login-container" style={{width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32}}>
+        <h2 className="login-title" style={{color: '#e67e22'}}>Báo cáo Checklist</h2>
+        <div className="login-underline" style={{ background: '#e67e22' }}></div>
+
+        <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'16px 0'}}>
+          <input type="date" value={fromDate} onChange={(e)=>setFromDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+          <span>đến</span>
+          <input type="date" value={toDate} onChange={(e)=>setToDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+          <input placeholder="Lọc theo nhân viên" value={filterUser} onChange={(e)=>setFilterUser(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+          <select value={filterType} onChange={(e)=>setFilterType(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}}>
+            <option value="all">Tất cả</option>
+            <option value="bat_dau">Bắt đầu ca</option>
+            <option value="ket_ca">Kết ca</option>
+          </select>
+          <button className="login-button" onClick={fetchChecklist} disabled={loading}>
+            {loading ? 'Đang tải...' : 'Tải dữ liệu'}
+          </button>
+          <button className="login-button" onClick={() => navigate('/admin')} style={{background:'#6b7a86'}}>
+            Quay lại
+          </button>
+        </div>
+
+        <div className="roster-scroll" style={{marginTop:10}}>
+          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, margin:'0 auto' }}>
+            <thead>
+              <tr style={{background:'#f5fbff'}}>
+                <th>Ngày</th>
+                <th>Thứ</th>
+                <th>Ca</th>
+                <th>Loại</th>
+                <th>Nhân viên</th>
+                <th>Task hoàn thành</th>
+                <th>Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr><td colSpan={7} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>
+                  {loading ? 'Đang tải...' : 'Chưa có dữ liệu'}
+                </td></tr>
+              ) : items.map((it, i) => {
+                const tasks = it.tasks || {};
+                const taskList = Object.entries(tasks);
+                const doneCount = taskList.filter(([_, t]) => t && (t.done === true || t.done === 'true')).length;
+                const totalCount = taskList.length;
+                const type = it.checklistType || (String(it.date_shift||'').endsWith('#ket_ca') ? 'ket_ca' : 'bat_dau');
+                const typeLabel = type === 'ket_ca' ? 'Kết ca' : 'Bắt đầu ca';
+                const typeColor = type === 'ket_ca' ? '#e67e22' : '#43a8ef';
+                
+                return (
+                  <tr key={i} style={{background: i%2===0 ? '#ffffff' : '#fbfdff'}}>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.date}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', color:'#6b7a86'}}>{getWeekdayVi(it.date)}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{getShiftName(it.shift)}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>
+                      <span style={{color:typeColor, fontWeight:600}}>{typeLabel}</span>
+                    </td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.user}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', textAlign:'center'}}>
+                      <span style={{fontWeight:600, color: doneCount === totalCount && totalCount > 0 ? '#2ecc71' : '#e67e22'}}>
+                        {doneCount}/{totalCount}
+                      </span>
+                    </td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>
+                      <button 
+                        className="login-button" 
+                        style={{padding:'4px 8px', fontSize:'0.85em'}}
+                        onClick={() => setSelectedItem(it)}
+                      >
+                        Chi tiết
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Modal chi tiết */}
+        {selectedItem && (
+          <div style={{
+            position:'fixed', top:0, left:0, right:0, bottom:0,
+            background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center',
+            zIndex:1000
+          }} onClick={() => setSelectedItem(null)}>
+            <div style={{
+              background:'#fff', borderRadius:12, padding:20, maxWidth:600, width:'90vw',
+              maxHeight:'80vh', overflow:'auto'
+            }} onClick={(e)=>e.stopPropagation()}>
+              <h3 style={{marginTop:0, color:'#e67e22'}}>Chi tiết Checklist</h3>
+              <div style={{marginBottom:12}}>
+                <strong>Nhân viên:</strong> {selectedItem.user}<br/>
+                <strong>Ngày:</strong> {selectedItem.date} ({getWeekdayVi(selectedItem.date)})<br/>
+                <strong>Ca:</strong> {getShiftName(selectedItem.shift)}<br/>
+                <strong>Loại:</strong> {selectedItem.checklistType === 'ket_ca' ? 'Kết ca' : 'Bắt đầu ca'}<br/>
+                <strong>Thời gian tạo:</strong> {new Date(selectedItem.createdAt).toLocaleString('vi-VN')}<br/>
+                <strong>Cập nhật:</strong> {new Date(selectedItem.updatedAt).toLocaleString('vi-VN')}
+              </div>
+              <h4 style={{marginTop:16, marginBottom:8}}>Tasks:</h4>
+              {Object.keys(selectedItem.tasks || {}).length === 0 ? (
+                <div style={{color:'#6b7a86'}}>Không có task</div>
+              ) : (
+                <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                  {Object.entries(selectedItem.tasks || {}).map(([taskId, task]) => (
+                    <div key={taskId} style={{
+                      border:'1px solid #e6eef5', borderRadius:8, padding:12,
+                      background: task.done ? '#e9f8ef' : '#fff5e5'
+                    }}>
+                      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+                        <span style={{fontWeight:600}}>{taskId}</span>
+                        <span style={{
+                          padding:'2px 8px', borderRadius:4, fontSize:'0.85em',
+                          background: task.done ? '#2ecc71' : '#e67e22',
+                          color:'#fff'
+                        }}>
+                          {task.done ? '✓ Hoàn thành' : '✗ Chưa xong'}
+                        </span>
+                      </div>
+                      {task.imageUrl && (
+                        <div style={{marginTop:8}}>
+                          <img src={task.imageUrl} alt={taskId} style={{
+                            maxWidth:'100%', borderRadius:8, border:'1px solid #eef5fa'
+                          }} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button className="login-button" style={{marginTop:16}} onClick={() => setSelectedItem(null)}>
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -710,7 +1281,9 @@ function App() {
         <Route path="/login" element={<LoginForm />} />
         <Route path="/nhan-vien" element={<ProtectedRoute><NhanVien /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+        <Route path="/checklist-report" element={<ProtectedRoute><ChecklistReport /></ProtectedRoute>} />
         <Route path="/checkin" element={<ProtectedRoute><Checkin /></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
