@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
@@ -171,11 +171,21 @@ function NhanVien() {
 
   const handleCheckIn = (dateStr, type) => {
     const key = `${userName}__${dateStr}__${type}`;
-    if (checkins[key]) return;
-    const next = { ...checkins, [key]: { at: new Date().toISOString() } };
+    if (!checkins[key]) {
+      const next = { ...checkins, [key]: { at: new Date().toISOString() } };
+      setCheckins(next);
+      localStorage.setItem('checkins', JSON.stringify(next));
+    }
+    // chuyển đến trang checklist
+    navigate(`/checkin?date=${encodeURIComponent(dateStr)}&shift=${encodeURIComponent(type)}`);
+  };
+
+  const resetCheckIn = (dateStr, type) => {
+    const key = `${userName}__${dateStr}__${type}`;
+    const next = { ...checkins };
+    delete next[key];
     setCheckins(next);
     localStorage.setItem('checkins', JSON.stringify(next));
-    alert('Check-in thành công!');
   };
 
   React.useEffect(() => {
@@ -282,7 +292,10 @@ function NhanVien() {
                     s.canCheckIn && !s.checked ? (
                       <button key={`btn-${idx}`} className="login-button" style={{width:'auto', padding:'8px 12px'}} onClick={()=>handleCheckIn(r.date, s.type)}>Bắt đầu ca ({s.type})</button>
                     ) : s.checked ? (
-                      <span key={`done-${idx}`} style={{fontWeight:600, color:'#2ecc71'}}>Đã check-in ({s.type})</span>
+                      <span key={`done-${idx}`} style={{fontWeight:600, color:'#2ecc71', display:'flex', alignItems:'center', gap:8}}>
+                        Đã check-in ({s.type})
+                        <button type="button" onClick={()=>resetCheckIn(r.date, s.type)} style={{background:'#fff', border:'1px solid #e6eef5', borderRadius:8, padding:'4px 8px', cursor:'pointer'}}>Đặt lại</button>
+                      </span>
                     ) : null
                   ))}
                 </div>
@@ -583,6 +596,112 @@ function Admin() {
   );
 }
 
+// Trang checklist/bắt đầu ca
+function useQuery() {
+  const { search } = useLocation();
+  return React.useMemo(() => new URLSearchParams(search), [search]);
+}
+
+function Checkin() {
+  const navigate = useNavigate();
+  const query = useQuery();
+  const dateStr = query.get('date') || '';
+  const shift = query.get('shift') || '';
+  const userName = localStorage.getItem('userName') || '';
+
+  // checklist mặc định
+  const defaultTasks = [
+    { id: 'bar', label: 'Vệ sinh quầy Barista' },
+    { id: 'wc', label: 'Vệ sinh nhà vệ sinh' },
+    { id: 'fridge', label: 'Vệ sinh tủ lạnh' },
+    { id: 'cash', label: 'Kiểm két' }
+  ];
+
+  const storageKey = `checklist__${userName}__${dateStr}__${shift}`;
+  const [tasks, setTasks] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      return defaultTasks.map(t => ({
+        ...t,
+        done: !!(saved.tasks?.[t.id]?.done),
+        image: saved.tasks?.[t.id]?.image || ''
+      }));
+    } catch {
+      return defaultTasks.map(t => ({ ...t, done: false, image: '' }));
+    }
+  });
+
+  const saveState = (nextTasks) => {
+    const payload = { tasks: {} };
+    nextTasks.forEach(t => { payload.tasks[t.id] = { done: t.done, image: t.image }; });
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+  };
+
+  const toggleTask = (id) => {
+    const next = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    setTasks(next);
+    saveState(next);
+  };
+
+  const onUpload = (id, file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const next = tasks.map(t => t.id === id ? { ...t, image: reader.result } : t);
+      setTasks(next);
+      saveState(next);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const allDone = tasks.every(t => t.done && t.image);
+
+  const endShift = () => {
+    if (!allDone && !window.confirm('Một số task chưa hoàn thành/thiếu ảnh. Vẫn kết ca?')) {
+      return;
+    }
+    const checkKey = `${userName}__${dateStr}__${shift}`;
+    const saved = JSON.parse(localStorage.getItem('checkins') || '{}');
+    saved[checkKey] = { ...(saved[checkKey] || {}), doneAt: new Date().toISOString() };
+    localStorage.setItem('checkins', JSON.stringify(saved));
+    alert('Đã kết ca!');
+    navigate('/nhan-vien');
+  };
+
+  return (
+    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
+      <div className="login-container" style={{width: 800, maxWidth: '96vw', marginTop: 28, marginBottom: 28, alignItems:'stretch'}}>
+        <h2 className="login-title" style={{color:'#43a8ef', alignSelf:'center'}}>Bắt đầu ca</h2>
+        <div className="login-underline" style={{ background: '#43a8ef', alignSelf:'center' }}></div>
+        <div style={{textAlign:'center', marginBottom:16}}>Ngày {dateStr} · {shift === 'sang' ? 'Ca sáng' : shift === 'trua' ? 'Ca trưa' : 'Ca tối'}</div>
+        <div style={{display:'flex', flexDirection:'column', gap:12}}>
+          {tasks.map(t => (
+            <div key={t.id} style={{background:'#fff', border:'1px solid #e6eef5', borderRadius:12, padding:'12px 14px', boxShadow:'0 6px 16px rgba(0,0,0,0.06)'}}>
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
+                <label style={{display:'flex', alignItems:'center', gap:10}}>
+                  <input type="checkbox" checked={t.done} onChange={()=>toggleTask(t.id)} />
+                  <span style={{fontWeight:600}}>{t.label}</span>
+                </label>
+                <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <input type="file" accept="image/*" onChange={(e)=>onUpload(t.id, e.target.files?.[0])} />
+                </div>
+              </div>
+              {t.image && (
+                <div style={{marginTop:10}}>
+                  <img src={t.image} alt={t.label} style={{maxWidth:'100%', borderRadius:8, border:'1px solid #eef5fa'}} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <button className="login-button" style={{marginTop:18}} onClick={endShift}>
+          Kết ca
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -591,6 +710,7 @@ function App() {
         <Route path="/login" element={<LoginForm />} />
         <Route path="/nhan-vien" element={<ProtectedRoute><NhanVien /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+        <Route path="/checkin" element={<ProtectedRoute><Checkin /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
