@@ -128,3 +128,43 @@ body, html, #root, .login-page {
 .login-button:hover, .login-button:focus {
   background: #43a8ef;
 }
+
+/* Responsive tweaks for mobile */
+@media (max-width: 600px) {
+  .login-page {
+    align-items: flex-start;
+  }
+  .login-container {
+    width: calc(100vw - 24px) !important;
+    padding: 16px 14px 20px;
+    margin: 16px 12px 24px;
+  }
+  .login-title { font-size: 1.6rem; }
+  .login-underline { margin-bottom: 16px; }
+  .login-button { font-size: 1rem; padding: 10px 0; }
+
+  /* Make tables scrollable horizontally on small screens */
+  .roster-scroll { width: 100%; overflow-x: auto; }
+  .roster-table { min-width: 900px; }
+  .roster-scroll .roster-table { display: table; width: 100%; }
+  .roster-scroll thead tr { background: #f5fbff; position: sticky; top: 0; }
+  .roster-scroll th, .roster-scroll td { white-space: nowrap; }
+
+  /* Multi-select trigger button look */
+  .msd-root button { font-size: 14px; padding: 8px 10px; }
+}
+
+/* Equalize shift column widths */
+.roster-table th:nth-child(3),
+.roster-table th:nth-child(4),
+.roster-table th:nth-child(5),
+.roster-table td:nth-child(3),
+.roster-table td:nth-child(4),
+.roster-table td:nth-child(5) {
+  width: 220px;
+}
+
+/* Ensure dropdown button fills cell */
+.roster-table .msd-root > button {
+  width: 100%;
+}

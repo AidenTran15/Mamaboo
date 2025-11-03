@@ -361,38 +361,40 @@ function Admin() {
           <div style={{color:'red'}}>{error}</div>
         ) : (
           <form onSubmit={(e)=>{e.preventDefault(); handleSave();}} style={{margin:0, width:'100%'}}>
-            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:12, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
-              <thead>
-                <tr style={{background:'#f5fbff'}}>
-                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
-                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Thứ</th>
-                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Sáng</th>
-                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Trưa</th>
-                  <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Tối</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(editMode ? monthEdit : monthData).map((row, idx) => (
-                  <tr key={idx} style={{background: idx%2===0 ? '#ffffff' : '#fbfdff'}}>
-                    <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color:'#2b4c66'}}>{row.date}</td>
-                    <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color:'#6b7a86'}}>{getWeekdayVi(row.date)}</td>
-                    {['sang','trua','toi'].map(ca => (
-                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px'}} key={ca}>
-                        {editMode ? (
-                          <MultiSelectDropdown
-                            options={staffs}
-                            value={row[ca] || []}
-                            onChange={(vals)=>handleChange(idx, ca, { target: { selectedOptions: vals.map(v=>({ value: v })) } })}
-                          />
-                        ) : (
-                          <div style={{minHeight:24, color:'#1c222f'}}>{Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]}</div>
-                        )}
-                      </td>
-                    ))}
+            <div className="roster-scroll">
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:12, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
+                <thead>
+                  <tr style={{background:'#f5fbff'}}>
+                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
+                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Thứ</th>
+                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Sáng</th>
+                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Trưa</th>
+                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Tối</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(editMode ? monthEdit : monthData).map((row, idx) => (
+                    <tr key={idx} style={{background: idx%2===0 ? '#ffffff' : '#fbfdff'}}>
+                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color:'#2b4c66'}}>{row.date}</td>
+                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color:'#6b7a86'}}>{getWeekdayVi(row.date)}</td>
+                      {['sang','trua','toi'].map(ca => (
+                        <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px'}} key={ca}>
+                          {editMode ? (
+                            <MultiSelectDropdown
+                              options={staffs}
+                              value={row[ca] || []}
+                              onChange={(vals)=>handleChange(idx, ca, { target: { selectedOptions: vals.map(v=>({ value: v })) } })}
+                            />
+                          ) : (
+                            <div style={{minHeight:24, color:'#1c222f'}}>{Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]}</div>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {!editMode && <button type="button" className="login-button" style={{marginTop:16}} onClick={handleEdit}>Chỉnh sửa</button>}
             {editMode && (
@@ -404,28 +406,30 @@ function Admin() {
             {info && <div style={{marginTop:12, color:'#2ecc71', fontWeight:600}}>{info}</div>}
 
             <h3 style={{textAlign:'left', margin:'18px 0 8px'}}>Tổng số giờ trong tháng</h3>
-            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:10, overflow:'hidden', boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto' }}>
-              <thead>
-                <tr style={{background:'#f7fafc'}}>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tổng giờ</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đơn</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đôi</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền (VND)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => (
-                  <tr key={name} style={{background:'#fff'}}>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{total}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{singleH}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(money).toLocaleString('vi-VN')}</td>
+            <div className="roster-scroll">
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, overflow:'hidden', boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto' }}>
+                <thead>
+                  <tr style={{background:'#f7fafc'}}>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tổng giờ</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đơn</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đôi</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền (VND)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => (
+                    <tr key={name} style={{background:'#fff'}}>
+                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
+                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{total}</td>
+                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{singleH}</td>
+                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
+                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(money).toLocaleString('vi-VN')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </form>
         )}
         <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
