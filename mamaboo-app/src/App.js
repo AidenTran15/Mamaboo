@@ -239,29 +239,42 @@ function Admin() {
   };
   const computeTotals = (rows) => {
     const hoursByShift = { sang: 4, trua: 5, toi: 4 };
-    const map = new Map();
+    const rateSingle = 25000; // VND per hour per person when only 1 person in shift
+    const rateDouble = 20000; // VND per hour per person when >=2 people in shift
+
+    const totalHours = new Map(); // name -> hours
+    const singleHours = new Map(); // name -> single shift hours
+    const doubleHours = new Map(); // name -> double shift hours
+    const moneyMap = new Map(); // name -> money
+
     rows.forEach(r => {
       ['sang','trua','toi'].forEach(ca => {
-        const v = r[ca];
-        const h = hoursByShift[ca];
-        if (Array.isArray(v)) {
-          v.forEach(n => {
-            const name = (n || '').toString().trim();
-            if (!name) return;
-            map.set(name, (map.get(name) || 0) + h);
-          });
-        } else if (v) {
-          const name = (v || '').toString().trim();
-          if (name) map.set(name, (map.get(name) || 0) + h);
-        }
+        const members = Array.isArray(r[ca]) ? r[ca].filter(Boolean) : (r[ca] ? [r[ca]] : []);
+        if (members.length === 0) return;
+        const hours = hoursByShift[ca];
+        const isSingle = members.length === 1;
+        const rate = isSingle ? rateSingle : rateDouble;
+        members.forEach(nameRaw => {
+          const name = (nameRaw || '').toString().trim();
+          if (!name) return;
+          totalHours.set(name, (totalHours.get(name) || 0) + hours);
+          if (isSingle) {
+            singleHours.set(name, (singleHours.get(name) || 0) + hours);
+          } else {
+            doubleHours.set(name, (doubleHours.get(name) || 0) + hours);
+          }
+          moneyMap.set(name, (moneyMap.get(name) || 0) + hours * rate);
+        });
       });
     });
-    const arr = Array.from(map.entries()).map(([name, hours]) => {
-      const salary = Number(staffSalary[name] || 0);
-      const total = hours * salary;
-      return [name, hours, salary, total];
+
+    const arr = Array.from(totalHours.entries()).map(([name, hours]) => {
+      const sh = singleHours.get(name) || 0;
+      const dh = doubleHours.get(name) || 0;
+      const money = moneyMap.get(name) || 0;
+      return [name, hours, sh, dh, money];
     });
-    return arr.sort((a,b)=> b[3]-a[3]);
+    return arr.sort((a,b)=> b[4]-a[4]);
   };
 
   return (
@@ -330,17 +343,19 @@ function Admin() {
                 <tr style={{background:'#f7fafc'}}>
                   <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
                   <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tổng giờ</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:140}}>Lương/giờ</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đơn</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đôi</th>
+                  <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền (VND)</th>
                 </tr>
               </thead>
               <tbody>
-                {computeTotals(editMode ? monthEdit : monthData).map(([name, hours, salary, total]) => (
+                {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => (
                   <tr key={name} style={{background:'#fff'}}>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{hours}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right'}}>{salary.toLocaleString('vi-VN')}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{total.toLocaleString('vi-VN')}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{total}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{singleH}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
+                    <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(money).toLocaleString('vi-VN')}</td>
                   </tr>
                 ))}
               </tbody>
