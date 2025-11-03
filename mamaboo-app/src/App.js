@@ -278,8 +278,8 @@ function Admin() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'flex-start'}}>
-      <div className="login-container" style={{width: 750, maxWidth: '95vw'}}>
+    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 24}}>
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản trị viên</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
         <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
@@ -297,7 +297,7 @@ function Admin() {
           <div style={{color:'red'}}>{error}</div>
         ) : (
           <form onSubmit={(e)=>{e.preventDefault(); handleSave();}} style={{margin:0, width:'100%'}}>
-            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:12, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.08)' }}>
+            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:12, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
               <thead>
                 <tr style={{background:'#f5fbff'}}>
                   <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
@@ -338,7 +338,7 @@ function Admin() {
             {info && <div style={{marginTop:12, color:'#2ecc71', fontWeight:600}}>{info}</div>}
 
             <h3 style={{textAlign:'left', margin:'18px 0 8px'}}>Tổng số giờ trong tháng</h3>
-            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:10, overflow:'hidden', boxShadow:'0 3px 14px rgba(0,0,0,0.06)' }}>
+            <table style={{ width:'100%', borderCollapse: 'separate', borderSpacing:0, borderRadius:10, overflow:'hidden', boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto' }}>
               <thead>
                 <tr style={{background:'#f7fafc'}}>
                   <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
