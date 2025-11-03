@@ -192,13 +192,14 @@ function NhanVien() {
         const curY = now.getFullYear();
         const curM = now.getMonth();
         const curD = now.getDate();
-        const start = curD < 15 ? new Date(curY, curM - 1, 15) : new Date(curY, curM, 15);
-        const end = curD < 15 ? new Date(curY, curM, 15) : new Date(curY, curM + 1, 15);
+        // Window: from today to one month later
+        const start = new Date(curY, curM, curD);
+        const end = new Date(curY, curM + 1, curD);
         const byDate = new Map();
         all.forEach(r => byDate.set(r.date, r));
 
         const pad2 = (n) => n.toString().padStart(2, '0');
-        const todayStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+        const todayStr = `${curY}-${pad2(curM+1)}-${pad2(curD)}`;
 
         const result = [];
         const norm = (s) => (s || '').toString().trim();
@@ -216,7 +217,6 @@ function NhanVien() {
 
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
           const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
-          if (ds < todayStr) continue; // chỉ hiển thị từ hôm nay trở đi
           const r = byDate.get(ds);
           if (!r) continue;
           const isToday = ds === todayStr;
