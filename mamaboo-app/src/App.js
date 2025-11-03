@@ -362,7 +362,7 @@ function Admin() {
         ) : (
           <form onSubmit={(e)=>{e.preventDefault(); handleSave();}} style={{margin:0, width:'100%'}}>
             <div className="roster-scroll">
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:12, overflow:'hidden', boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:12, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
                 <thead>
                   <tr style={{background:'#f5fbff'}}>
                     <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
@@ -378,7 +378,7 @@ function Admin() {
                       <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color:'#2b4c66'}}>{row.date}</td>
                       <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color:'#6b7a86'}}>{getWeekdayVi(row.date)}</td>
                       {['sang','trua','toi'].map(ca => (
-                        <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px'}} key={ca}>
+                        <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', position:'relative'}} key={ca}>
                           {editMode ? (
                             <MultiSelectDropdown
                               options={staffs}
@@ -407,7 +407,7 @@ function Admin() {
 
             <h3 style={{textAlign:'left', margin:'18px 0 8px'}}>Tổng số giờ trong tháng</h3>
             <div className="roster-scroll">
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, overflow:'hidden', boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto' }}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto' }}>
                 <thead>
                   <tr style={{background:'#f7fafc'}}>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
