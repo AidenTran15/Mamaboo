@@ -152,7 +152,7 @@ function NhanVien() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [rows, setRows] = useState([]);
+  const [rows, setRows] = useState([]); // [{date, weekday, shifts:[{text,type}]}]
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
 
@@ -174,26 +174,26 @@ function NhanVien() {
 
         const result = [];
         const norm = (s) => (s || '').toString().trim();
-        const labelFor = (nameArr, tag) => {
+        const build = (nameArr, tag, type) => {
           const members = Array.isArray(nameArr) ? nameArr.filter(Boolean).map(norm) : (nameArr ? [norm(nameArr)] : []);
           if (members.length === 0) return null;
           if (!members.includes(norm(userName))) return null;
           const mates = members.filter(n => n !== norm(userName));
-          if (mates.length === 0) return `${tag} (một mình)`;
-          return `${tag} (cùng: ${mates.join(', ')})`;
+          if (mates.length === 0) return { text: `${tag} · một mình`, type };
+          return { text: `${tag} · cùng: ${mates.join(', ')}`, type };
         };
 
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
           const ds = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
           const r = byDate.get(ds);
           if (!r) continue;
-          const parts = [];
-          const morning = labelFor(r.sang, 'Ca sáng'); if (morning) parts.push(morning);
-          const noon = labelFor(r.trua, 'Ca trưa'); if (noon) parts.push(noon);
-          const night = labelFor(r.toi, 'Ca tối'); if (night) parts.push(night);
-          if (parts.length) {
+          const shifts = [];
+          const morning = build(r.sang, 'Ca sáng', 'sang'); if (morning) shifts.push(morning);
+          const noon = build(r.trua, 'Ca trưa', 'trua'); if (noon) shifts.push(noon);
+          const night = build(r.toi, 'Ca tối', 'toi'); if (night) shifts.push(night);
+          if (shifts.length) {
             const weekday = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()];
-            result.push({ date: ds, weekday, detail: parts.join(' | ') });
+            result.push({ date: ds, weekday, shifts });
           }
         }
         if (mounted) setRows(result);
@@ -204,38 +204,42 @@ function NhanVien() {
     return () => { mounted = false; };
   }, [userName]);
 
+  const chipStyle = (type) => {
+    const colors = { sang: '#e9f8ef', trua: '#fff5e5', toi: '#f3eaff' };
+    const text = { sang: '#1e7e34', trua: '#c17d00', toi: '#6f42c1' };
+    return { background: colors[type] || '#eef5ff', color: text[type] || '#1c222f', padding: '6px 10px', borderRadius: 999, fontWeight: 600, fontSize: 14 };
+  };
+
   return (
     <div className="login-page" style={{justifyContent: 'flex-start'}}>
-      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 24}}>
+      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 24, alignItems:'stretch'}}>
         <h2 className="login-title" style={{color: '#2ecc71'}}>Nhân Viên</h2>
         <div className="login-underline" style={{ background: '#2ecc71' }}></div>
         <div style={{textAlign: 'center', fontSize: 20, marginTop: 10, marginBottom: 16}}>Xin chào {userName ? userName : 'bạn'}!</div>
 
-        <h3 style={{alignSelf:'flex-start', margin:'6px 0 10px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
+        <h3 style={{alignSelf:'flex-start', margin:'6px 0 14px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
         {loading ? (
           <div>Đang tải...</div>
         ) : (
-          <div className="roster-scroll">
-            <table className="roster-table" style={{ borderCollapse:'separate', borderSpacing:0, borderRadius:12, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
-              <thead>
-                <tr style={{background:'#f5fbff'}}>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8', textAlign:'left'}}>Ngày</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Thứ</th>
-                  <th style={{padding:'10px 8px', borderBottom:'1px solid #e6f2f8'}}>Chi tiết</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length === 0 ? (
-                  <tr><td colSpan={3} style={{padding:12, textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</td></tr>
-                ) : rows.map((r) => (
-                  <tr key={r.date}>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.date}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.weekday}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{r.detail}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div style={{display:'flex', flexDirection:'column', gap:12}}>
+            {rows.length === 0 ? (
+              <div style={{textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</div>
+            ) : rows.map((r) => (
+              <div key={r.date} style={{
+                background:'#fff', border:'1px solid #e9f2f8', borderRadius:14,
+                boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px'
+              }}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}>
+                  <div style={{fontWeight:700, color:'#2b4c66'}}>{r.weekday}</div>
+                  <div style={{opacity:0.8}}>{r.date}</div>
+                </div>
+                <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                  {r.shifts.map((s, idx) => (
+                    <span key={idx} style={chipStyle(s.type)}>{s.text}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
