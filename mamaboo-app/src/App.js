@@ -162,12 +162,11 @@ function NhanVien() {
   const canCheckInNow = (dateStr, type) => {
     // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
     const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
-    const d = new Date(dateStr + 'T00:00:00');
-    const now = new Date();
-    if (d.toDateString() !== now.toDateString()) return false; // only today
-    const { h, m } = startMap[type] || { h: 0, m: 0 };
-    const start = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, 0);
-    return now.getTime() >= start.getTime();
+    const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+    const [y, mo, da] = dateStr.split('-').map(Number);
+    const start = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
+    // Compare using Vietnam local date/time
+    return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= start.getTime();
   };
 
   const handleCheckIn = (dateStr, type) => {
@@ -189,11 +188,17 @@ function NhanVien() {
         try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
         const all = Array.isArray(data.items) ? data.items : [];
 
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 15);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 15);
+        const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+        const curY = now.getFullYear();
+        const curM = now.getMonth();
+        const curD = now.getDate();
+        const start = curD < 15 ? new Date(curY, curM - 1, 15) : new Date(curY, curM, 15);
+        const end = curD < 15 ? new Date(curY, curM, 15) : new Date(curY, curM + 1, 15);
         const byDate = new Map();
         all.forEach(r => byDate.set(r.date, r));
+
+        const pad2 = (n) => n.toString().padStart(2, '0');
+        const todayStr = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
 
         const result = [];
         const norm = (s) => (s || '').toString().trim();
@@ -210,10 +215,11 @@ function NhanVien() {
         };
 
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-          const ds = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')}`;
+          const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+          if (ds < todayStr) continue; // chỉ hiển thị từ hôm nay trở đi
           const r = byDate.get(ds);
           if (!r) continue;
-          const isToday = new Date(ds).toDateString() === new Date().toDateString();
+          const isToday = ds === todayStr;
           const shifts = [];
           const morning = build(r.sang, 'Ca sáng', 'sang', ds, isToday); if (morning) shifts.push(morning);
           const noon = build(r.trua, 'Ca trưa', 'trua', ds, isToday); if (noon) shifts.push(noon);
@@ -230,6 +236,13 @@ function NhanVien() {
     })();
     return () => { mounted = false; };
   }, [userName, checkins]);
+
+  React.useEffect(() => {
+    const el = document.getElementById('today-card');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [rows.length]);
 
   const chipStyle = (type) => {
     const colors = { sang: '#e9f8ef', trua: '#fff5e5', toi: '#f3eaff' };
@@ -252,7 +265,7 @@ function NhanVien() {
             {rows.length === 0 ? (
               <div style={{textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</div>
             ) : rows.map((r) => (
-              <div key={r.date} style={{
+              <div id={r.isToday ? 'today-card' : undefined} key={r.date} style={{
                 background:r.isToday ? '#f0fbff' : '#fff', border:'1px solid #e9f2f8', borderRadius:14,
                 boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px',
                 width:'100%', margin:'0 auto'
