@@ -300,8 +300,13 @@ function Admin() {
   const monthLabel = (() => {
     const start = new Date(year, month, 15);
     const end = new Date(year, month + 1, 15);
-    const fmtLabel = (d) => `${d.toLocaleDateString('vi-VN', { day:'2-digit', month:'long', year:'numeric' })}`;
-    return `${fmtLabel(start)} → ${fmtLabel(new Date(end.getFullYear(), end.getMonth(), 14))}`;
+    const m1 = start.getMonth() + 1;
+    const m2 = end.getMonth() + 1;
+    const y1 = start.getFullYear();
+    const y2 = end.getFullYear();
+    const monthPart = `Tháng ${m1}-${m2}`;
+    const yearPart = y1 === y2 ? `, ${y1}` : `, ${y1}-${y2}`;
+    return monthPart + yearPart;
   })();
   const getWeekdayVi = (dateStr) => {
     const [yy, mm, dd] = dateStr.split('-').map(Number);
