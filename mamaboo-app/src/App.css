@@ -61,6 +61,8 @@ body, html, #root, .login-page {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: visible;
+  overflow-y: visible;
 }
 
 .login-title {
@@ -148,10 +150,26 @@ body, html, #root, .login-page {
   .login-button { font-size: 1rem; padding: 10px 0; }
 
   /* Make tables scrollable horizontally on small screens */
-  .roster-scroll { width: 100%; overflow-x: auto; }
-  .roster-table { min-width: 900px; }
-  .roster-scroll .roster-table { display: table; width: 100%; }
-  .roster-scroll thead tr { background: #f5fbff; position: sticky; top: 0; }
+  .roster-scroll { 
+    width: 100% !important; 
+    max-width: 100% !important;
+    overflow-x: auto !important; 
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .roster-table { min-width: 800px !important; }
+  .roster-scroll .roster-table { 
+    display: table !important; 
+    width: auto !important;
+    min-width: 800px !important;
+    margin: 0 !important;
+  }
+  .roster-scroll thead tr { background: #f5fbff; position: sticky; top: 0; z-index: 10; }
   .roster-scroll th, .roster-scroll td { white-space: nowrap; }
 
   /* Multi-select trigger button look */
@@ -163,6 +181,13 @@ body, html, #root, .login-page {
     max-width: 100% !important;
     padding: 24px 16px !important;
     margin-top: 16px !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+  
+  /* Ensure roster-scroll can extend beyond container on mobile */
+  .login-container > div {
+    overflow-x: visible !important;
   }
 
   /* Admin buttons - full width on mobile */
@@ -210,4 +235,43 @@ body, html, #root, .login-page {
 /* Ensure dropdown button fills cell */
 .roster-table .msd-root > button {
   width: 100%;
+}
+
+/* General horizontal scrolling for roster tables */
+.roster-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  display: block;
+}
+
+.roster-scroll .roster-table {
+  width: auto;
+  min-width: 800px;
+  display: table;
+  table-layout: auto;
+}
+
+/* Ensure parent containers don't restrict scrolling */
+.login-container .roster-scroll {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* Force scrolling on mobile */
+@media (max-width: 600px) {
+  .roster-scroll {
+    overflow-x: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth;
+  }
+  
+  .roster-scroll .roster-table {
+    min-width: 800px !important;
+    width: auto !important;
+  }
 }

@@ -1955,7 +1955,7 @@ function ChecklistReport() {
         </div>
 
         <div className="roster-scroll" style={{marginTop:10}}>
-          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, margin:'0 auto' }}>
+          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, margin:'0 auto', minWidth:700 }}>
             <thead>
               <tr style={{background:'#f5fbff'}}>
                 <th>Ngày</th>
@@ -2705,10 +2705,10 @@ function OvertimeManagement() {
         )}
 
         {records.length > 0 && (
-          <div style={{marginTop:records.length > 0 ? 0 : 24}}>
+          <div style={{marginTop:records.length > 0 ? 0 : 24, width:'100%', overflow:'visible'}}>
             <h3 style={{marginBottom:16, color:'#1c222f'}}>Danh sách đã thêm</h3>
-            <div className="roster-scroll">
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
+            <div className="roster-scroll" style={{width:'100%', overflowX:'auto', overflowY:'visible', WebkitOverflowScrolling:'touch'}}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', minWidth:800, width:'auto' }}>
                 <thead>
                   <tr style={{background:'#f7fafc'}}>
                     <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
