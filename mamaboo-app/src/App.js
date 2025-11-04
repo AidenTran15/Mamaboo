@@ -877,6 +877,16 @@ function Admin() {
     const names = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
     return names[d.getDay()];
   };
+
+  const isToday = (dateStr) => {
+    const today = new Date();
+    const [yy, mm, dd] = dateStr.split('-').map(Number);
+    const date = new Date(yy, mm - 1, dd);
+    return today.getFullYear() === date.getFullYear() &&
+           today.getMonth() === date.getMonth() &&
+           today.getDate() === date.getDate();
+  };
+
   const computeTotals = (rows) => {
     const hoursByShift = { sang: 4, trua: 5, toi: 4 };
     const rateSingle = 20000; // VND per hour per person when only 1 person in shift
@@ -1094,10 +1104,16 @@ function Admin() {
                   </tr>
                 </thead>
                 <tbody>
-                  {(editMode ? monthEdit : monthData).map((row, idx) => (
-                    <tr key={idx} style={{background: idx%2===0 ? '#ffffff' : '#fbfdff'}}>
-                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color:'#2b4c66'}}>{row.date}</td>
-                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color:'#6b7a86'}}>{getWeekdayVi(row.date)}</td>
+                  {(editMode ? monthEdit : monthData).map((row, idx) => {
+                    const todayHighlight = isToday(row.date);
+                    return (
+                    <tr key={idx} style={{
+                      background: todayHighlight ? '#fff9e6' : (idx%2===0 ? '#ffffff' : '#fbfdff'),
+                      borderLeft: todayHighlight ? '4px solid #ff9800' : 'none',
+                      fontWeight: todayHighlight ? 600 : 'normal'
+                    }}>
+                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color: todayHighlight ? '#ff9800' : '#2b4c66'}}>{row.date}</td>
+                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color: todayHighlight ? '#ff9800' : '#6b7a86', fontWeight: todayHighlight ? 600 : 'normal'}}>{getWeekdayVi(row.date)}</td>
                       {['sang','trua','toi'].map(ca => (
                         <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', position:'relative'}} key={ca}>
                           {editMode ? (
@@ -1112,7 +1128,8 @@ function Admin() {
                         </td>
                       ))}
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
