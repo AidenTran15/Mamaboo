@@ -725,6 +725,8 @@ function Admin() {
             </div>
 
             {/* Checklist viewer */}
+            {false && (
+            <>
             <h3 style={{textAlign:'left', margin:'22px 0 8px'}}>Checklist đã lưu</h3>
             <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
               <input type="date" value={ckFrom} onChange={(e)=>setCkFrom(e.target.value)} />
@@ -768,6 +770,8 @@ function Admin() {
                 </tbody>
               </table>
             </div>
+            </>
+            )}
           </form>
         )}
         <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
@@ -1564,7 +1568,7 @@ function ChecklistReport() {
                   })));
                 }
                 
-  return (
+                return (
                   <tr key={i} style={{background: i%2===0 ? '#ffffff' : '#fbfdff'}}>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.date}</td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', color:'#6b7a86'}}>{getWeekdayVi(it.date)}</td>
@@ -1629,7 +1633,7 @@ function ChecklistReport() {
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>
                       <button 
                         className="login-button" 
-                        style={{padding:'4px 8px', fontSize:'0.85em'}}
+                        style={{padding:'6px 12px', fontSize:'0.9em', width:'110px'}}
                         onClick={() => setSelectedItem(it)}
                       >
                         Chi tiết
