@@ -1897,10 +1897,24 @@ function OvertimeManagement() {
   const navigate = useNavigate();
   const [staffs, setStaffs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-11
-  const [overtimeData, setOvertimeData] = useState(() => {
+  const [formData, setFormData] = useState({
+    staffName: '',
+    date: '',
+    shift: '',
+    type: 'overtime', // 'overtime' hoặc 'late'
+    hours: 0
+  });
+  const [records, setRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem('overtimeRecords');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Load overtimeData cũ và chuyển đổi sang records nếu cần
+  const [overtimeData] = useState(() => {
     try {
       const saved = localStorage.getItem('overtimeData');
       return saved ? JSON.parse(saved) : {};
@@ -1934,46 +1948,70 @@ function OvertimeManagement() {
     })();
   }, []);
 
-  const monthKey = `${year}-${month + 1}`;
-  const monthLabel = (() => {
-    const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 
-                        'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-    return `${monthNames[month]}, ${year}`;
-  })();
+  // Set default date to today
+  React.useEffect(() => {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    setFormData(prev => prev.date ? prev : { ...prev, date: dateStr });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const prevMonth = () => { 
-    const m = month - 1; 
-    if (m < 0) { 
-      setMonth(11); 
-      setYear(y => y-1); 
-    } else { 
-      setMonth(m); 
-    } 
-  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.staffName || !formData.date || !formData.shift || formData.hours <= 0) {
+      alert('Vui lòng điền đầy đủ thông tin!');
+      return;
+    }
 
-  const nextMonth = () => { 
-    const m = month + 1; 
-    if (m > 11) { 
-      setMonth(0); 
-      setYear(y => y+1); 
-    } else { 
-      setMonth(m); 
-    } 
-  };
+    const newRecord = {
+      id: Date.now(),
+      staffName: formData.staffName,
+      date: formData.date,
+      shift: formData.shift,
+      type: formData.type,
+      hours: Number(formData.hours)
+    };
 
-  const updateOvertimeData = (name, field, value) => {
+    const updatedRecords = [...records, newRecord];
+    setRecords(updatedRecords);
+    localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
+
+    // Cập nhật overtimeData để tương thích với code cũ
+    const [y, m] = formData.date.split('-').map(Number);
+    const monthKey = `${y}-${m}`;
     const newData = { ...overtimeData };
     if (!newData[monthKey]) newData[monthKey] = {};
-    if (!newData[monthKey][name]) newData[monthKey][name] = { overtime: 0, lateCount: 0 };
-    newData[monthKey][name][field] = Math.max(0, Number(value) || 0);
-    setOvertimeData(newData);
+    if (!newData[monthKey][formData.staffName]) newData[monthKey][formData.staffName] = { overtime: 0, lateCount: 0 };
+    
+    if (formData.type === 'overtime') {
+      newData[monthKey][formData.staffName].overtime = (newData[monthKey][formData.staffName].overtime || 0) + formData.hours;
+    } else {
+      newData[monthKey][formData.staffName].lateCount = (newData[monthKey][formData.staffName].lateCount || 0) + formData.hours;
+    }
     localStorage.setItem('overtimeData', JSON.stringify(newData));
+
+    // Reset form
+    setFormData({
+      staffName: '',
+      date: new Date().toISOString().split('T')[0],
+      shift: '',
+      type: 'overtime',
+      hours: 0
+    });
+
+    alert('Đã thêm thành công!');
   };
 
-  const adjustValue = (name, field, delta) => {
-    const staffData = overtimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
-    const current = staffData[field] || 0;
-    updateOvertimeData(name, field, current + delta);
+  const handleDelete = (id) => {
+    if (!window.confirm('Bạn có chắc muốn xóa bản ghi này?')) return;
+    const updatedRecords = records.filter(r => r.id !== id);
+    setRecords(updatedRecords);
+    localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
+  };
+
+  const getShiftName = (shift) => {
+    const map = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
+    return map[shift] || shift;
   };
 
   if (loading) {
@@ -1990,91 +2028,142 @@ function OvertimeManagement() {
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý tăng ca/đi trễ</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'20px 0 16px'}}>
-          <button className="login-button" style={{width:120}} onClick={prevMonth}>{'← Tháng trước'}</button>
-          <div style={{fontWeight:700, color:'#1c222f', fontSize:'18px'}}>{monthLabel}</div>
-          <button className="login-button" style={{width:120}} onClick={nextMonth}>{'Tháng sau →'}</button>
-        </div>
+        <form onSubmit={handleSubmit} style={{marginTop:24, background:'#fff', border:'1px solid #e6eef5', borderRadius:12, padding:20, boxShadow:'0 4px 12px rgba(0,0,0,0.08)'}}>
+          <h3 style={{marginTop:0, marginBottom:16, color:'#1c222f'}}>Thêm mới</h3>
+          
+          <div style={{display:'flex', flexDirection:'column', gap:16}}>
+            <div>
+              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Nhân viên *</label>
+              <select
+                value={formData.staffName}
+                onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
+                required
+                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+              >
+                <option value="">-- Chọn nhân viên --</option>
+                {staffs.map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            </div>
 
-        <div className="roster-scroll">
-          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
-            <thead>
-              <tr style={{background:'#f7fafc'}}>
-                <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
-                <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', width:200}}>Tăng ca (giờ)</th>
-                <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', width:200}}>Đi trễ (lần)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {staffs.length === 0 ? (
-                <tr>
-                  <td colSpan={3} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
-                    Không có nhân viên
-                  </td>
-                </tr>
-              ) : staffs.map((name) => {
-                const staffData = overtimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
-                return (
-                  <tr key={name} style={{background:'#fff'}}>
-                    <td style={{padding:'12px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{name}</td>
-                    <td style={{padding:'12px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
-                      <div style={{display:'flex', alignItems:'center', gap:8, justifyContent:'center'}}>
-                        <button
-                          type="button"
-                          onClick={() => adjustValue(name, 'overtime', -0.25)}
-                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
-                        >
-                          −
-                        </button>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.25"
-                          value={staffData.overtime}
-                          onChange={(e) => updateOvertimeData(name, 'overtime', e.target.value)}
-                          style={{width:'100px', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, textAlign:'center', fontSize:'16px', fontWeight:600}}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => adjustValue(name, 'overtime', 0.25)}
-                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </td>
-                    <td style={{padding:'12px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
-                      <div style={{display:'flex', alignItems:'center', gap:8, justifyContent:'center'}}>
-                        <button
-                          type="button"
-                          onClick={() => adjustValue(name, 'lateCount', -1)}
-                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
-                        >
-                          −
-                        </button>
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={staffData.lateCount}
-                          onChange={(e) => updateOvertimeData(name, 'lateCount', e.target.value)}
-                          style={{width:'100px', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, textAlign:'center', fontSize:'16px', fontWeight:600}}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => adjustValue(name, 'lateCount', 1)}
-                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </td>
+            <div>
+              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày *</label>
+              <input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                required
+                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+              />
+            </div>
+
+            <div>
+              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ca *</label>
+              <select
+                value={formData.shift}
+                onChange={(e) => setFormData(prev => ({ ...prev, shift: e.target.value }))}
+                required
+                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+              >
+                <option value="">-- Chọn ca --</option>
+                <option value="sang">Ca sáng</option>
+                <option value="trua">Ca trưa</option>
+                <option value="toi">Ca tối</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Loại *</label>
+              <div style={{display:'flex', gap:16}}>
+                <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="overtime"
+                    checked={formData.type === 'overtime'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                  />
+                  <span>Tăng ca</span>
+                </label>
+                <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                  <input
+                    type="radio"
+                    name="type"
+                    value="late"
+                    checked={formData.type === 'late'}
+                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                  />
+                  <span>Đi trễ</span>
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>
+                {formData.type === 'overtime' ? 'Số giờ tăng ca *' : 'Số lần đi trễ *'}
+              </label>
+              <input
+                type="number"
+                min="0"
+                step={formData.type === 'overtime' ? '0.25' : '1'}
+                value={formData.hours}
+                onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
+                required
+                placeholder={formData.type === 'overtime' ? 'Ví dụ: 1.5' : 'Ví dụ: 2'}
+                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+              />
+            </div>
+
+            <button type="submit" className="login-button" style={{marginTop:8, width:'100%', padding:'12px'}}>
+              Thêm
+            </button>
+          </div>
+        </form>
+
+        {records.length > 0 && (
+          <div style={{marginTop:24}}>
+            <h3 style={{marginBottom:16, color:'#1c222f'}}>Danh sách đã thêm</h3>
+            <div className="roster-scroll">
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
+                <thead>
+                  <tr style={{background:'#f7fafc'}}>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ngày</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ca</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Loại</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Số giờ/lần</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Thao tác</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+                <tbody>
+                  {records.map((record) => (
+                    <tr key={record.id} style={{background:'#fff'}}>
+                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
+                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
+                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{getShiftName(record.shift)}</td>
+                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                        {record.type === 'overtime' ? 'Tăng ca' : 'Đi trễ'}
+                      </td>
+                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>
+                        {record.hours}
+                      </td>
+                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(record.id)}
+                          style={{padding:'6px 12px', background:'#e67e22', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:'14px'}}
+                        >
+                          Xóa
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div style={{marginTop:24, display:'flex', justifyContent:'center', gap:12}}>
           <button className="login-button" onClick={() => navigate('/admin')} style={{padding:'12px 36px'}}>
