@@ -887,6 +887,12 @@ function Admin() {
            today.getDate() === date.getDate();
   };
 
+  const formatDate = (dateStr) => {
+    // Format từ YYYY-MM-DD sang DD/MM/YYYY
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
   const computeTotals = (rows) => {
     const hoursByShift = { sang: 4, trua: 5, toi: 4 };
     const rateSingle = 20000; // VND per hour per person when only 1 person in shift
@@ -1112,7 +1118,7 @@ function Admin() {
                       borderLeft: todayHighlight ? '4px solid #ff9800' : 'none',
                       fontWeight: todayHighlight ? 600 : 'normal'
                     }}>
-                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color: todayHighlight ? '#ff9800' : '#2b4c66'}}>{row.date}</td>
+                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color: todayHighlight ? '#ff9800' : '#2b4c66'}}>{formatDate(row.date)}</td>
                       <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color: todayHighlight ? '#ff9800' : '#6b7a86', fontWeight: todayHighlight ? 600 : 'normal'}}>{getWeekdayVi(row.date)}</td>
                       {['sang','trua','toi'].map(ca => (
                         <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', position:'relative'}} key={ca}>
