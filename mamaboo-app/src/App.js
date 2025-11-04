@@ -793,11 +793,11 @@ function Checkin() {
   // Checklist các task cần làm trong ca (theo từng ca)
   const SHIFT_TASK_TEMPLATES = {
     sang: [
-      { id: 'open_bar', label: 'Mở máy/chuẩn bị quầy Barista' },
-      { id: 'clean_tables', label: 'Vệ sinh bàn ghế khu vực khách' },
-      { id: 'fridge_morning', label: 'Kiểm tra & vệ sinh tủ lạnh sáng' },
-      { id: 'cash_open', label: 'Kiểm két đầu ca' },
-      { id: 'prep_items', label: 'Chuẩn bị nguyên liệu cho ca sáng' }
+      { id: 'setup bàn tiếp khách, quầy thu ngân', label: 'setup bàn tiếp khách, quầy thu ngân' },
+      { id: 'Quét và lau sàn', label: 'Quét và lau sàn' },
+      { id: 'Kiểm tra nhà vệ sinh', label: 'Kiểm tra nhà vệ sinh' },
+      { id: 'set up khu vực cashier', label: 'set up khu vực cashier' },
+      { id: 'Chuẩn bị nguyên liệu cho ca sáng', label: 'Chuẩn bị nguyên liệu cho ca sáng' }
     ],
     trua: [
       { id: 'stock_mid', label: 'Bổ sung nguyên liệu giữa ca' },
@@ -806,9 +806,14 @@ function Checkin() {
       { id: 'check_orders', label: 'Kiểm tra đơn hàng và tồn kho' }
     ],
     toi: [
-      { id: 'prep_evening', label: 'Chuẩn bị cho ca tối' },
-      { id: 'clean_area', label: 'Vệ sinh khu vực làm việc' },
-      { id: 'check_supplies', label: 'Kiểm tra nguyên liệu còn lại' }
+      { id: 'Đổ rác', label: 'Đổ rác' },
+      { id: 'Dọn bàn ghé', label: 'Dọn bàn ghé' },
+      { id: 'Chà bồn cầu', label: 'Chà bồn cầu' },
+      { id: 'Chà lababo', label: 'Chà lababo' },
+      { id: 'Cắm sạc loa', label: 'Cắm sạc loa' },
+      { id: 'Dắt xe', label: 'Dắt xe' },
+      { id: 'Giặt cây lau nhà', label: 'Giặt cây lau nhà' },
+      { id: 'Kiểm tra két', label: 'Kiểm tra két' },
     ]
   };
 
