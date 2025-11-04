@@ -435,6 +435,15 @@ function Admin() {
   const [month, setMonth] = useState(today.getMonth()); // 0-11
   const [monthData, setMonthData] = useState([]); // [{date: 'YYYY-MM-DD', sang:[], trua:[], toi:[]}] hiện tại tháng
   const [monthEdit, setMonthEdit] = useState([]);
+  // State cho tăng ca và đi trễ: { [year-month]: { [name]: { overtime: 0, lateCount: 0 } } }
+  const [overtimeData, setOvertimeData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('overtimeData');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
   const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -590,7 +599,7 @@ function Admin() {
   };
   const computeTotals = (rows) => {
     const hoursByShift = { sang: 4, trua: 5, toi: 4 };
-    const rateSingle = 25000; // VND per hour per person when only 1 person in shift
+    const rateSingle = 20000; // VND per hour per person when only 1 person in shift
     const rateDouble = 20000; // VND per hour per person when >=2 people in shift
 
     const totalHours = new Map(); // name -> hours
@@ -708,18 +717,103 @@ function Admin() {
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đơn</th>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đôi</th>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền (VND)</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tăng ca (giờ)</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Đi trễ (giờ)</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => (
-                    <tr key={name} style={{background:'#fff'}}>
-                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
-                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{total}</td>
-                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{singleH}</td>
-                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
-                      <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(money).toLocaleString('vi-VN')}</td>
-                    </tr>
-                  ))}
+                  {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => {
+                    const monthKey = `${year}-${month + 1}`;
+                    const staffData = overtimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
+                    const ratePerHour = 20000; // VND per hour for overtime and late count
+                    // Tính tổng lương: lương ca làm + tăng ca - đi trễ (đều tính 20000 VND/giờ)
+                    const overtimePay = (staffData.overtime || 0) * ratePerHour;
+                    const latePay = (staffData.lateCount || 0) * ratePerHour;
+                    const totalSalary = money + overtimePay - latePay;
+                    const updateOvertimeData = (field, value) => {
+                      const newData = { ...overtimeData };
+                      if (!newData[monthKey]) newData[monthKey] = {};
+                      if (!newData[monthKey][name]) newData[monthKey][name] = { overtime: 0, lateCount: 0 };
+                      newData[monthKey][name][field] = Math.max(0, Number(value) || 0);
+                      setOvertimeData(newData);
+                      localStorage.setItem('overtimeData', JSON.stringify(newData));
+                    };
+                    const handleOvertimeChange = (value) => updateOvertimeData('overtime', value);
+                    const handleLateCountChange = (value) => updateOvertimeData('lateCount', value);
+                    const adjustValue = (field, delta) => {
+                      const current = staffData[field] || 0;
+                      updateOvertimeData(field, current + delta);
+                    };
+                    return (
+                      <tr key={name} style={{background:'#fff'}}>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{total}</td>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{singleH}</td>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(totalSalary).toLocaleString('vi-VN')}</td>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
+                          {editMode ? (
+                            <div style={{display:'flex', alignItems:'center', gap:4, justifyContent:'center'}}>
+                              <button
+                                type="button"
+                                onClick={() => adjustValue('overtime', -0.25)}
+                                style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
+                              >
+                                −
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.25"
+                                value={staffData.overtime}
+                                onChange={(e) => handleOvertimeChange(e.target.value)}
+                                style={{width:'70px', padding:'4px 6px', border:'1px solid #e6eef5', borderRadius:6, textAlign:'center'}}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => adjustValue('overtime', 0.25)}
+                                style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <span>{staffData.overtime}</span>
+                          )}
+                        </td>
+                        <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
+                          {editMode ? (
+                            <div style={{display:'flex', alignItems:'center', gap:4, justifyContent:'center'}}>
+                              <button
+                                type="button"
+                                onClick={() => adjustValue('lateCount', -0.25)}
+                                style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
+                              >
+                                −
+                              </button>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.25"
+                                value={staffData.lateCount}
+                                onChange={(e) => handleLateCountChange(e.target.value)}
+                                style={{width:'70px', padding:'4px 6px', border:'1px solid #e6eef5', borderRadius:6, textAlign:'center'}}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => adjustValue('lateCount', 0.25)}
+                                style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <span>{staffData.lateCount}</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
