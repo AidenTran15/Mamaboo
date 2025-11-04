@@ -7,6 +7,9 @@ const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/
 const UPDATE_ROSTER_API = 'https://rgnp5b26d5.execute-api.ap-southeast-2.amazonaws.com/prod/';
 const STAFF_API = 'https://4j10nn65m6.execute-api.ap-southeast-2.amazonaws.com/prod';
 const CHECKLIST_GET_API = 'https://4qwg9i4he0.execute-api.ap-southeast-2.amazonaws.com/prod';
+const OVERTIME_GET_API = 'https://enxgjymmjc.execute-api.ap-southeast-2.amazonaws.com/prod';
+const OVERTIME_POST_API = 'https://c659yzs9hb.execute-api.ap-southeast-2.amazonaws.com/prod';
+const OVERTIME_DELETE_API = 'https://rbyhzws278.execute-api.ap-southeast-2.amazonaws.com/prod';
 
 function ProtectedRoute({ children }) {
   const loggedIn = !!localStorage.getItem('userName');
@@ -445,11 +448,12 @@ function Admin() {
   const [monthEdit, setMonthEdit] = useState([]);
   // State cho tăng ca và đi trễ: { [year-month]: { [name]: { overtime: 0, lateCount: 0 } } }
   // Tính lại từ records để đảm bảo đúng chu kỳ lương
-  const rebuildOvertimeDataFromRecords = () => {
+  // Hàm này có thể nhận records từ API hoặc localStorage
+  const rebuildOvertimeDataFromRecords = (records) => {
     try {
-      const saved = localStorage.getItem('overtimeRecords');
-      const records = saved ? JSON.parse(saved) : [];
       const data = {};
+      
+      if (!records || records.length === 0) return data;
       
       records.forEach(record => {
         // Tính chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
@@ -483,19 +487,51 @@ function Admin() {
     }
   };
   
-  const [overtimeData, setOvertimeData] = useState(() => {
-    const fromRecords = rebuildOvertimeDataFromRecords();
-    // Nếu có dữ liệu từ records, dùng nó. Nếu không, dùng dữ liệu cũ
-    if (Object.keys(fromRecords).length > 0) {
-      return fromRecords;
-    }
-    try {
-      const saved = localStorage.getItem('overtimeData');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [overtimeData, setOvertimeData] = useState({});
+  const [overtimeRecords, setOvertimeRecords] = useState([]); // Lưu records để dùng cho rebuild
+  
+  // Fetch overtime records từ API hoặc localStorage
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Thử fetch từ API trước
+        if (OVERTIME_GET_API && !OVERTIME_GET_API.includes('YOUR_API_GATEWAY_URL')) {
+          const res = await fetch(OVERTIME_GET_API);
+          const text = await res.text();
+          let parsed = {};
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          const items = Array.isArray(parsed.items) ? parsed.items : [];
+          if (items.length > 0) {
+            setOvertimeRecords(items);
+            const rebuilt = rebuildOvertimeDataFromRecords(items);
+            setOvertimeData(rebuilt);
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Failed to fetch from API, using localStorage:', e);
+      }
+      
+      // Fallback: dùng localStorage
+      try {
+        const saved = localStorage.getItem('overtimeRecords');
+        const records = saved ? JSON.parse(saved) : [];
+        setOvertimeRecords(records);
+        const rebuilt = rebuildOvertimeDataFromRecords(records);
+        if (Object.keys(rebuilt).length > 0) {
+          setOvertimeData(rebuilt);
+        } else {
+          // Fallback to old overtimeData format
+          const savedOld = localStorage.getItem('overtimeData');
+          if (savedOld) {
+            setOvertimeData(JSON.parse(savedOld));
+          }
+        }
+      } catch (e) {
+        console.error('Error loading overtime data:', e);
+      }
+    })();
+  }, []);
 
   const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
   const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -598,36 +634,15 @@ function Admin() {
 
   React.useEffect(() => { rebuildMonthData(); }, [rebuildMonthData]);
   
-  // Rebuild overtimeData từ records mỗi khi component mount hoặc khi localStorage thay đổi
+  // Rebuild overtimeData khi records thay đổi
   React.useEffect(() => {
-    const rebuilt = rebuildOvertimeDataFromRecords();
-    setOvertimeData(rebuilt);
-    localStorage.setItem('overtimeData', JSON.stringify(rebuilt));
-    
-    // Listen for storage changes từ OvertimeManagement
-    const handleStorageChange = () => {
-      const rebuilt = rebuildOvertimeDataFromRecords();
+    if (overtimeRecords.length > 0) {
+      const rebuilt = rebuildOvertimeDataFromRecords(overtimeRecords);
       setOvertimeData(rebuilt);
-    };
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also check periodically (trong trường hợp localStorage change không trigger storage event trong cùng tab)
-    const interval = setInterval(() => {
-      const rebuilt = rebuildOvertimeDataFromRecords();
-      const currentStr = JSON.stringify(overtimeData);
-      const rebuiltStr = JSON.stringify(rebuilt);
-      if (currentStr !== rebuiltStr) {
-        setOvertimeData(rebuilt);
-        localStorage.setItem('overtimeData', JSON.stringify(rebuilt));
-      }
-    }, 2000);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      // Vẫn lưu vào localStorage để tương thích ngược
+      localStorage.setItem('overtimeData', JSON.stringify(rebuilt));
+    }
+  }, [overtimeRecords]);
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
   const prevMonth = () => { const m = month - 1; if (m < 0) { setMonth(11); setYear(y => y-1); } else setMonth(m); };
@@ -837,7 +852,7 @@ function Admin() {
                 <tbody>
                   {(() => {
                     // Rebuild lại từ records để đảm bảo đúng chu kỳ lương
-                    const currentOvertimeData = rebuildOvertimeDataFromRecords();
+                    const currentOvertimeData = rebuildOvertimeDataFromRecords(overtimeRecords);
                     const monthKey = `${year}-${month + 1}`;
                     const ratePerHour = 20000;
                     let totalAllSalary = 0;
@@ -1914,24 +1929,41 @@ function OvertimeManagement() {
     type: 'overtime', // 'overtime' hoặc 'late'
     hours: 0
   });
-  const [records, setRecords] = useState(() => {
-    try {
-      const saved = localStorage.getItem('overtimeRecords');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [records, setRecords] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Load overtimeData cũ và chuyển đổi sang records nếu cần
-  const [overtimeData] = useState(() => {
-    try {
-      const saved = localStorage.getItem('overtimeData');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  // Fetch records từ API hoặc localStorage
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Thử fetch từ API trước
+        if (OVERTIME_GET_API && !OVERTIME_GET_API.includes('YOUR_API_GATEWAY_URL')) {
+          const res = await fetch(OVERTIME_GET_API);
+          const text = await res.text();
+          let parsed = {};
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          const items = Array.isArray(parsed.items) ? parsed.items : [];
+          if (items.length > 0) {
+            setRecords(items);
+            // Vẫn lưu vào localStorage để tương thích ngược
+            localStorage.setItem('overtimeRecords', JSON.stringify(items));
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Failed to fetch from API, using localStorage:', e);
+      }
+      
+      // Fallback: dùng localStorage
+      try {
+        const saved = localStorage.getItem('overtimeRecords');
+        const records = saved ? JSON.parse(saved) : [];
+        setRecords(records);
+      } catch (e) {
+        console.error('Error loading records:', e);
+      }
+    })();
+  }, []);
 
   React.useEffect(() => {
     (async () => {
@@ -1966,125 +1998,157 @@ function OvertimeManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.staffName || !formData.date || !formData.shift || formData.hours <= 0) {
       alert('Vui lòng điền đầy đủ thông tin!');
       return;
     }
 
-    const newRecord = {
-      id: Date.now(),
-      staffName: formData.staffName,
-      date: formData.date,
-      shift: formData.shift,
-      type: formData.type,
-      hours: Number(formData.hours)
-    };
+    setSubmitting(true);
 
-    const updatedRecords = [...records, newRecord];
-    setRecords(updatedRecords);
-    localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
+    try {
+      const recordData = {
+        staffName: formData.staffName,
+        date: formData.date,
+        shift: formData.shift,
+        type: formData.type,
+        hours: Number(formData.hours)
+      };
 
-    // Cập nhật overtimeData để tương thích với code cũ
-    // Tính chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
-    // Nếu ngày < 15: thuộc chu kỳ tháng trước (bắt đầu từ 15 tháng trước)
-    // Nếu ngày >= 15: thuộc chu kỳ tháng hiện tại (bắt đầu từ 15 tháng này)
-    const [y, m, d] = formData.date.split('-').map(Number);
-    let periodMonth = m;
-    let periodYear = y;
-    if (d < 15) {
-      // Thuộc chu kỳ tháng trước
-      if (m === 1) {
-        periodMonth = 12;
-        periodYear = y - 1;
-      } else {
-        periodMonth = m - 1;
-      }
-    }
-    const monthKey = `${periodYear}-${periodMonth}`;
-    const newData = { ...overtimeData };
-    if (!newData[monthKey]) newData[monthKey] = {};
-    if (!newData[monthKey][formData.staffName]) newData[monthKey][formData.staffName] = { overtime: 0, lateCount: 0 };
-    
-    if (formData.type === 'overtime') {
-      newData[monthKey][formData.staffName].overtime = (newData[monthKey][formData.staffName].overtime || 0) + formData.hours;
-    } else {
-      newData[monthKey][formData.staffName].lateCount = (newData[monthKey][formData.staffName].lateCount || 0) + formData.hours;
-    }
-    // Rebuild lại từ tất cả records để đảm bảo đúng
-    const allRecords = [...updatedRecords];
-    const rebuiltData = {};
-    allRecords.forEach(record => {
-      const [y, m, d] = record.date.split('-').map(Number);
-      let periodMonth = m;
-      let periodYear = y;
-      if (d < 15) {
-        if (m === 1) {
-          periodMonth = 12;
-          periodYear = y - 1;
-        } else {
-          periodMonth = m - 1;
+      let newRecord;
+      
+      // Thử POST lên API trước
+      if (OVERTIME_POST_API && !OVERTIME_POST_API.includes('YOUR_API_GATEWAY_URL')) {
+        try {
+          const res = await fetch(OVERTIME_POST_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(recordData)
+          });
+          const text = await res.text();
+          let parsed = {};
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          
+          if (parsed.item && parsed.item.id) {
+            newRecord = parsed.item;
+          } else {
+            // Nếu API không trả về item, tạo ID local
+            newRecord = { ...recordData, id: Date.now().toString() };
+          }
+        } catch (apiError) {
+          console.log('API POST failed, using localStorage:', apiError);
+          // Fallback: dùng localStorage
+          newRecord = { ...recordData, id: Date.now().toString() };
         }
-      }
-      const monthKey = `${periodYear}-${periodMonth}`;
-      
-      if (!rebuiltData[monthKey]) rebuiltData[monthKey] = {};
-      if (!rebuiltData[monthKey][record.staffName]) rebuiltData[monthKey][record.staffName] = { overtime: 0, lateCount: 0 };
-      
-      if (record.type === 'overtime') {
-        rebuiltData[monthKey][record.staffName].overtime = (rebuiltData[monthKey][record.staffName].overtime || 0) + record.hours;
       } else {
-        rebuiltData[monthKey][record.staffName].lateCount = (rebuiltData[monthKey][record.staffName].lateCount || 0) + record.hours;
+        // API chưa được cấu hình, dùng localStorage
+        newRecord = { ...recordData, id: Date.now().toString() };
       }
-    });
-    localStorage.setItem('overtimeData', JSON.stringify(rebuiltData));
 
-    // Reset form và đóng form
-    setFormData({
-      staffName: '',
-      date: new Date().toISOString().split('T')[0],
-      shift: '',
-      type: 'overtime',
-      hours: 0
-    });
-    setShowForm(false);
+      // Cập nhật state và localStorage
+      const updatedRecords = [...records, newRecord];
+      setRecords(updatedRecords);
+      localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
 
-    alert('Đã thêm thành công!');
+      // Reset form và đóng form
+      setFormData({
+        staffName: '',
+        date: new Date().toISOString().split('T')[0],
+        shift: '',
+        type: 'overtime',
+        hours: 0
+      });
+      setShowForm(false);
+
+      alert('Đã thêm thành công!');
+    } catch (error) {
+      console.error('Error submitting record:', error);
+      alert('Có lỗi xảy ra khi thêm bản ghi. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa bản ghi này?')) return;
-    const updatedRecords = records.filter(r => r.id !== id);
-    setRecords(updatedRecords);
-    localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
-    
-    // Rebuild lại overtimeData từ records còn lại
-    const rebuiltData = {};
-    updatedRecords.forEach(record => {
-      const [y, m, d] = record.date.split('-').map(Number);
-      let periodMonth = m;
-      let periodYear = y;
-      if (d < 15) {
-        if (m === 1) {
-          periodMonth = 12;
-          periodYear = y - 1;
-        } else {
-          periodMonth = m - 1;
+
+    // Đảm bảo ID là string
+    const recordId = String(id || '').trim();
+    if (!recordId) {
+      alert('Không tìm thấy ID của bản ghi cần xóa');
+      return;
+    }
+
+    console.log('Deleting record with ID:', recordId);
+
+    try {
+      // Thử DELETE qua API trước
+      if (OVERTIME_DELETE_API && !OVERTIME_DELETE_API.includes('YOUR_API_GATEWAY_URL')) {
+        try {
+          // Gửi ID trong request body thay vì query string vì API Gateway có thể không truyền query params
+          console.log('DELETE URL:', OVERTIME_DELETE_API);
+          console.log('DELETE ID:', recordId);
+          
+          const response = await fetch(OVERTIME_DELETE_API, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: recordId })
+          });
+          
+          const text = await response.text();
+          console.log('DELETE response:', text);
+          
+          let parsed = {};
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          
+          console.log('DELETE parsed:', parsed);
+          
+          if (!response.ok || (parsed.error && !parsed.ok)) {
+            throw new Error(parsed.error || `HTTP ${response.status}`);
+          }
+          
+          // Xóa thành công, reload records từ API
+          try {
+            const res = await fetch(OVERTIME_GET_API);
+            const resText = await res.text();
+            let resParsed = {};
+            try { resParsed = JSON.parse(resText); if (typeof resParsed.body === 'string') resParsed = JSON.parse(resParsed.body); } catch {}
+            const items = Array.isArray(resParsed.items) ? resParsed.items : [];
+            setRecords(items);
+            localStorage.setItem('overtimeRecords', JSON.stringify(items));
+            alert('Đã xóa thành công!');
+            return;
+          } catch (fetchError) {
+            console.error('Error reloading records:', fetchError);
+            // Fallback: xóa khỏi state
+            const updatedRecords = records.filter(r => String(r.id) !== recordId);
+            setRecords(updatedRecords);
+            localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
+            alert('Đã xóa thành công!');
+            return;
+          }
+        } catch (apiError) {
+          console.error('API DELETE failed:', apiError);
+          console.error('Error details:', {
+            id: recordId,
+            idType: typeof recordId,
+            url: `${OVERTIME_DELETE_API}?id=${encodeURIComponent(recordId)}`
+          });
+          alert(`Không thể xóa trên server: ${apiError.message}. Vui lòng thử lại sau.`);
+          return;
         }
       }
-      const monthKey = `${periodYear}-${periodMonth}`;
-      
-      if (!rebuiltData[monthKey]) rebuiltData[monthKey] = {};
-      if (!rebuiltData[monthKey][record.staffName]) rebuiltData[monthKey][record.staffName] = { overtime: 0, lateCount: 0 };
-      
-      if (record.type === 'overtime') {
-        rebuiltData[monthKey][record.staffName].overtime = (rebuiltData[monthKey][record.staffName].overtime || 0) + record.hours;
-      } else {
-        rebuiltData[monthKey][record.staffName].lateCount = (rebuiltData[monthKey][record.staffName].lateCount || 0) + record.hours;
-      }
-    });
-    localStorage.setItem('overtimeData', JSON.stringify(rebuiltData));
+
+      // Fallback: chỉ xóa từ localStorage nếu API chưa được cấu hình
+      const updatedRecords = records.filter(r => String(r.id) !== recordId);
+      setRecords(updatedRecords);
+      localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
+      alert('Đã xóa khỏi bộ nhớ local (API chưa được cấu hình)');
+    } catch (error) {
+      console.error('Error deleting record:', error);
+      alert('Có lỗi xảy ra khi xóa bản ghi. Vui lòng thử lại.');
+    }
   };
 
   const getShiftName = (shift) => {
@@ -2276,8 +2340,8 @@ function OvertimeManagement() {
                 </div>
 
                 <div style={{display:'flex', gap:12, marginTop:8}}>
-                  <button type="submit" className="login-button" style={{flex:1, padding:'12px'}}>
-                    Thêm
+                  <button type="submit" className="login-button" style={{flex:1, padding:'12px'}} disabled={submitting}>
+                    {submitting ? 'Đang lưu...' : 'Thêm'}
                   </button>
                   <button 
                     type="button" 
