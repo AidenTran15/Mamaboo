@@ -220,6 +220,130 @@ body, html, #root, .login-page {
     font-size: 16px !important;
     order: -1;
   }
+
+  /* NhanVien page responsive */
+  .login-container[style*="width: 750"] {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    padding: 24px 16px !important;
+    margin-top: 16px !important;
+    margin-bottom: 16px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* NhanVien page - shift cards container */
+  .login-container[style*="width: 750"] > div[style*="display:flex"][style*="flexDirection:column"][style*="gap:12"] {
+    gap: 10px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* NhanVien page - individual shift card */
+  .login-container[style*="width: 750"] > div > div[style*="borderRadius:14"] {
+    padding: 12px !important;
+    border-radius: 12px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* NhanVien page - shift card header (date and weekday) */
+  .login-container[style*="width: 750"] > div > div > div[style*="display:flex"][style*="justifyContent:space-between"] {
+    flex-direction: row !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    flex-wrap: nowrap !important;
+  }
+
+  /* NhanVien page - date text in header */
+  .login-container[style*="width: 750"] > div > div > div[style*="display:flex"][style*="justifyContent:space-between"] > div {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    min-width: fit-content !important;
+  }
+
+  /* NhanVien page - shift chips and buttons container */
+  .login-container[style*="width: 750"] > div > div > div[style*="display:flex"][style*="gap:10"][style*="flexWrap:wrap"] {
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  /* NhanVien page - all direct children of container (except shift cards) */
+  .login-container[style*="width: 750"] > *:not(div[style*="display:flex"][style*="flexDirection:column"]) {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  /* NhanVien page - shift chips (Ca sáng, Ca trưa, etc.) */
+  .login-container[style*="width: 750"] > div > div > div > span {
+    max-width: 100% !important;
+    display: inline-block !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    box-sizing: border-box !important;
+    white-space: normal !important;
+    flex-shrink: 1 !important;
+  }
+
+  /* NhanVien page - "Đã kết ca" status text */
+  .login-container[style*="width: 750"] > div > div > div > span[style*="fontWeight:600"][style*="color"] {
+    max-width: none !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* NhanVien page - shift button full width on mobile */
+  .login-container[style*="width: 750"] .login-button {
+    width: 100% !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    margin: 0 !important;
+  }
+
+  /* NhanVien page - greeting text */
+  .login-container[style*="width: 750"] > div[style*="textAlign: center"][style*="fontSize: 20"] {
+    font-size: 18px !important;
+    margin-top: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* NhanVien page - title */
+  .login-container[style*="width: 750"] .login-title {
+    font-size: 1.8rem !important;
+  }
+
+  /* NhanVien page - h3 heading */
+  .login-container[style*="width: 750"] h3 {
+    font-size: 16px !important;
+    margin: 10px 0 12px !important;
+  }
+
+  /* NhanVien page - logout button */
+  .login-container[style*="width: 750"] > button[style*="marginTop: 24"] {
+    margin-top: 20px !important;
+    width: 100% !important;
+  }
 }
 
 /* Equalize shift column widths */
