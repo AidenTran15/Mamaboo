@@ -55,7 +55,7 @@ body, html, #root, .login-page {
   background: #fff;
   border-radius: 18px;
   box-shadow: 0 6px 32px 0 rgba(49, 158, 219, 0.2);
-  padding: 38px 36px 32px;
+  padding: 38px 28px 32px;
   width: 400px;
   max-width: 95vw;
   display: flex;
@@ -97,7 +97,7 @@ body, html, #root, .login-page {
 }
 
 .login-input {
-  width: 100%;
+  width: calc(100% - 0px);
   min-height: 40px;
   color: #1c222f;
   background: #fff;
@@ -107,6 +107,7 @@ body, html, #root, .login-page {
   font-size: 1rem;
   outline: none;
   transition: border 0.2s;
+  box-sizing: border-box;
 }
 .login-input:focus {
   border: 1.5px solid #43a8ef;
