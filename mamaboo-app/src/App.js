@@ -2816,16 +2816,21 @@ function PenaltyManagement() {
           let parsed = {};
           try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
           const items = Array.isArray(parsed.items) ? parsed.items : [];
-          if (items.length > 0) {
-            setRecords(items);
-            return;
+          // Luôn dùng dữ liệu từ API, kể cả khi empty array
+          setRecords(items);
+          // Xóa localStorage để đồng bộ với API
+          if (items.length === 0) {
+            localStorage.removeItem('penaltyRecords');
+          } else {
+            localStorage.setItem('penaltyRecords', JSON.stringify(items));
           }
+          return;
         }
       } catch (e) {
         console.log('Failed to fetch from API, using localStorage:', e);
       }
       
-      // Fallback: dùng localStorage
+      // Fallback: dùng localStorage chỉ khi API không available
       try {
         const saved = localStorage.getItem('penaltyRecords');
         const records = saved ? JSON.parse(saved) : [];
