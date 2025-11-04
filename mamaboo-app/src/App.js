@@ -1206,7 +1206,7 @@ function Checkin() {
                 </label>
                 <div style={{display:'flex', alignItems:'center', gap:10}}>
                   <label style={{cursor:'pointer', padding:'6px 12px', background:'#43a8ef', color:'#fff', borderRadius:6, fontSize:'0.9em'}}>
-                    📷 Upload ảnh
+                    Upload ảnh
                     <input type="file" accept="image/*" onChange={(e)=>onUpload(t.id, e.target.files?.[0])} style={{display:'none'}} />
                   </label>
                 </div>
@@ -1227,26 +1227,17 @@ function Checkin() {
               color:'#fff',
               border:'none',
               borderRadius:12,
-              padding:'12px 16px',
+              padding:'12px 24px',
               fontSize:'1em',
               fontWeight:600,
               cursor:'pointer',
-              display:'flex',
-              flexDirection:'column',
-              alignItems:'center',
-              justifyContent:'center',
-              minHeight:80,
-              width:100,
               boxShadow:'0 4px 12px rgba(0,0,0,0.1)',
               transition:'background 0.2s'
             }}
             onMouseEnter={(e) => e.target.style.background = '#d35400'}
             onMouseLeave={(e) => e.target.style.background = '#e67e22'}
           >
-            <span>Kết</span>
-            <span>ca</span>
-            <span>và</span>
-            <span>lưu</span>
+            Kết ca và lưu
           </button>
           <button 
             onClick={() => navigate('/nhan-vien')} 
