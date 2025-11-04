@@ -1,0 +1,9 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"user\": \"Kim Thu\", \"date\": \"2025-11-04\", \"shift\": \"toi\", \"tasks\": {\"open_bar\": {\"done\": true, \"imageUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\"}}, \"checklistType\": \"bat_dau\"}",
+  "isBase64Encoded": false,
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+

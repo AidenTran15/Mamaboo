@@ -1,0 +1,9 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"user\": \"Kim Thư\", \"date\": \"2025-11-05\", \"shift\": \"toi\", \"tasks\": {\"prep_evening\": {\"done\": true, \"imageUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==\"}, \"clean_area\": {\"done\": true, \"imageUrl\": \"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAgDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=\"}, \"check_supplies\": {\"done\": true, \"imageUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAdgAAAHYBTnsmCAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAFYSURBVBiVY/z//z8DJYAFiAxgAqL/YGQB4v9gZAPi/2BkB+L/YOQA4v9g5ATi/2DkAuL/YOQG4v9g5AHi/2DkBeL/YOQD4v9gFADi/2AUBOL/YBQE4v9gFALi/2AUBuL/YBQB4v9gFAXi/2AUB+L/YBQH4v9glADi/2CU/B8AAAD//2Q=\"}}, \"checklistType\": \"bat_dau\"}",
+  "isBase64Encoded": false,
+  "headers": {
+    "Content-Type": "application/json"
+  }
+}
+

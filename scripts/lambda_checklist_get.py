@@ -107,6 +107,53 @@ def lambda_handler(event, context):
         return (date, order, tord)
 
     items.sort(key=sort_key)
+    
+    # Convert Decimal types to native types for JSON serialization
+    def convert_decimals(obj):
+        from decimal import Decimal
+        if isinstance(obj, Decimal):
+            return float(obj) if obj % 1 != 0 else int(obj)
+        elif isinstance(obj, dict):
+            return {k: convert_decimals(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert_decimals(item) for item in obj]
+        return obj
+    
+    items = convert_decimals(items)
+    
+    # Debug: Log all items with detailed image information
+    print('=' * 80)
+    print('=== GET CHECKLIST DEBUG ===')
+    print(f'Total items retrieved: {len(items)}')
+    for idx, item in enumerate(items):
+        print(f'\n--- Item {idx+1}/{len(items)} ---')
+        print(f'  user={item.get("user")}, date={item.get("date")}, shift={item.get("shift")}, checklistType={item.get("checklistType")}')
+        print(f'  date_shift={item.get("date_shift")}')
+        tasks = item.get('tasks', {})
+        print(f'  tasks type: {type(tasks)}, tasks is dict: {isinstance(tasks, dict)}')
+        if isinstance(tasks, dict):
+            print(f'  tasks count: {len(tasks)}')
+            print(f'  tasks keys: {list(tasks.keys())}')
+            tasks_with_images = 0
+            for task_id, task_data in tasks.items():
+                if isinstance(task_data, dict):
+                    img_url = task_data.get('imageUrl') or task_data.get('image') or ''
+                    img_len = len(str(img_url)) if img_url else 0
+                    has_img = bool(img_url and img_len > 100)
+                    if has_img:
+                        tasks_with_images += 1
+                    print(f'    Task {task_id}: done={task_data.get("done")}, has_image={has_img}, image_length={img_len}')
+                    if img_len > 0 and img_len <= 200:
+                        print(f'      Image preview: {str(img_url)[:100]}...')
+                    elif img_len > 200:
+                        print(f'      Image starts: {str(img_url)[:50]}... (total {img_len} chars)')
+                else:
+                    print(f'    Task {task_id}: task_data type={type(task_data)}, value={str(task_data)[:100]}')
+            print(f'  ✓ Tasks with valid images: {tasks_with_images}/{len(tasks)}')
+        else:
+            print(f'  ⚠ WARNING: tasks is not a dict: {type(tasks)}')
+            print(f'    tasks value (first 500 chars): {str(tasks)[:500]}')
+    print('=' * 80)
 
     return _response(200, {
         'success': True,

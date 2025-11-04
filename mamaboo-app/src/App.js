@@ -218,9 +218,9 @@ function NhanVien() {
           const mates = members.filter(n => n !== norm(userName));
           const text = mates.length === 0 ? `${tag} · một mình` : `${tag} · cùng: ${mates.join(', ')}`;
           const key = `${userName}__${ds}__${type}`;
-          // Cho phép hiển thị nút bắt đầu ca nếu là ngày hôm nay (để test dễ hơn)
-          const canCheckIn = isToday; // Bỏ điều kiện thời gian để test dễ hơn
-          const canCheckOut = isToday && (canCheckOutNow(ds, type) || checkinStatus[key]); // Có thể kết ca nếu đã check-in hoặc đến giờ
+          // Cho phép hiển thị nút bắt đầu ca cho TẤT CẢ các ca để test (bỏ điều kiện thời gian và ngày)
+          const canCheckIn = true; // Hiển thị nút cho tất cả ca để test
+          const canCheckOut = true; // Cho phép kết ca cho tất cả
           const hasCheckedIn = !!checkinStatus[key];
           const hasCheckedOut = !!checkinStatus[key + '_done'];
           return { text, type, canCheckIn, canCheckOut, hasCheckedIn, hasCheckedOut };
@@ -735,9 +735,14 @@ function Checkin() {
   });
 
   const saveState = (nextTasks) => {
-    const payload = { tasks: {} };
-    nextTasks.forEach(t => { payload.tasks[t.id] = { done: t.done, image: t.image }; });
-    localStorage.setItem(storageKey, JSON.stringify(payload));
+    try {
+      const payload = { tasks: {} };
+      nextTasks.forEach(t => { payload.tasks[t.id] = { done: t.done, image: t.image }; });
+      localStorage.setItem(storageKey, JSON.stringify(payload));
+    } catch (e) {
+      // Quota exceeded - don't save to localStorage, but continue
+      console.warn('localStorage quota exceeded, skipping save to localStorage');
+    }
   };
 
   const toggleTask = (id) => {
@@ -746,24 +751,137 @@ function Checkin() {
     saveState(next);
   };
 
-  const onUpload = (id, file) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const next = tasks.map(t => t.id === id ? { ...t, image: reader.result } : t);
-      setTasks(next);
-      saveState(next);
-    };
-    reader.readAsDataURL(file);
+  // Helper function to resize and compress image
+  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to base64 with compression
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const onUpload = async (id, file) => {
+    if (!file) {
+      console.log(`Task ${id}: No file selected`);
+      return;
+    }
+    
+    console.log(`Task ${id}: Uploading image, file name:`, file.name, 'size:', file.size, 'type:', file.type);
+    
+    try {
+      // Compress image before uploading
+      console.log(`Task ${id}: Compressing image...`);
+      const compressedImage = await compressImage(file, 800, 800, 0.75);
+      console.log(`Task ${id}: Image compressed, original size:`, file.size, 'compressed length:', compressedImage.length);
+      
+      if (compressedImage.length > 300000) { // ~300KB base64 (~200KB raw)
+        console.warn(`Task ${id}: Compressed image still large (${compressedImage.length} chars). Compressing further...`);
+        // Compress more aggressively
+        const moreCompressed = await compressImage(file, 600, 600, 0.6);
+        console.log(`Task ${id}: Re-compressed length:`, moreCompressed.length);
+        
+        if (moreCompressed.length > 300000) {
+          alert('Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn.');
+          return;
+        }
+        
+        const next = tasks.map(t => t.id === id ? { ...t, image: moreCompressed } : t);
+        setTasks(next);
+        // Don't save to localStorage to avoid quota exceeded
+        // saveState(next); 
+        
+        console.log(`Task ${id}: Image compressed and saved to state`);
+      } else {
+        const next = tasks.map(t => t.id === id ? { ...t, image: compressedImage } : t);
+        setTasks(next);
+        // Try to save to localStorage, but don't fail if quota exceeded
+        try {
+          saveState(next);
+        } catch (e) {
+          console.warn(`Task ${id}: Could not save to localStorage (quota exceeded), but image is in state`);
+        }
+        
+        console.log(`Task ${id}: Image saved successfully, verified length:`, compressedImage.length);
+      }
+    } catch (error) {
+      console.error(`Task ${id}: Error processing image:`, error);
+      alert('Lỗi khi xử lý ảnh!');
+    }
   };
 
   const handleEndShift = async () => {
+    console.log('=== BẮT ĐẦU LƯU CHECKLIST ===');
+    console.log('Current tasks state:', tasks.map(t => ({
+      id: t.id,
+      done: t.done,
+      hasImage: !!(t.image && t.image.length > 10),
+      imageLength: t.image ? t.image.length : 0
+    })));
+    
     // Chuyển đổi tasks sang format cho API
     const tasksMap = tasks.reduce((acc, t) => {
       const img = t.image || '';
-      acc[t.id] = { done: !!t.done, imageUrl: img };
+      
+      // Validate image
+      if (img && img.length < 100) {
+        console.warn(`Task ${t.id}: Image too short (${img.length} chars), treating as empty`);
+        acc[t.id] = { done: !!t.done, imageUrl: '' };
+      } else {
+        acc[t.id] = { done: !!t.done, imageUrl: img };
+      }
+      
+      // Debug log để kiểm tra ảnh có được lưu không
+      if (img && img.length > 100) {
+        console.log(`✓ Task ${t.id} có ảnh khi lưu, độ dài:`, img.length, 'Preview:', img.substring(0, 50) + '...');
+      } else {
+        console.log(`✗ Task ${t.id} KHÔNG có ảnh khi lưu (length: ${img.length})`);
+      }
       return acc;
     }, {});
+    
+    console.log('Tasks map trước khi gửi:', Object.keys(tasksMap).map(k => ({
+      taskId: k,
+      done: tasksMap[k].done,
+      hasImage: !!(tasksMap[k].imageUrl && tasksMap[k].imageUrl.length > 100),
+      imageLength: tasksMap[k].imageUrl ? tasksMap[k].imageUrl.length : 0
+    })));
+    
+    // Count tasks with valid images
+    const tasksWithImages = Object.values(tasksMap).filter(t => t.imageUrl && t.imageUrl.length > 100).length;
+    console.log(`Tổng số tasks: ${tasks.length}, Tasks có ảnh hợp lệ: ${tasksWithImages}`);
     
     // Kiểm tra xem có task nào chưa hoàn thành không (không bắt buộc)
     const allDone = tasks.every(t => t.done);
@@ -778,15 +896,27 @@ function Checkin() {
       date: dateStr, 
       shift, 
       tasks: tasksMap, 
-      checklistType: 'bat_dau' // Sử dụng 'bat_dau' cho checklist duy nhất
+      checklistType: 'ket_ca' // Lưu với type 'ket_ca' khi bấm "Kết ca"
     };
     
+    // Log payload size (truncate for readability)
+    const payloadStr = JSON.stringify(payload);
+    console.log('Payload size:', payloadStr.length, 'bytes');
+    console.log('Payload preview (first 500 chars):', payloadStr.substring(0, 500));
+    
+    // Verify tasks in payload
+    const payloadTasksWithImages = Object.values(payload.tasks).filter(t => t.imageUrl && t.imageUrl.length > 100).length;
+    console.log('Payload tasks có ảnh hợp lệ:', payloadTasksWithImages);
+    
     try {
+      console.log('Sending request to:', CHECKLIST_API);
       const resp = await fetch(CHECKLIST_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: payloadStr
       });
+      
+      console.log('Response status:', resp.status, resp.statusText);
       
       const txt = await resp.text();
       let data = {};
@@ -805,6 +935,142 @@ function Checkin() {
         return;
       }
       
+      console.log('✅ Lưu checklist thành công!');
+      console.log('Response data:', data);
+      const tasksWithImagesCount = Object.keys(tasksMap).filter(k => {
+        const t = tasksMap[k];
+        return t.imageUrl && t.imageUrl.length > 100;
+      }).length;
+      console.log('Payload tasks có ảnh:', tasksWithImagesCount, '/', Object.keys(tasksMap).length);
+      
+      // Verify: Fetch lại từ DynamoDB để xác nhận ảnh đã được lưu
+      if (tasksWithImagesCount > 0) {
+        console.log('🔍 Đang verify ảnh đã được lưu vào DynamoDB...');
+        try {
+          const CHECKLIST_GET_API = 'https://4qwg9i4he0.execute-api.ap-southeast-2.amazonaws.com/prod';
+          const verifyUrl = new URL(CHECKLIST_GET_API);
+          verifyUrl.searchParams.set('from', dateStr);
+          verifyUrl.searchParams.set('to', dateStr);
+          verifyUrl.searchParams.set('user', userName);
+          
+          // Wait a bit for DynamoDB to be consistent
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const verifyRes = await fetch(verifyUrl.toString());
+          const verifyText = await verifyRes.text();
+          let verifyData = {};
+          try {
+            verifyData = JSON.parse(verifyText);
+            if (typeof verifyData.body === 'string') {
+              verifyData = JSON.parse(verifyData.body);
+            }
+          } catch {}
+          
+          const verifyItems = Array.isArray(verifyData.items) ? verifyData.items : [];
+          console.log(`🔍 Verify: Found ${verifyItems.length} items from DynamoDB`);
+          console.log('🔍 Verify: Looking for item with:', { user: userName, date: dateStr, shift, checklistType: 'ket_ca' });
+          
+          // Log all items to see what we got
+          if (verifyItems.length > 0) {
+            console.log('🔍 Verify: All items found:');
+            verifyItems.forEach((it, idx) => {
+              const tasksObj = it.tasks || {};
+              const tasksKeys = typeof tasksObj === 'object' && tasksObj !== null ? Object.keys(tasksObj) : [];
+              const tasksCount = tasksKeys.length;
+              console.log(`  Item ${idx}: user="${it.user}", date="${it.date}", shift="${it.shift}", checklistType="${it.checklistType || '(none)'}", date_shift="${it.date_shift || '(none)'}", tasksCount=${tasksCount}`);
+              
+              // For the first matching item, log detailed task info
+              if (it.user === userName && it.date === dateStr && it.shift === shift) {
+                console.log(`  ✅ Item ${idx} MATCHES search criteria!`);
+                console.log(`    Tasks structure:`, tasksKeys.map(k => {
+                  const t = tasksObj[k];
+                  const hasImg = !!(t?.imageUrl || t?.image);
+                  const imgLen = (t?.imageUrl || t?.image || '').toString().length;
+                  return { taskId: k, done: t?.done, hasImage: hasImg, imageLength: imgLen };
+                }));
+              }
+            });
+          } else {
+            console.warn('⚠ Verify: No items returned from DynamoDB GET');
+          }
+          
+          const savedItem = verifyItems.find(it => 
+            it.user === userName && 
+            it.date === dateStr && 
+            it.shift === shift &&
+            it.checklistType === 'ket_ca'
+          );
+          
+          console.log('🔍 Verify: savedItem found?', !!savedItem);
+          
+          if (savedItem) {
+            console.log('🔍 Verify: savedItem keys:', Object.keys(savedItem));
+            console.log('🔍 Verify: savedItem.tasks type:', typeof savedItem.tasks);
+            console.log('🔍 Verify: savedItem.tasks is object?', typeof savedItem.tasks === 'object' && savedItem.tasks !== null);
+            console.log('🔍 Verify: savedItem.tasks keys:', savedItem.tasks ? Object.keys(savedItem.tasks) : 'null');
+            console.log('🔍 Verify: savedItem.tasks value (first 500 chars):', JSON.stringify(savedItem.tasks).substring(0, 500));
+          } else {
+            console.warn('⚠ Verify: savedItem NOT FOUND!');
+            console.warn('  Search criteria:', { user: userName, date: dateStr, shift, checklistType: 'ket_ca' });
+            console.warn('  Available items:', verifyItems.map(it => ({
+              user: it.user,
+              date: it.date,
+              shift: it.shift,
+              checklistType: it.checklistType || '(none)'
+            })));
+          }
+          
+          if (savedItem && savedItem.tasks) {
+            const savedTasks = savedItem.tasks;
+            console.log('Verify: savedTasks entries:', Object.entries(savedTasks).map(([k, v]) => ({
+              taskId: k,
+              hasImageUrl: !!(v?.imageUrl),
+              hasImage: !!(v?.image),
+              imageUrlLength: v?.imageUrl ? String(v.imageUrl).length : 0,
+              imageLength: v?.image ? String(v.image).length : 0,
+              taskDataType: typeof v
+            })));
+            
+            let verifiedImages = 0;
+            for (const [taskId, taskData] of Object.entries(savedTasks)) {
+              if (taskData && typeof taskData === 'object') {
+                const imgUrl = taskData.imageUrl || taskData.image || '';
+                console.log(`Verify task ${taskId}: imageUrl length=${imgUrl.length}, type=${typeof imgUrl}`);
+                if (imgUrl && imgUrl.length > 100) {
+                  verifiedImages++;
+                  console.log(`✅ Verified task ${taskId}: image saved, length=${imgUrl.length}`);
+                } else {
+                  console.warn(`⚠ Task ${taskId}: imageUrl empty or too short (length=${imgUrl.length})`);
+                  console.warn(`  Task data:`, taskData);
+                }
+              } else {
+                console.warn(`⚠ Task ${taskId}: taskData is not an object, type=${typeof taskData}`, taskData);
+              }
+            }
+            
+            if (verifiedImages === tasksWithImagesCount) {
+              console.log(`✅ VERIFIED: Tất cả ${verifiedImages} ảnh đã được lưu vào DynamoDB!`);
+              alert(`✅ Đã kết ca và lưu checklist thành công! ${verifiedImages} ảnh đã được lưu.`);
+            } else {
+              console.warn(`⚠ WARNING: Chỉ ${verifiedImages}/${tasksWithImagesCount} ảnh được verify trong DynamoDB`);
+              console.warn('Verify: Expected tasks:', Object.keys(tasksMap));
+              console.warn('Verify: Saved tasks:', Object.keys(savedTasks));
+              alert(`⚠ Đã lưu checklist nhưng chỉ verify được ${verifiedImages}/${tasksWithImagesCount} ảnh. Vui lòng kiểm tra CloudWatch Logs.`);
+            }
+          } else {
+            console.warn('⚠ WARNING: Không tìm thấy item đã lưu trong DynamoDB để verify');
+            console.warn('Verify: verifyItems:', verifyItems);
+            console.warn('Verify: Search criteria:', { user: userName, date: dateStr, shift });
+            alert('⚠ Đã lưu checklist nhưng không thể verify ảnh. Vui lòng kiểm tra CloudWatch Logs của Lambda POST để xem ảnh có được lưu không.');
+          }
+        } catch (verifyErr) {
+          console.error('Error verifying saved data:', verifyErr);
+          alert('✅ Đã kết ca và lưu checklist! (Không thể verify ảnh tự động, vui lòng kiểm tra thủ công)');
+        }
+      } else {
+        alert('Đã kết ca và lưu checklist!');
+      }
+      
       // Đánh dấu đã bắt đầu ca và đã kết ca
       const checkKey = `${userName}__${dateStr}__${shift}`;
       const status = JSON.parse(localStorage.getItem('checkinStatus') || '{}');
@@ -812,7 +1078,6 @@ function Checkin() {
       status[checkKey + '_done'] = { doneAt: new Date().toISOString() };
       localStorage.setItem('checkinStatus', JSON.stringify(status));
       
-      alert('Đã kết ca và lưu checklist!');
       navigate('/nhan-vien');
     } catch (e) {
       console.error('Error saving checklist:', e);
@@ -913,7 +1178,7 @@ function ChecklistReport() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [filterUser, setFilterUser] = useState('');
-  const [filterType, setFilterType] = useState('ket_ca'); // 'all', 'bat_dau', 'ket_ca' - default chỉ kết ca
+  const [filterType, setFilterType] = useState('all'); // 'all', 'bat_dau', 'ket_ca' - default hiển thị tất cả
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -928,9 +1193,44 @@ function ChecklistReport() {
       
       const res = await fetch(url.toString());
       const text = await res.text();
+      console.log('=== FETCH CHECKLIST RESPONSE ===');
+      console.log('Raw response length:', text.length);
+      console.log('Raw response (first 500 chars):', text.substring(0, 500));
+      
       let data = {};
-      try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch {}
+      try { 
+        data = JSON.parse(text); 
+        if (typeof data.body === 'string') {
+          console.log('Body is string, parsing again...');
+          data = JSON.parse(data.body);
+        }
+        console.log('Parsed data keys:', Object.keys(data));
+        console.log('Items count:', Array.isArray(data.items) ? data.items.length : 'N/A');
+      } catch (parseErr) {
+        console.error('Parse error:', parseErr);
+      }
+      
       let fetched = Array.isArray(data.items) ? data.items : [];
+      
+      // Log first item to check tasks structure
+      if (fetched.length > 0) {
+        console.log('First item sample:', {
+          user: fetched[0].user,
+          date: fetched[0].date,
+          shift: fetched[0].shift,
+          tasksKeys: fetched[0].tasks ? Object.keys(fetched[0].tasks) : [],
+          firstTaskSample: fetched[0].tasks ? (() => {
+            const firstTaskKey = Object.keys(fetched[0].tasks)[0];
+            const firstTask = fetched[0].tasks[firstTaskKey];
+            return {
+              taskId: firstTaskKey,
+              done: firstTask?.done,
+              hasImageUrl: !!(firstTask?.imageUrl),
+              imageUrlLength: firstTask?.imageUrl ? String(firstTask.imageUrl).length : 0
+            };
+          })() : null
+        });
+      }
       
       // Filter by type
       if (filterType !== 'all') {
@@ -1004,9 +1304,9 @@ function ChecklistReport() {
           <input type="date" value={toDate} onChange={(e)=>setToDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
           <input placeholder="Lọc theo nhân viên" value={filterUser} onChange={(e)=>setFilterUser(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
           <select value={filterType} onChange={(e)=>setFilterType(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}}>
-            <option value="ket_ca">Kết ca</option>
             <option value="all">Tất cả</option>
             <option value="bat_dau">Bắt đầu ca</option>
+            <option value="ket_ca">Kết ca</option>
           </select>
           <button className="login-button" onClick={fetchChecklist} disabled={loading}>
             {loading ? 'Đang tải...' : 'Tải dữ liệu'}
@@ -1046,24 +1346,71 @@ function ChecklistReport() {
                 
                 // Debug: log để kiểm tra dữ liệu
                 if (i === 0) {
-                  console.log('Sample checklist item:', it);
-                  console.log('Tasks:', tasks);
-                  console.log('Task list:', taskList);
+                  console.log('=== DEBUG CHECKLIST ITEM ===');
+                  console.log('Item:', it);
+                  console.log('Tasks object:', tasks);
+                  console.log('Task list entries:', taskList);
+                  taskList.forEach(([taskId, t]) => {
+                    console.log(`Task ${taskId}:`, t);
+                    console.log(`  - imageUrl:`, t?.imageUrl ? (String(t.imageUrl).substring(0, 100) + '...') : 'null');
+                    console.log(`  - image:`, t?.image ? (String(t.image).substring(0, 100) + '...') : 'null');
+                  });
                 }
                 
                 // Lấy tất cả ảnh từ tasks - kiểm tra cả imageUrl và image field
                 const images = taskList
                   .map(([taskId, t]) => {
-                    if (!t) return null;
+                    if (!t) {
+                      if (i === 0) console.log(`Task ${taskId}: null task`);
+                      return null;
+                    }
                     // Ưu tiên imageUrl, nếu không có thì lấy image
-                    const imgUrl = (t.imageUrl && t.imageUrl.trim()) || (t.image && t.image.trim());
-                    if (imgUrl && imgUrl.length > 10 && imgUrl !== 'data:image/jpeg;base64,') { 
-                      // Có ảnh (có thể là URL hoặc base64, nhưng phải có dữ liệu thực)
-                      return { taskId, url: imgUrl };
+                    const imgUrl = (t.imageUrl && String(t.imageUrl).trim()) || (t.image && String(t.image).trim()) || '';
+                    
+                    if (i === 0 && imgUrl) {
+                      console.log(`Task ${taskId} có imgUrl, độ dài:`, imgUrl.length, 'Type:', typeof imgUrl);
+                    }
+                    
+                    // Kiểm tra xem có ảnh thật không - giảm điều kiện strict hơn
+                    if (imgUrl && imgUrl.length > 10) {
+                      // Nếu là base64, phải có dữ liệu sau phần prefix
+                      if (imgUrl.startsWith('data:')) {
+                        const parts = imgUrl.split(',');
+                        if (parts.length > 1 && parts[1].length > 10) { // Giảm từ 50 xuống 10 để dễ debug
+                          // Base64 có dữ liệu thực
+                          if (i === 0) console.log(`Task ${taskId}: Found valid base64 image, length:`, parts[1].length);
+                          return { taskId, url: imgUrl };
+                        } else {
+                          if (i === 0) console.log(`Task ${taskId}: Base64 nhưng không đủ dữ liệu`, parts.length);
+                        }
+                      } else if (imgUrl.startsWith('http') || imgUrl.startsWith('/')) {
+                        // URL hợp lệ
+                        if (i === 0) console.log(`Task ${taskId}: Found valid URL`);
+                        return { taskId, url: imgUrl };
+                      } else {
+                        if (i === 0) console.log(`Task ${taskId}: imgUrl không match format, giá trị:`, imgUrl.substring(0, 50));
+                      }
+                    } else {
+                      if (i === 0 && taskList.length > 0) console.log(`Task ${taskId}: Không có imgUrl hoặc quá ngắn`);
                     }
                     return null;
                   })
                   .filter(Boolean);
+                
+                // Debug log để kiểm tra
+                console.log(`Item ${i} (${it.date} ${it.shift}): Found ${images.length} images`);
+                if (images.length > 0) {
+                  console.log('Images found:', images.map(img => ({ taskId: img.taskId, urlLength: img.url.length })));
+                } else if (taskList.length > 0) {
+                  console.warn(`⚠ Item ${i} có ${taskList.length} tasks nhưng không tìm thấy ảnh nào!`);
+                  console.warn('Task samples:', taskList.slice(0, 2).map(([tid, t]) => ({
+                    id: tid,
+                    hasImageUrl: !!(t?.imageUrl),
+                    hasImage: !!(t?.image),
+                    imageUrlLength: t?.imageUrl ? String(t.imageUrl).length : 0,
+                    imageLength: t?.image ? String(t.image).length : 0
+                  })));
+                }
                 
   return (
                   <tr key={i} style={{background: i%2===0 ? '#ffffff' : '#fbfdff'}}>
@@ -1083,32 +1430,46 @@ function ChecklistReport() {
                       {images.length === 0 ? (
                         <span style={{color:'#6b7a86', fontSize:'0.85em'}}>Không có ảnh</span>
                       ) : images.length === 1 ? (
-                        <img 
-                          src={images[0].url} 
-                          alt={images[0].taskId}
-                          style={{
-                            width:50, height:50, objectFit:'cover', borderRadius:6,
-                            border:'1px solid #e6eef5', cursor:'pointer'
-                          }}
-                          onClick={() => setSelectedItem(it)}
-                          title="Click để xem chi tiết"
-                        />
+                        <div style={{display:'flex', justifyContent:'center'}}>
+                          <img 
+                            src={images[0].url} 
+                            alt={images[0].taskId}
+                            style={{
+                              width:60, height:60, objectFit:'cover', borderRadius:8,
+                              border:'2px solid #43a8ef', cursor:'pointer',
+                              boxShadow:'0 2px 8px rgba(0,0,0,0.1)'
+                            }}
+                            onClick={() => setSelectedItem(it)}
+                            title="Click để xem chi tiết"
+                            onError={(e) => {
+                              console.error('Image load error for', images[0].taskId, ':', images[0].url?.substring(0, 50));
+                              e.target.style.display = 'none';
+                              e.target.parentElement.innerHTML = '<span style="color:#e67e22;font-size:0.85em">Lỗi ảnh</span>';
+                            }}
+                          />
+                        </div>
                       ) : (
-                        <div style={{display:'flex', gap:4, alignItems:'center'}}>
+                        <div style={{display:'flex', gap:4, alignItems:'center', justifyContent:'center'}}>
                           <img 
                             src={images[0].url} 
                             alt={images[0].taskId}
                             style={{
                               width:50, height:50, objectFit:'cover', borderRadius:6,
-                              border:'1px solid #e6eef5', cursor:'pointer'
+                              border:'2px solid #43a8ef', cursor:'pointer',
+                              boxShadow:'0 2px 6px rgba(0,0,0,0.1)'
                             }}
                             onClick={() => setSelectedItem(it)}
                             title="Click để xem tất cả ảnh"
+                            onError={(e) => {
+                              console.error('Image load error for', images[0].taskId);
+                              e.target.style.display = 'none';
+                            }}
                           />
                           {images.length > 1 && (
                             <span style={{
-                              fontSize:'0.75em', color:'#6b7a86', fontWeight:600,
-                              background:'#f0f5f9', padding:'2px 6px', borderRadius:4
+                              fontSize:'0.75em', color:'#fff', fontWeight:700,
+                              background:'#43a8ef', padding:'3px 8px', borderRadius:12,
+                              minWidth:24, textAlign:'center'
                             }}>
                               +{images.length - 1}
                             </span>
@@ -1172,13 +1533,37 @@ function ChecklistReport() {
                           {task.done ? '✓ Hoàn thành' : '✗ Chưa xong'}
                         </span>
                       </div>
-                      {(task.imageUrl || task.image) && (
-                        <div style={{marginTop:8}}>
-                          <img src={task.imageUrl || task.image} alt={taskId} style={{
-                            maxWidth:'100%', borderRadius:8, border:'1px solid #eef5fa'
-                          }} />
-                        </div>
-                      )}
+                      {(task.imageUrl || task.image) && (() => {
+                        const imgUrl = (task.imageUrl && String(task.imageUrl).trim()) || (task.image && String(task.image).trim());
+                        // Kiểm tra xem ảnh có hợp lệ không
+                        if (imgUrl && imgUrl.length > 20) {
+                          const isValid = imgUrl.startsWith('data:') 
+                            ? imgUrl.split(',').length > 1 && imgUrl.split(',')[1].length > 50
+                            : imgUrl.startsWith('http') || imgUrl.startsWith('/');
+                          
+                          if (isValid) {
+                            return (
+                              <div style={{marginTop:8}}>
+                                <img 
+                                  src={imgUrl} 
+                                  alt={taskId} 
+                                  style={{
+                                    maxWidth:'100%', maxHeight:300, borderRadius:8, 
+                                    border:'2px solid #43a8ef', objectFit:'contain',
+                                    background:'#f5f7fa'
+                                  }}
+                                  onError={(e) => {
+                                    console.error('Image load error in modal for', taskId);
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = '<span style="color:#e67e22;font-size:0.9em">Không thể tải ảnh</span>';
+                                  }}
+                                />
+                              </div>
+                            );
+                          }
+                        }
+                        return null;
+                      })()}
                     </div>
                   ))}
                 </div>
