@@ -836,6 +836,8 @@ function Admin() {
                 </thead>
                 <tbody>
                   {(() => {
+                    // Rebuild lại từ records để đảm bảo đúng chu kỳ lương
+                    const currentOvertimeData = rebuildOvertimeDataFromRecords();
                     const monthKey = `${year}-${month + 1}`;
                     const ratePerHour = 20000;
                     let totalAllSalary = 0;
@@ -843,7 +845,7 @@ function Admin() {
                     return (
                       <>
                         {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => {
-                          const staffData = overtimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
+                          const staffData = currentOvertimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
                           // Mamaboo là chủ nên không tính lương (luôn = 0)
                           const isMamaboo = name.toLowerCase() === 'mamaboo';
                           const totalSalary = isMamaboo ? 0 : (() => {
