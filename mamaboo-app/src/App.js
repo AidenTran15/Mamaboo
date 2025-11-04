@@ -783,20 +783,6 @@ function Admin() {
                             totalAllSalary += totalSalary;
                           }
                           
-                          const updateOvertimeData = (field, value) => {
-                            const newData = { ...overtimeData };
-                            if (!newData[monthKey]) newData[monthKey] = {};
-                            if (!newData[monthKey][name]) newData[monthKey][name] = { overtime: 0, lateCount: 0 };
-                            newData[monthKey][name][field] = Math.max(0, Number(value) || 0);
-                            setOvertimeData(newData);
-                            localStorage.setItem('overtimeData', JSON.stringify(newData));
-                          };
-                          const handleOvertimeChange = (value) => updateOvertimeData('overtime', value);
-                          const handleLateCountChange = (value) => updateOvertimeData('lateCount', value);
-                          const adjustValue = (field, delta) => {
-                            const current = staffData[field] || 0;
-                            updateOvertimeData(field, current + delta);
-                          };
                           return (
                             <tr key={name} style={{background:'#fff'}}>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
@@ -805,64 +791,10 @@ function Admin() {
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(totalSalary).toLocaleString('vi-VN')}</td>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
-                                {editMode ? (
-                                  <div style={{display:'flex', alignItems:'center', gap:4, justifyContent:'center'}}>
-                                    <button
-                                      type="button"
-                                      onClick={() => adjustValue('overtime', -0.25)}
-                                      style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
-                                    >
-                                      −
-                                    </button>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="0.25"
-                                      value={staffData.overtime}
-                                      onChange={(e) => handleOvertimeChange(e.target.value)}
-                                      style={{width:'70px', padding:'4px 6px', border:'1px solid #e6eef5', borderRadius:6, textAlign:'center'}}
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => adjustValue('overtime', 0.25)}
-                                      style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <span>{staffData.overtime}</span>
-                                )}
+                                <span>{staffData.overtime}</span>
                               </td>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
-                                {editMode ? (
-                                  <div style={{display:'flex', alignItems:'center', gap:4, justifyContent:'center'}}>
-                                    <button
-                                      type="button"
-                                      onClick={() => adjustValue('lateCount', -0.25)}
-                                      style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
-                                    >
-                                      −
-                                    </button>
-                                    <input
-                                      type="number"
-                                      min="0"
-                                      step="0.25"
-                                      value={staffData.lateCount}
-                                      onChange={(e) => handleLateCountChange(e.target.value)}
-                                      style={{width:'70px', padding:'4px 6px', border:'1px solid #e6eef5', borderRadius:6, textAlign:'center'}}
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => adjustValue('lateCount', 0.25)}
-                                      style={{padding:'2px 8px', border:'1px solid #e6eef5', borderRadius:4, background:'#fff', cursor:'pointer', fontSize:'14px'}}
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <span>{staffData.lateCount}</span>
-                                )}
+                                <span>{staffData.lateCount}</span>
                               </td>
                             </tr>
                           );
