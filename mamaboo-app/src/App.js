@@ -490,6 +490,87 @@ function Admin() {
   const [overtimeData, setOvertimeData] = useState({});
   const [overtimeRecords, setOvertimeRecords] = useState([]); // Lưu records để dùng cho rebuild
   
+  // Penalty records - lưu từ localStorage
+  const [penaltyRecords, setPenaltyRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem('penaltyRecords');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  
+  // Penalty rates: mức 1 = 50k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
+  const PENALTY_RATES = {
+    '1': 50000,
+    '2': 80000,
+    '3': 100000,
+    '4': 150000,
+    '5': 200000
+  };
+  
+  // Tính tổng tiền phạt cho nhân viên trong chu kỳ lương
+  const calculatePenaltyAmount = (staffName, monthKey) => {
+    try {
+      let totalPenalty = 0;
+      penaltyRecords.forEach(record => {
+        // Kiểm tra xem record có thuộc chu kỳ lương này không
+        const [recordYear, recordMonth, recordDay] = record.date.split('-').map(Number);
+        let recordPeriodMonth = recordMonth;
+        let recordPeriodYear = recordYear;
+        
+        // Tính chu kỳ lương của record (từ ngày 15 tháng này đến 14 tháng sau)
+        if (recordDay < 15) {
+          if (recordMonth === 1) {
+            recordPeriodMonth = 12;
+            recordPeriodYear = recordYear - 1;
+          } else {
+            recordPeriodMonth = recordMonth - 1;
+          }
+        }
+        
+        const recordMonthKey = `${recordPeriodYear}-${recordPeriodMonth}`;
+        
+        // Nếu record thuộc chu kỳ này và nhân viên khớp
+        if (recordMonthKey === monthKey && record.staffName === staffName) {
+          const rate = PENALTY_RATES[record.penaltyLevel] || 0;
+          totalPenalty += rate;
+        }
+      });
+      
+      return totalPenalty;
+    } catch {
+      return 0;
+    }
+  };
+  
+  // Reload penaltyRecords khi localStorage thay đổi
+  React.useEffect(() => {
+    const checkPenaltyRecords = () => {
+      try {
+        const saved = localStorage.getItem('penaltyRecords');
+        const records = saved ? JSON.parse(saved) : [];
+        setPenaltyRecords(records);
+      } catch (e) {
+        console.error('Error loading penalty records:', e);
+      }
+    };
+    
+    // Load initially
+    checkPenaltyRecords();
+    
+    // Listen for storage changes
+    window.addEventListener('storage', checkPenaltyRecords);
+    
+    // Check periodically (in case localStorage changes in same tab)
+    const interval = setInterval(checkPenaltyRecords, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', checkPenaltyRecords);
+      clearInterval(interval);
+    };
+  }, []);
+  
   // Fetch overtime records từ API hoặc localStorage
   React.useEffect(() => {
     (async () => {
@@ -776,6 +857,9 @@ function Admin() {
           <button className="login-button" onClick={() => navigate('/overtime-management')} style={{ margin: '0 24px', padding: '12px 36px' }}>
             Quản lý tăng ca/đi trễ
           </button>
+          <button className="login-button" onClick={() => navigate('/penalty-management')} style={{ margin: '0 24px', padding: '12px 36px' }}>
+            Quản lý hình phạt
+          </button>
         </div>
 
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
@@ -847,6 +931,7 @@ function Admin() {
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền (VND)</th>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tăng ca (giờ)</th>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Đi trễ (giờ)</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Phạt (VND)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -861,13 +946,16 @@ function Admin() {
                       <>
                         {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => {
                           const staffData = currentOvertimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
+                          // Tính tiền phạt
+                          const penaltyAmount = calculatePenaltyAmount(name, monthKey);
+                          
                           // Mamaboo là chủ nên không tính lương (luôn = 0)
                           const isMamaboo = name.toLowerCase() === 'mamaboo';
                           const totalSalary = isMamaboo ? 0 : (() => {
-                            // Tính tổng lương: lương ca làm + tăng ca - đi trễ (đều tính 20000 VND/giờ)
+                            // Tính tổng lương: lương ca làm + tăng ca - đi trễ - phạt
                             const overtimePay = (staffData.overtime || 0) * ratePerHour;
                             const latePay = (staffData.lateCount || 0) * ratePerHour;
-                            return money + overtimePay - latePay;
+                            return money + overtimePay - latePay - penaltyAmount;
                           })();
                           
                           // Cộng vào tổng (trừ Mamaboo)
@@ -888,6 +976,9 @@ function Admin() {
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
                                 <span>{Number(staffData.lateCount) || 0}</span>
                               </td>
+                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:600, color: penaltyAmount > 0 ? '#e67e22' : '#6b7a86'}}>
+                                {penaltyAmount > 0 ? Number(penaltyAmount).toLocaleString('vi-VN') : '0'}
+                              </td>
                             </tr>
                           );
                         })}
@@ -899,6 +990,7 @@ function Admin() {
                             {Number(totalAllSalary).toLocaleString('vi-VN')}
                           </td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}} colSpan="2"></td>
+                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}}></td>
                         </tr>
                       </>
                     );
@@ -2495,8 +2587,374 @@ function App() {
         <Route path="/checklist-report" element={<ProtectedRoute><ChecklistReport /></ProtectedRoute>} />
         <Route path="/checkin" element={<ProtectedRoute><Checkin /></ProtectedRoute>} />
         <Route path="/overtime-management" element={<ProtectedRoute><OvertimeManagement /></ProtectedRoute>} />
+        <Route path="/penalty-management" element={<ProtectedRoute><PenaltyManagement /></ProtectedRoute>} />
       </Routes>
     </Router>
+  );
+}
+
+// Trang quản lý hình phạt
+function PenaltyManagement() {
+  const navigate = useNavigate();
+  const [staffs, setStaffs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    staffName: '',
+    penaltyLevel: '',
+    date: '',
+    reason: ''
+  });
+  const [records, setRecords] = useState(() => {
+    try {
+      const saved = localStorage.getItem('penaltyRecords');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [filterStaff, setFilterStaff] = useState(''); // Filter theo nhân viên
+
+  // Fetch staff list
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const rs = await fetch(STAFF_API);
+        const rsText = await rs.text();
+        let parsed = {};
+        try { parsed = JSON.parse(rsText); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { parsed = {}; }
+        const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
+        const list = [];
+        itemsStaff.forEach(s => {
+          const name = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
+          if (!name) return;
+          // Loại bỏ "kiett" và "Mamaboo" khỏi danh sách
+          if (name.toLowerCase() === 'kiett' || name.toLowerCase() === 'mamaboo') return;
+          list.push(name);
+        });
+        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+      } catch (e) {
+        console.error('Error fetching staff list:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  // Set default date to today
+  React.useEffect(() => {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    setFormData(prev => prev.date ? prev : { ...prev, date: dateStr });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.staffName || !formData.penaltyLevel || !formData.date || !formData.reason.trim()) {
+      alert('Vui lòng điền đầy đủ thông tin!');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const newRecord = {
+        id: Date.now().toString(),
+        staffName: formData.staffName,
+        penaltyLevel: formData.penaltyLevel,
+        date: formData.date,
+        reason: formData.reason.trim()
+      };
+
+      const updatedRecords = [...records, newRecord];
+      setRecords(updatedRecords);
+      localStorage.setItem('penaltyRecords', JSON.stringify(updatedRecords));
+
+      // Reset form và đóng form
+      setFormData({
+        staffName: '',
+        penaltyLevel: '',
+        date: new Date().toISOString().split('T')[0],
+        reason: ''
+      });
+      setShowForm(false);
+
+      alert('Đã thêm thành công!');
+    } catch (error) {
+      console.error('Error submitting record:', error);
+      alert('Có lỗi xảy ra khi thêm bản ghi. Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = (id) => {
+    if (!window.confirm('Bạn có chắc muốn xóa bản ghi này?')) return;
+    const updatedRecords = records.filter(r => r.id !== id);
+    setRecords(updatedRecords);
+    localStorage.setItem('penaltyRecords', JSON.stringify(updatedRecords));
+  };
+
+  if (loading) {
+    return (
+      <div className="login-page" style={{justifyContent:'center', alignItems:'center'}}>
+        <div>Đang tải...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
+      <div className="login-container" style={{width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32}}>
+        <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý hình phạt</h2>
+        <div className="login-underline" style={{ background: '#e67e22' }}></div>
+
+        <div style={{marginTop:24, display:'flex', justifyContent:'flex-start', gap:12}}>
+          <button 
+            type="button"
+            className="login-button" 
+            onClick={() => setShowForm(true)}
+            style={{padding:'12px 36px'}}
+          >
+            Tạo
+          </button>
+        </div>
+
+        {/* Modal */}
+        {showForm && (
+          <div 
+            style={{
+              position:'fixed',
+              top:0,
+              left:0,
+              right:0,
+              bottom:0,
+              background:'rgba(0,0,0,0.5)',
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              zIndex:1000
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowForm(false);
+                setFormData({
+                  staffName: '',
+                  penaltyLevel: '',
+                  date: new Date().toISOString().split('T')[0],
+                  reason: ''
+                });
+              }
+            }}
+          >
+            <form 
+              onSubmit={handleSubmit} 
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background:'#fff',
+                borderRadius:12,
+                padding:24,
+                boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
+                width:'90%',
+                maxWidth:500,
+                maxHeight:'90vh',
+                overflow:'auto'
+              }}
+            >
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+                <h3 style={{margin:0, color:'#1c222f', fontSize:'20px', fontWeight:700}}>Thêm mới</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormData({
+                      staffName: '',
+                      penaltyLevel: '',
+                      date: new Date().toISOString().split('T')[0],
+                      reason: ''
+                    });
+                  }}
+                  style={{
+                    background:'transparent',
+                    border:'none',
+                    fontSize:'24px',
+                    cursor:'pointer',
+                    color:'#6b7a86',
+                    padding:0,
+                    width:30,
+                    height:30,
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center'
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div style={{display:'flex', flexDirection:'column', gap:16}}>
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Nhân viên *</label>
+                  <select
+                    value={formData.staffName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
+                    required
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  >
+                    <option value="">-- Chọn nhân viên --</option>
+                    {staffs.map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Mức độ phạt *</label>
+                  <select
+                    value={formData.penaltyLevel}
+                    onChange={(e) => setFormData(prev => ({ ...prev, penaltyLevel: e.target.value }))}
+                    required
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  >
+                    <option value="">-- Chọn mức độ --</option>
+                    <option value="1">Mức 1</option>
+                    <option value="2">Mức 2</option>
+                    <option value="3">Mức 3</option>
+                    <option value="4">Mức 4</option>
+                    <option value="5">Mức 5</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày phạt *</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    required
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  />
+                </div>
+
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Lý do phạt *</label>
+                  <textarea
+                    value={formData.reason}
+                    onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
+                    required
+                    rows={4}
+                    placeholder="Nhập lý do phạt..."
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px', resize:'vertical', fontFamily:'inherit'}}
+                  />
+                </div>
+
+                <div style={{display:'flex', gap:12, marginTop:8}}>
+                  <button type="submit" className="login-button" style={{flex:1, padding:'12px', minWidth:0, width:'auto'}} disabled={submitting}>
+                    {submitting ? 'Đang lưu...' : 'Thêm'}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowForm(false);
+                      setFormData({
+                        staffName: '',
+                        penaltyLevel: '',
+                        date: new Date().toISOString().split('T')[0],
+                        reason: ''
+                      });
+                    }}
+                    style={{flex:1, padding:'12px', background:'#6b7a86', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, minWidth:0, width:'auto'}}
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Filter section */}
+        {records.length > 0 && (
+          <div style={{marginTop:24, marginBottom:16}}>
+            <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo nhân viên:</label>
+                <StaffFilterDropdown 
+                  options={staffs} 
+                  value={filterStaff} 
+                  onChange={setFilterStaff}
+                  placeholder="Tất cả nhân viên"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {records.length > 0 && (
+          <div style={{marginTop:records.length > 0 ? 0 : 24}}>
+            <h3 style={{marginBottom:16, color:'#1c222f'}}>Danh sách đã thêm</h3>
+            <div className="roster-scroll">
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
+                <thead>
+                  <tr style={{background:'#f7fafc'}}>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Mức độ phạt</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ngày phạt</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Lý do phạt</th>
+                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    // Filter records
+                    const filtered = records.filter(record => {
+                      if (filterStaff && record.staffName !== filterStaff) return false;
+                      return true;
+                    });
+                    
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={5} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
+                            Không có dữ liệu phù hợp với bộ lọc
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    return filtered.map((record) => (
+                      <tr key={record.id} style={{background:'#fff'}}>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>Mức {record.penaltyLevel}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.reason}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(record.id)}
+                            style={{padding:'6px 12px', background:'#e67e22', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:'14px'}}
+                          >
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div style={{marginTop:24, display:'flex', justifyContent:'center', gap:12}}>
+          <button className="login-button" onClick={() => navigate('/admin')} style={{padding:'12px 36px'}}>
+            Quay lại
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
