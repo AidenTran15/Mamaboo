@@ -66,6 +66,14 @@ function MultiSelectDropdown({ options, value, onChange, placeholder = 'Chọn n
             style={{ width:'100%', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, marginBottom:8 }}
           />
           <div style={{ maxHeight:180, overflow:'auto', paddingRight:4 }}>
+            {value && value.length > 0 && (
+              <div 
+                style={{ padding:'8px 4px', cursor:'pointer', color:'#e67e22', fontWeight:600, borderBottom:'1px solid #eef5fa', marginBottom:4 }}
+                onClick={() => { onChange([]); setOpen(false); }}
+              >
+                ✕ Xóa tất cả
+              </div>
+            )}
             {filtered.length === 0 && <div style={{padding:'6px 2px', color:'#8a97a8'}}>Không có kết quả</div>}
             {filtered.map(name => (
               <label key={name} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px', cursor:'pointer' }}>
@@ -472,6 +480,8 @@ function Admin() {
           itemsStaff.forEach(s => {
             const name = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
             if (!name) return;
+            // Loại bỏ "kiett" khỏi danh sách nhân viên
+            if (name.toLowerCase() === 'kiett') return;
             list.push(name);
             const sal = Number(s.Salary || s.salary || 0);
             salaryMap[name] = isNaN(sal) ? 0 : sal;
@@ -516,15 +526,26 @@ function Admin() {
     const start = new Date(year, month, 15); // inclusive
     const end = new Date(year, month + 1, 15); // exclusive
 
+    // Helper function để filter "kiett" ra khỏi mảng nhân viên
+    const filterKiett = (arr) => {
+      if (!Array.isArray(arr)) {
+        arr = arr ? [arr] : [];
+      }
+      return arr.filter(name => {
+        const n = (name || '').toString().trim().toLowerCase();
+        return n !== 'kiett';
+      });
+    };
+
     const arr = [];
     for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
       const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
       const base = byDate.get(dateStr) || { date: dateStr, sang: [], trua: [], toi: [] };
       arr.push({
         date: dateStr,
-        sang: Array.isArray(base.sang) ? base.sang : (base.sang ? [base.sang] : []),
-        trua: Array.isArray(base.trua) ? base.trua : (base.trua ? [base.trua] : []),
-        toi: Array.isArray(base.toi) ? base.toi : (base.toi ? [base.toi] : []),
+        sang: filterKiett(base.sang),
+        trua: filterKiett(base.trua),
+        toi: filterKiett(base.toi),
       });
     }
     setMonthData(arr);
@@ -547,19 +568,29 @@ function Admin() {
   const handleSave = async () => {
     setSaving(true); setInfo('');
     let changed = 0;
+    // Helper function để filter "kiett" ra khỏi mảng nhân viên
+    const filterKiett = (arr) => {
+      if (!Array.isArray(arr)) return [];
+      return arr.filter(name => {
+        const n = (name || '').toString().trim().toLowerCase();
+        return n !== 'kiett';
+      });
+    };
     for (let i=0;i<monthEdit.length;i++) {
       const before = monthData[i];
       const after = monthEdit[i];
       if (!before || !after) continue;
       for (const ca of ['sang','trua','toi']) {
-        const a = JSON.stringify(before[ca]||[]);
-        const b = JSON.stringify(after[ca]||[]);
+        // Filter "kiett" ra trước khi so sánh và lưu
+        const filteredAfter = filterKiett(after[ca] || []);
+        const a = JSON.stringify(filterKiett(before[ca]||[]));
+        const b = JSON.stringify(filteredAfter);
         if (a !== b) {
           try {
             await fetch(UPDATE_ROSTER_API, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ date: after.date, ca, nhan_vien: after[ca] || [] })
+              body: JSON.stringify({ date: after.date, ca, nhan_vien: filteredAfter })
             });
             changed++;
           } catch (e) { console.log('Update error', e); }
@@ -617,6 +648,8 @@ function Admin() {
         members.forEach(nameRaw => {
           const name = (nameRaw || '').toString().trim();
           if (!name) return;
+          // Loại bỏ "kiett" khỏi tính toán lương
+          if (name.toLowerCase() === 'kiett') return;
           totalHours.set(name, (totalHours.get(name) || 0) + hours);
           if (isSingle) {
             singleHours.set(name, (singleHours.get(name) || 0) + hours);
@@ -1485,6 +1518,8 @@ function ChecklistReport() {
         itemsStaff.forEach(s => {
           const name = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
           if (!name) return;
+          // Loại bỏ "kiett" khỏi danh sách nhân viên
+          if (name.toLowerCase() === 'kiett') return;
           list.push(name);
         });
         
