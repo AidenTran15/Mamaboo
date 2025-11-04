@@ -10,6 +10,9 @@ const CHECKLIST_GET_API = 'https://4qwg9i4he0.execute-api.ap-southeast-2.amazona
 const OVERTIME_GET_API = 'https://enxgjymmjc.execute-api.ap-southeast-2.amazonaws.com/prod';
 const OVERTIME_POST_API = 'https://c659yzs9hb.execute-api.ap-southeast-2.amazonaws.com/prod';
 const OVERTIME_DELETE_API = 'https://rbyhzws278.execute-api.ap-southeast-2.amazonaws.com/prod';
+const PENALTY_GET_API = 'https://lfp8b72mc5.execute-api.ap-southeast-2.amazonaws.com/prod';
+const PENALTY_POST_API = 'https://1w4hxsqrtc.execute-api.ap-southeast-2.amazonaws.com/prod';
+const PENALTY_DELETE_API = 'YOUR_API_GATEWAY_URL'; // Cập nhật URL sau khi deploy Lambda DELETE
 
 function ProtectedRoute({ children }) {
   const loggedIn = !!localStorage.getItem('userName');
@@ -490,15 +493,39 @@ function Admin() {
   const [overtimeData, setOvertimeData] = useState({});
   const [overtimeRecords, setOvertimeRecords] = useState([]); // Lưu records để dùng cho rebuild
   
-  // Penalty records - lưu từ localStorage
-  const [penaltyRecords, setPenaltyRecords] = useState(() => {
-    try {
-      const saved = localStorage.getItem('penaltyRecords');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  // Penalty records - fetch từ API hoặc localStorage
+  const [penaltyRecords, setPenaltyRecords] = useState([]);
+  
+  // Fetch penalty records từ API hoặc localStorage
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Thử fetch từ API trước
+        if (PENALTY_GET_API && !PENALTY_GET_API.includes('YOUR_API_GATEWAY_URL')) {
+          const res = await fetch(PENALTY_GET_API);
+          const text = await res.text();
+          let parsed = {};
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          const items = Array.isArray(parsed.items) ? parsed.items : [];
+          if (items.length >= 0) { // Luôn dùng API nếu có data (kể cả empty array)
+            setPenaltyRecords(items);
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Failed to fetch penalty from API, using localStorage:', e);
+      }
+      
+      // Fallback: dùng localStorage
+      try {
+        const saved = localStorage.getItem('penaltyRecords');
+        const records = saved ? JSON.parse(saved) : [];
+        setPenaltyRecords(records);
+      } catch (e) {
+        console.error('Error loading penalty records:', e);
+      }
+    })();
+  }, []);
   
   // Penalty rates: mức 1 = 50k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
   const PENALTY_RATES = {
@@ -513,13 +540,21 @@ function Admin() {
   const calculatePenaltyAmount = (staffName, monthKey) => {
     try {
       let totalPenalty = 0;
+      if (!penaltyRecords || penaltyRecords.length === 0) {
+        return 0;
+      }
+      
       penaltyRecords.forEach(record => {
         // Kiểm tra xem record có thuộc chu kỳ lương này không
+        if (!record.date || !record.staffName) return;
+        
         const [recordYear, recordMonth, recordDay] = record.date.split('-').map(Number);
         let recordPeriodMonth = recordMonth;
         let recordPeriodYear = recordYear;
         
         // Tính chu kỳ lương của record (từ ngày 15 tháng này đến 14 tháng sau)
+        // Ví dụ: ngày 5/11 thuộc chu kỳ 10-11 (từ 15/10 đến 14/11)
+        // Ngày 20/11 thuộc chu kỳ 11-12 (từ 15/11 đến 14/12)
         if (recordDay < 15) {
           if (recordMonth === 1) {
             recordPeriodMonth = 12;
@@ -539,15 +574,32 @@ function Admin() {
       });
       
       return totalPenalty;
-    } catch {
+    } catch (error) {
+      console.error('Error calculating penalty:', error);
       return 0;
     }
   };
   
-  // Reload penaltyRecords khi localStorage thay đổi
+  // Reload penaltyRecords khi localStorage thay đổi hoặc khi cần refresh
   React.useEffect(() => {
-    const checkPenaltyRecords = () => {
+    const checkPenaltyRecords = async () => {
       try {
+        // Thử reload từ API trước
+        if (PENALTY_GET_API && !PENALTY_GET_API.includes('YOUR_API_GATEWAY_URL')) {
+          try {
+            const res = await fetch(PENALTY_GET_API);
+            const text = await res.text();
+            let parsed = {};
+            try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+            const items = Array.isArray(parsed.items) ? parsed.items : [];
+            setPenaltyRecords(items);
+            return;
+          } catch (e) {
+            console.log('Failed to reload from API:', e);
+          }
+        }
+        
+        // Fallback: dùng localStorage
         const saved = localStorage.getItem('penaltyRecords');
         const records = saved ? JSON.parse(saved) : [];
         setPenaltyRecords(records);
@@ -556,14 +608,11 @@ function Admin() {
       }
     };
     
-    // Load initially
-    checkPenaltyRecords();
-    
     // Listen for storage changes
     window.addEventListener('storage', checkPenaltyRecords);
     
-    // Check periodically (in case localStorage changes in same tab)
-    const interval = setInterval(checkPenaltyRecords, 1000);
+    // Check periodically (in case data changes)
+    const interval = setInterval(checkPenaltyRecords, 2000);
     
     return () => {
       window.removeEventListener('storage', checkPenaltyRecords);
@@ -2605,16 +2654,40 @@ function PenaltyManagement() {
     date: '',
     reason: ''
   });
-  const [records, setRecords] = useState(() => {
-    try {
-      const saved = localStorage.getItem('penaltyRecords');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [records, setRecords] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [filterStaff, setFilterStaff] = useState(''); // Filter theo nhân viên
+
+  // Fetch penalty records từ API hoặc localStorage
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Thử fetch từ API trước
+        if (PENALTY_GET_API && !PENALTY_GET_API.includes('YOUR_API_GATEWAY_URL')) {
+          const res = await fetch(PENALTY_GET_API);
+          const text = await res.text();
+          let parsed = {};
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          const items = Array.isArray(parsed.items) ? parsed.items : [];
+          if (items.length > 0) {
+            setRecords(items);
+            return;
+          }
+        }
+      } catch (e) {
+        console.log('Failed to fetch from API, using localStorage:', e);
+      }
+      
+      // Fallback: dùng localStorage
+      try {
+        const saved = localStorage.getItem('penaltyRecords');
+        const records = saved ? JSON.parse(saved) : [];
+        setRecords(records);
+      } catch (e) {
+        console.error('Error loading penalty records:', e);
+      }
+    })();
+  }, []);
 
   // Fetch staff list
   React.useEffect(() => {
@@ -2650,7 +2723,7 @@ function PenaltyManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.staffName || !formData.penaltyLevel || !formData.date || !formData.reason.trim()) {
       alert('Vui lòng điền đầy đủ thông tin!');
@@ -2659,6 +2732,59 @@ function PenaltyManagement() {
 
     setSubmitting(true);
 
+    const recordData = {
+      staffName: formData.staffName,
+      penaltyLevel: formData.penaltyLevel,
+      date: formData.date,
+      reason: formData.reason.trim()
+    };
+    
+    // Thử POST lên API trước
+    if (PENALTY_POST_API && !PENALTY_POST_API.includes('YOUR_API_GATEWAY_URL')) {
+      try {
+        const res = await fetch(PENALTY_POST_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(recordData)
+        });
+        const text = await res.text();
+        let parsed = {};
+        try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+        
+        if (res.ok && parsed.ok) {
+          // Thành công, reload records từ API
+          try {
+            const resGet = await fetch(PENALTY_GET_API);
+            const textGet = await resGet.text();
+            let parsedGet = {};
+            try { parsedGet = JSON.parse(textGet); if (typeof parsedGet.body === 'string') parsedGet = JSON.parse(parsedGet.body); } catch {}
+            const items = Array.isArray(parsedGet.items) ? parsedGet.items : [];
+            setRecords(items);
+            
+            // Reset form và đóng form
+            setFormData({
+              staffName: '',
+              penaltyLevel: '',
+              date: new Date().toISOString().split('T')[0],
+              reason: ''
+            });
+            setShowForm(false);
+            alert('Đã thêm thành công!');
+            setSubmitting(false);
+            return;
+          } catch (e) {
+            console.error('Error reloading records:', e);
+          }
+        } else {
+          throw new Error(parsed.error || 'API returned error');
+        }
+      } catch (apiError) {
+        console.error('API POST failed:', apiError);
+        // Fall through to localStorage
+      }
+    }
+
+    // Fallback: dùng localStorage
     try {
       const newRecord = {
         id: Date.now().toString(),

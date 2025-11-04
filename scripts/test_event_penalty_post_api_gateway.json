@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"staffName\": \"Kim Thu\", \"date\": \"2025-11-04\", \"penaltyLevel\": \"1\", \"reason\": \"Đi trễ nhiều lần\"}"
+}
+
