@@ -683,6 +683,9 @@ function Admin() {
           <button className="login-button" onClick={() => navigate('/checklist-report')} style={{ margin: '0 24px', padding: '12px 36px' }}>
             Xem báo cáo checklist
           </button>
+          <button className="login-button" onClick={() => navigate('/overtime-management')} style={{ margin: '0 24px', padding: '12px 36px' }}>
+            Quản lý tăng ca/đi trễ
+          </button>
         </div>
 
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
@@ -1889,6 +1892,200 @@ function ChecklistReport() {
   );
 }
 
+// Trang quản lý tăng ca/đi trễ
+function OvertimeManagement() {
+  const navigate = useNavigate();
+  const [staffs, setStaffs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth()); // 0-11
+  const [overtimeData, setOvertimeData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('overtimeData');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const rs = await fetch(STAFF_API);
+        const rsText = await rs.text();
+        let parsed = {};
+        try { parsed = JSON.parse(rsText); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { parsed = {}; }
+        const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
+        const list = [];
+        itemsStaff.forEach(s => {
+          const name = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
+          if (!name) return;
+          // Loại bỏ "kiett" và "Mamaboo" khỏi danh sách
+          if (name.toLowerCase() === 'kiett' || name.toLowerCase() === 'mamaboo') return;
+          list.push(name);
+        });
+        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+      } catch (e) {
+        console.error('Error fetching staff list:', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const monthKey = `${year}-${month + 1}`;
+  const monthLabel = (() => {
+    const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 
+                        'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+    return `${monthNames[month]}, ${year}`;
+  })();
+
+  const prevMonth = () => { 
+    const m = month - 1; 
+    if (m < 0) { 
+      setMonth(11); 
+      setYear(y => y-1); 
+    } else { 
+      setMonth(m); 
+    } 
+  };
+
+  const nextMonth = () => { 
+    const m = month + 1; 
+    if (m > 11) { 
+      setMonth(0); 
+      setYear(y => y+1); 
+    } else { 
+      setMonth(m); 
+    } 
+  };
+
+  const updateOvertimeData = (name, field, value) => {
+    const newData = { ...overtimeData };
+    if (!newData[monthKey]) newData[monthKey] = {};
+    if (!newData[monthKey][name]) newData[monthKey][name] = { overtime: 0, lateCount: 0 };
+    newData[monthKey][name][field] = Math.max(0, Number(value) || 0);
+    setOvertimeData(newData);
+    localStorage.setItem('overtimeData', JSON.stringify(newData));
+  };
+
+  const adjustValue = (name, field, delta) => {
+    const staffData = overtimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
+    const current = staffData[field] || 0;
+    updateOvertimeData(name, field, current + delta);
+  };
+
+  if (loading) {
+    return (
+      <div className="login-page" style={{justifyContent:'center', alignItems:'center'}}>
+        <div>Đang tải...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
+      <div className="login-container" style={{width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32}}>
+        <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý tăng ca/đi trễ</h2>
+        <div className="login-underline" style={{ background: '#e67e22' }}></div>
+
+        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'20px 0 16px'}}>
+          <button className="login-button" style={{width:120}} onClick={prevMonth}>{'← Tháng trước'}</button>
+          <div style={{fontWeight:700, color:'#1c222f', fontSize:'18px'}}>{monthLabel}</div>
+          <button className="login-button" style={{width:120}} onClick={nextMonth}>{'Tháng sau →'}</button>
+        </div>
+
+        <div className="roster-scroll">
+          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
+            <thead>
+              <tr style={{background:'#f7fafc'}}>
+                <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
+                <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', width:200}}>Tăng ca (giờ)</th>
+                <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', width:200}}>Đi trễ (lần)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {staffs.length === 0 ? (
+                <tr>
+                  <td colSpan={3} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
+                    Không có nhân viên
+                  </td>
+                </tr>
+              ) : staffs.map((name) => {
+                const staffData = overtimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
+                return (
+                  <tr key={name} style={{background:'#fff'}}>
+                    <td style={{padding:'12px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{name}</td>
+                    <td style={{padding:'12px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
+                      <div style={{display:'flex', alignItems:'center', gap:8, justifyContent:'center'}}>
+                        <button
+                          type="button"
+                          onClick={() => adjustValue(name, 'overtime', -0.25)}
+                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.25"
+                          value={staffData.overtime}
+                          onChange={(e) => updateOvertimeData(name, 'overtime', e.target.value)}
+                          style={{width:'100px', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, textAlign:'center', fontSize:'16px', fontWeight:600}}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => adjustValue(name, 'overtime', 0.25)}
+                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </td>
+                    <td style={{padding:'12px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
+                      <div style={{display:'flex', alignItems:'center', gap:8, justifyContent:'center'}}>
+                        <button
+                          type="button"
+                          onClick={() => adjustValue(name, 'lateCount', -1)}
+                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
+                        >
+                          −
+                        </button>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={staffData.lateCount}
+                          onChange={(e) => updateOvertimeData(name, 'lateCount', e.target.value)}
+                          style={{width:'100px', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, textAlign:'center', fontSize:'16px', fontWeight:600}}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => adjustValue(name, 'lateCount', 1)}
+                          style={{padding:'6px 12px', border:'1px solid #e6eef5', borderRadius:6, background:'#fff', cursor:'pointer', fontSize:'16px', fontWeight:600}}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{marginTop:24, display:'flex', justifyContent:'center', gap:12}}>
+          <button className="login-button" onClick={() => navigate('/admin')} style={{padding:'12px 36px'}}>
+            Quay lại
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -1899,6 +2096,7 @@ function App() {
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
         <Route path="/checklist-report" element={<ProtectedRoute><ChecklistReport /></ProtectedRoute>} />
         <Route path="/checkin" element={<ProtectedRoute><Checkin /></ProtectedRoute>} />
+        <Route path="/overtime-management" element={<ProtectedRoute><OvertimeManagement /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
