@@ -646,23 +646,20 @@ function Admin() {
                   <tr style={{background:'#f5fbff'}}>
                     <th>Ngày</th>
                     <th>Ca</th>
-                    <th>Loại</th>
                     <th>Nhân viên</th>
                     <th>Số task hoàn thành</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ckItems.length === 0 ? (
-                    <tr><td colSpan={5} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>Chưa có dữ liệu</td></tr>
+                    <tr><td colSpan={4} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>Chưa có dữ liệu</td></tr>
                   ) : ckItems.map((it, i) => {
                     const tasks = it.tasks || {};
                     const doneCount = Object.values(tasks).filter((t)=>t && (t.done === true || t.done === 'true')).length;
-                    const type = it.checklistType || (String(it.date_shift||'').endsWith('#ket_ca') ? 'ket_ca' : 'bat_dau');
                     return (
                       <tr key={i}>
                         <td>{it.date}</td>
                         <td>{it.shift}</td>
-                        <td>{type}</td>
                         <td>{it.user}</td>
                         <td>{doneCount}</td>
                       </tr>
@@ -1178,7 +1175,6 @@ function ChecklistReport() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [filterUser, setFilterUser] = useState('');
-  const [filterType, setFilterType] = useState('all'); // 'all', 'bat_dau', 'ket_ca' - default hiển thị tất cả
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -1229,14 +1225,6 @@ function ChecklistReport() {
               imageUrlLength: firstTask?.imageUrl ? String(firstTask.imageUrl).length : 0
             };
           })() : null
-        });
-      }
-      
-      // Filter by type
-      if (filterType !== 'all') {
-        fetched = fetched.filter(it => {
-          const type = it.checklistType || (String(it.date_shift||'').endsWith('#ket_ca') ? 'ket_ca' : 'bat_dau');
-          return type === filterType;
         });
       }
       
@@ -1303,11 +1291,6 @@ function ChecklistReport() {
           <span>đến</span>
           <input type="date" value={toDate} onChange={(e)=>setToDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
           <input placeholder="Lọc theo nhân viên" value={filterUser} onChange={(e)=>setFilterUser(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
-          <select value={filterType} onChange={(e)=>setFilterType(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}}>
-            <option value="all">Tất cả</option>
-            <option value="bat_dau">Bắt đầu ca</option>
-            <option value="ket_ca">Kết ca</option>
-          </select>
           <button className="login-button" onClick={fetchChecklist} disabled={loading}>
             {loading ? 'Đang tải...' : 'Tải dữ liệu'}
           </button>
@@ -1323,7 +1306,6 @@ function ChecklistReport() {
                 <th>Ngày</th>
                 <th>Thứ</th>
                 <th>Ca</th>
-                <th>Loại</th>
                 <th>Nhân viên</th>
                 <th>Task hoàn thành</th>
                 <th>Ảnh</th>
@@ -1332,7 +1314,7 @@ function ChecklistReport() {
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={8} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>
+                <tr><td colSpan={7} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>
                   {loading ? 'Đang tải...' : 'Chưa có dữ liệu'}
                 </td></tr>
               ) : items.map((it, i) => {
@@ -1340,9 +1322,6 @@ function ChecklistReport() {
                 const taskList = Object.entries(tasks);
                 const doneCount = taskList.filter(([_, t]) => t && (t.done === true || t.done === 'true')).length;
                 const totalCount = taskList.length;
-                const type = it.checklistType || (String(it.date_shift||'').endsWith('#ket_ca') ? 'ket_ca' : 'bat_dau');
-                const typeLabel = type === 'ket_ca' ? 'Kết ca' : 'Bắt đầu ca';
-                const typeColor = type === 'ket_ca' ? '#e67e22' : '#43a8ef';
                 
                 // Debug: log để kiểm tra dữ liệu
                 if (i === 0) {
@@ -1417,9 +1396,6 @@ function ChecklistReport() {
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.date}</td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', color:'#6b7a86'}}>{getWeekdayVi(it.date)}</td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{getShiftName(it.shift)}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>
-                      <span style={{color:typeColor, fontWeight:600}}>{typeLabel}</span>
-                    </td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.user}</td>
                     <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', textAlign:'center'}}>
                       <span style={{fontWeight:600, color: doneCount === totalCount && totalCount > 0 ? '#2ecc71' : '#e67e22'}}>
@@ -1509,7 +1485,6 @@ function ChecklistReport() {
                 <strong>Nhân viên:</strong> {selectedItem.user}<br/>
                 <strong>Ngày:</strong> {selectedItem.date} ({getWeekdayVi(selectedItem.date)})<br/>
                 <strong>Ca:</strong> {getShiftName(selectedItem.shift)}<br/>
-                <strong>Loại:</strong> {selectedItem.checklistType === 'ket_ca' ? 'Kết ca' : 'Bắt đầu ca'}<br/>
                 <strong>Thời gian tạo:</strong> {new Date(selectedItem.createdAt).toLocaleString('vi-VN')}<br/>
                 <strong>Cập nhật:</strong> {new Date(selectedItem.updatedAt).toLocaleString('vi-VN')}
               </div>
