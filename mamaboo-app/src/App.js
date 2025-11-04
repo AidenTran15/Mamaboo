@@ -2349,7 +2349,7 @@ function OvertimeManagement() {
                 </div>
 
                 <div style={{display:'flex', gap:12, marginTop:8}}>
-                  <button type="submit" className="login-button" style={{flex:1, padding:'12px'}} disabled={submitting}>
+                  <button type="submit" className="login-button" style={{flex:1, padding:'12px', minWidth:0, width:'auto'}} disabled={submitting}>
                     {submitting ? 'Đang lưu...' : 'Thêm'}
                   </button>
                   <button 
@@ -2364,7 +2364,7 @@ function OvertimeManagement() {
                         hours: 0
                       });
                     }}
-                    style={{flex:1, padding:'12px', background:'#6b7a86', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600}}
+                    style={{flex:1, padding:'12px', background:'#6b7a86', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, minWidth:0, width:'auto'}}
                   >
                     Hủy
                   </button>
