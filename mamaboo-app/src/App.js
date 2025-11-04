@@ -922,14 +922,88 @@ function Admin() {
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
         <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
 
-        <div style={{display:'flex', justifyContent:'center', gap:12, marginBottom:16}}>
-          <button className="login-button" onClick={() => navigate('/checklist-report')} style={{ margin: '0 24px', padding: '12px 36px' }}>
+        <div style={{display:'flex', justifyContent:'center', gap:16, marginBottom:24, flexWrap:'wrap'}}>
+          <button 
+            onClick={() => navigate('/checklist-report')} 
+            style={{ 
+              background: '#6c9bdc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '16px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 180,
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#5a8bc8';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#6c9bdc';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
             Xem báo cáo checklist
           </button>
-          <button className="login-button" onClick={() => navigate('/overtime-management')} style={{ margin: '0 24px', padding: '12px 36px' }}>
+          
+          <button 
+            onClick={() => navigate('/overtime-management')} 
+            style={{ 
+              background: '#6c9bdc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '16px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 180,
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#5a8bc8';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#6c9bdc';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
             Quản lý tăng ca/đi trễ
           </button>
-          <button className="login-button" onClick={() => navigate('/penalty-management')} style={{ margin: '0 24px', padding: '12px 36px' }}>
+          
+          <button 
+            onClick={() => navigate('/penalty-management')} 
+            style={{ 
+              background: '#6c9bdc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '16px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 180,
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#5a8bc8';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#6c9bdc';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
             Quản lý hình phạt
           </button>
         </div>
