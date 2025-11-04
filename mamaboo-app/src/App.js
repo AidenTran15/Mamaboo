@@ -113,13 +113,16 @@ function StaffFilterDropdown({ options, value, onChange, placeholder = 'Lọc th
   const label = value || placeholder;
 
   return (
-    <div className="staff-filter-root" style={{ position: 'relative', minWidth: 200 }}>
-      <button type="button" className="login-button" style={{
-        width: '100%', background:'#fff', color:'#1c222f', border:'1px solid #d6e9f5',
-        borderRadius:8, padding:'6px 8px', textAlign:'left', fontWeight:500
+    <div className="staff-filter-root" style={{ position: 'relative', width: 'auto', minWidth: '140px' }}>
+      <button type="button" style={{
+        width: '100%', background:'#fff', color:'#1c222f', border:'1px solid #e6eef5',
+        borderRadius:8, padding:'6px 8px', textAlign:'left', fontWeight:400,
+        fontSize:'14px', cursor:'pointer', fontFamily:'inherit', boxSizing:'border-box'
       }} onClick={(e)=>{e.stopPropagation(); toggle();}}>
-        {label}
-        <span style={{float:'right', opacity:0.6}}>▾</span>
+        <span style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%'}}>
+          <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1}}>{label}</span>
+          <span style={{opacity:0.6, marginLeft:8, flexShrink:0}}>▾</span>
+        </span>
       </button>
       {open && (
         <div style={{ position:'absolute', zIndex:1000, left:0, right:0, marginTop:6,
