@@ -1897,6 +1897,7 @@ function OvertimeManagement() {
   const navigate = useNavigate();
   const [staffs, setStaffs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     staffName: '',
     date: '',
@@ -1990,7 +1991,7 @@ function OvertimeManagement() {
     }
     localStorage.setItem('overtimeData', JSON.stringify(newData));
 
-    // Reset form
+    // Reset form và đóng form
     setFormData({
       staffName: '',
       date: new Date().toISOString().split('T')[0],
@@ -1998,6 +1999,7 @@ function OvertimeManagement() {
       type: 'overtime',
       hours: 0
     });
+    setShowForm(false);
 
     alert('Đã thêm thành công!');
   };
@@ -2028,98 +2030,200 @@ function OvertimeManagement() {
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý tăng ca/đi trễ</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
-        <form onSubmit={handleSubmit} style={{marginTop:24, background:'#fff', border:'1px solid #e6eef5', borderRadius:12, padding:20, boxShadow:'0 4px 12px rgba(0,0,0,0.08)'}}>
-          <h3 style={{marginTop:0, marginBottom:16, color:'#1c222f'}}>Thêm mới</h3>
-          
-          <div style={{display:'flex', flexDirection:'column', gap:16}}>
-            <div>
-              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Nhân viên *</label>
-              <select
-                value={formData.staffName}
-                onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
-                required
-                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
-              >
-                <option value="">-- Chọn nhân viên --</option>
-                {staffs.map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </select>
-            </div>
+        <div style={{marginTop:24, display:'flex', justifyContent:'flex-start', gap:12}}>
+          <button 
+            type="button"
+            className="login-button" 
+            onClick={() => setShowForm(true)}
+            style={{padding:'12px 36px'}}
+          >
+            Tạo
+          </button>
+        </div>
 
-            <div>
-              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày *</label>
-              <input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                required
-                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
-              />
-            </div>
-
-            <div>
-              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ca *</label>
-              <select
-                value={formData.shift}
-                onChange={(e) => setFormData(prev => ({ ...prev, shift: e.target.value }))}
-                required
-                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
-              >
-                <option value="">-- Chọn ca --</option>
-                <option value="sang">Ca sáng</option>
-                <option value="trua">Ca trưa</option>
-                <option value="toi">Ca tối</option>
-              </select>
-            </div>
-
-            <div>
-              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Loại *</label>
-              <div style={{display:'flex', gap:16}}>
-                <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
-                  <input
-                    type="radio"
-                    name="type"
-                    value="overtime"
-                    checked={formData.type === 'overtime'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                  />
-                  <span>Tăng ca</span>
-                </label>
-                <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
-                  <input
-                    type="radio"
-                    name="type"
-                    value="late"
-                    checked={formData.type === 'late'}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                  />
-                  <span>Đi trễ</span>
-                </label>
+        {/* Modal */}
+        {showForm && (
+          <div 
+            style={{
+              position:'fixed',
+              top:0,
+              left:0,
+              right:0,
+              bottom:0,
+              background:'rgba(0,0,0,0.5)',
+              display:'flex',
+              alignItems:'center',
+              justifyContent:'center',
+              zIndex:1000
+            }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setShowForm(false);
+                setFormData({
+                  staffName: '',
+                  date: new Date().toISOString().split('T')[0],
+                  shift: '',
+                  type: 'overtime',
+                  hours: 0
+                });
+              }
+            }}
+          >
+            <form 
+              onSubmit={handleSubmit} 
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background:'#fff',
+                borderRadius:12,
+                padding:24,
+                boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
+                width:'90%',
+                maxWidth:500,
+                maxHeight:'90vh',
+                overflow:'auto'
+              }}
+            >
+              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+                <h3 style={{margin:0, color:'#1c222f', fontSize:'20px', fontWeight:700}}>Thêm mới</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setFormData({
+                      staffName: '',
+                      date: new Date().toISOString().split('T')[0],
+                      shift: '',
+                      type: 'overtime',
+                      hours: 0
+                    });
+                  }}
+                  style={{
+                    background:'transparent',
+                    border:'none',
+                    fontSize:'24px',
+                    cursor:'pointer',
+                    color:'#6b7a86',
+                    padding:0,
+                    width:30,
+                    height:30,
+                    display:'flex',
+                    alignItems:'center',
+                    justifyContent:'center'
+                  }}
+                >
+                  ×
+                </button>
               </div>
-            </div>
+              
+              <div style={{display:'flex', flexDirection:'column', gap:16}}>
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Nhân viên *</label>
+                  <select
+                    value={formData.staffName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
+                    required
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  >
+                    <option value="">-- Chọn nhân viên --</option>
+                    {staffs.map(name => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                </div>
 
-            <div>
-              <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>
-                {formData.type === 'overtime' ? 'Số giờ tăng ca *' : 'Số lần đi trễ *'}
-              </label>
-              <input
-                type="number"
-                min="0"
-                step={formData.type === 'overtime' ? '0.25' : '1'}
-                value={formData.hours}
-                onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
-                required
-                placeholder={formData.type === 'overtime' ? 'Ví dụ: 1.5' : 'Ví dụ: 2'}
-                style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
-              />
-            </div>
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày *</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                    required
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  />
+                </div>
 
-            <button type="submit" className="login-button" style={{marginTop:8, width:'100%', padding:'12px'}}>
-              Thêm
-            </button>
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ca *</label>
+                  <select
+                    value={formData.shift}
+                    onChange={(e) => setFormData(prev => ({ ...prev, shift: e.target.value }))}
+                    required
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  >
+                    <option value="">-- Chọn ca --</option>
+                    <option value="sang">Ca sáng</option>
+                    <option value="trua">Ca trưa</option>
+                    <option value="toi">Ca tối</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Loại *</label>
+                  <div style={{display:'flex', gap:16}}>
+                    <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                      <input
+                        type="radio"
+                        name="type"
+                        value="overtime"
+                        checked={formData.type === 'overtime'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                      />
+                      <span>Tăng ca</span>
+                    </label>
+                    <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                      <input
+                        type="radio"
+                        name="type"
+                        value="late"
+                        checked={formData.type === 'late'}
+                        onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                      />
+                      <span>Đi trễ</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>
+                    {formData.type === 'overtime' ? 'Số giờ tăng ca *' : 'Số lần đi trễ *'}
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step={formData.type === 'overtime' ? '0.25' : '1'}
+                    value={formData.hours}
+                    onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
+                    required
+                    placeholder={formData.type === 'overtime' ? 'Ví dụ: 1.5' : 'Ví dụ: 2'}
+                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                  />
+                </div>
+
+                <div style={{display:'flex', gap:12, marginTop:8}}>
+                  <button type="submit" className="login-button" style={{flex:1, padding:'12px'}}>
+                    Thêm
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => {
+                      setShowForm(false);
+                      setFormData({
+                        staffName: '',
+                        date: new Date().toISOString().split('T')[0],
+                        shift: '',
+                        type: 'overtime',
+                        hours: 0
+                      });
+                    }}
+                    style={{flex:1, padding:'12px', background:'#6b7a86', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600}}
+                  >
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
-        </form>
+        )}
 
         {records.length > 0 && (
           <div style={{marginTop:24}}>
