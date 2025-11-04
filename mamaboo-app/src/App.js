@@ -370,6 +370,12 @@ function NhanVien() {
     return { background: colors[type] || '#eef5ff', color: text[type] || '#1c222f', padding: '6px 10px', borderRadius: 999, fontWeight: 600, fontSize: 14 };
   };
 
+  const formatDate = (dateStr) => {
+    // Format từ YYYY-MM-DD sang DD/MM/YYYY
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+  };
+
   return (
     <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
       <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
@@ -392,7 +398,7 @@ function NhanVien() {
               }}>
                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}>
                   <div style={{fontWeight:700, color:'#2b4c66'}}>{r.weekday}</div>
-                  <div style={{opacity:0.8}}>{r.date}</div>
+                  <div style={{opacity:0.8}}>{formatDate(r.date)}</div>
                 </div>
                 <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
                   {r.shifts.map((s, idx) => (
