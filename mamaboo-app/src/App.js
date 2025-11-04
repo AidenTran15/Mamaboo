@@ -636,8 +636,8 @@ function Admin() {
         <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
 
         <div style={{display:'flex', justifyContent:'center', gap:12, marginBottom:16}}>
-          <button className="login-button" onClick={() => navigate('/checklist-report')}>
-            📋 Xem báo cáo checklist
+          <button className="login-button" onClick={() => navigate('/checklist-report')} style={{ margin: '0 24px', padding: '12px 36px' }}>
+            Xem báo cáo checklist
           </button>
         </div>
 
