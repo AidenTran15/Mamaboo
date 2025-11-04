@@ -2839,12 +2839,6 @@ function PenaltyManagement() {
     }
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm('Bạn có chắc muốn xóa bản ghi này?')) return;
-    const updatedRecords = records.filter(r => r.id !== id);
-    setRecords(updatedRecords);
-    localStorage.setItem('penaltyRecords', JSON.stringify(updatedRecords));
-  };
 
   if (loading) {
     return (
@@ -3052,7 +3046,6 @@ function PenaltyManagement() {
                     <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Mức độ phạt</th>
                     <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ngày phạt</th>
                     <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Lý do phạt</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3066,7 +3059,7 @@ function PenaltyManagement() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={5} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
+                          <td colSpan={4} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
                             Không có dữ liệu phù hợp với bộ lọc
                           </td>
                         </tr>
@@ -3079,15 +3072,6 @@ function PenaltyManagement() {
                         <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>Mức {record.penaltyLevel}</td>
                         <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
                         <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.reason}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
-                          <button
-                            type="button"
-                            onClick={() => handleDelete(record.id)}
-                            style={{padding:'6px 12px', background:'#e67e22', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:'14px'}}
-                          >
-                            Xóa
-                          </button>
-                        </td>
                       </tr>
                     ));
                   })()}
