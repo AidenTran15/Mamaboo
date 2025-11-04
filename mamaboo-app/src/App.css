@@ -133,12 +133,15 @@ body, html, #root, .login-page {
 /* Responsive tweaks for mobile */
 @media (max-width: 600px) {
   .login-page {
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
   }
   .login-container {
-    width: calc(100vw - 24px) !important;
-    padding: 16px 14px 20px;
-    margin: 16px 12px 24px;
+    width: calc(100vw - 40px);
+    max-width: 400px;
+    padding: 28px 20px 24px;
+    margin: 0 auto;
   }
   .login-title { font-size: 1.6rem; }
   .login-underline { margin-bottom: 16px; }
