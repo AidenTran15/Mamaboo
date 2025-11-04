@@ -444,7 +444,51 @@ function Admin() {
   const [monthData, setMonthData] = useState([]); // [{date: 'YYYY-MM-DD', sang:[], trua:[], toi:[]}] hiện tại tháng
   const [monthEdit, setMonthEdit] = useState([]);
   // State cho tăng ca và đi trễ: { [year-month]: { [name]: { overtime: 0, lateCount: 0 } } }
+  // Tính lại từ records để đảm bảo đúng chu kỳ lương
+  const rebuildOvertimeDataFromRecords = () => {
+    try {
+      const saved = localStorage.getItem('overtimeRecords');
+      const records = saved ? JSON.parse(saved) : [];
+      const data = {};
+      
+      records.forEach(record => {
+        // Tính chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
+        const [y, m, d] = record.date.split('-').map(Number);
+        let periodMonth = m;
+        let periodYear = y;
+        if (d < 15) {
+          // Thuộc chu kỳ tháng trước
+          if (m === 1) {
+            periodMonth = 12;
+            periodYear = y - 1;
+          } else {
+            periodMonth = m - 1;
+          }
+        }
+        const monthKey = `${periodYear}-${periodMonth}`;
+        
+        if (!data[monthKey]) data[monthKey] = {};
+        if (!data[monthKey][record.staffName]) data[monthKey][record.staffName] = { overtime: 0, lateCount: 0 };
+        
+        if (record.type === 'overtime') {
+          data[monthKey][record.staffName].overtime = (data[monthKey][record.staffName].overtime || 0) + record.hours;
+        } else {
+          data[monthKey][record.staffName].lateCount = (data[monthKey][record.staffName].lateCount || 0) + record.hours;
+        }
+      });
+      
+      return data;
+    } catch {
+      return {};
+    }
+  };
+  
   const [overtimeData, setOvertimeData] = useState(() => {
+    const fromRecords = rebuildOvertimeDataFromRecords();
+    // Nếu có dữ liệu từ records, dùng nó. Nếu không, dùng dữ liệu cũ
+    if (Object.keys(fromRecords).length > 0) {
+      return fromRecords;
+    }
     try {
       const saved = localStorage.getItem('overtimeData');
       return saved ? JSON.parse(saved) : {};
@@ -553,6 +597,37 @@ function Admin() {
   }, [roster, year, month]);
 
   React.useEffect(() => { rebuildMonthData(); }, [rebuildMonthData]);
+  
+  // Rebuild overtimeData từ records mỗi khi component mount hoặc khi localStorage thay đổi
+  React.useEffect(() => {
+    const rebuilt = rebuildOvertimeDataFromRecords();
+    setOvertimeData(rebuilt);
+    localStorage.setItem('overtimeData', JSON.stringify(rebuilt));
+    
+    // Listen for storage changes từ OvertimeManagement
+    const handleStorageChange = () => {
+      const rebuilt = rebuildOvertimeDataFromRecords();
+      setOvertimeData(rebuilt);
+    };
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also check periodically (trong trường hợp localStorage change không trigger storage event trong cùng tab)
+    const interval = setInterval(() => {
+      const rebuilt = rebuildOvertimeDataFromRecords();
+      const currentStr = JSON.stringify(overtimeData);
+      const rebuiltStr = JSON.stringify(rebuilt);
+      if (currentStr !== rebuiltStr) {
+        setOvertimeData(rebuilt);
+        localStorage.setItem('overtimeData', JSON.stringify(rebuilt));
+      }
+    }, 2000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
   const prevMonth = () => { const m = month - 1; if (m < 0) { setMonth(11); setYear(y => y-1); } else setMonth(m); };
@@ -791,10 +866,10 @@ function Admin() {
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(totalSalary).toLocaleString('vi-VN')}</td>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
-                                <span>{staffData.overtime}</span>
+                                <span>{Number(staffData.overtime) || 0}</span>
                               </td>
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
-                                <span>{staffData.lateCount}</span>
+                                <span>{Number(staffData.lateCount) || 0}</span>
                               </td>
                             </tr>
                           );
@@ -1910,8 +1985,22 @@ function OvertimeManagement() {
     localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
 
     // Cập nhật overtimeData để tương thích với code cũ
-    const [y, m] = formData.date.split('-').map(Number);
-    const monthKey = `${y}-${m}`;
+    // Tính chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
+    // Nếu ngày < 15: thuộc chu kỳ tháng trước (bắt đầu từ 15 tháng trước)
+    // Nếu ngày >= 15: thuộc chu kỳ tháng hiện tại (bắt đầu từ 15 tháng này)
+    const [y, m, d] = formData.date.split('-').map(Number);
+    let periodMonth = m;
+    let periodYear = y;
+    if (d < 15) {
+      // Thuộc chu kỳ tháng trước
+      if (m === 1) {
+        periodMonth = 12;
+        periodYear = y - 1;
+      } else {
+        periodMonth = m - 1;
+      }
+    }
+    const monthKey = `${periodYear}-${periodMonth}`;
     const newData = { ...overtimeData };
     if (!newData[monthKey]) newData[monthKey] = {};
     if (!newData[monthKey][formData.staffName]) newData[monthKey][formData.staffName] = { overtime: 0, lateCount: 0 };
@@ -1921,7 +2010,33 @@ function OvertimeManagement() {
     } else {
       newData[monthKey][formData.staffName].lateCount = (newData[monthKey][formData.staffName].lateCount || 0) + formData.hours;
     }
-    localStorage.setItem('overtimeData', JSON.stringify(newData));
+    // Rebuild lại từ tất cả records để đảm bảo đúng
+    const allRecords = [...updatedRecords];
+    const rebuiltData = {};
+    allRecords.forEach(record => {
+      const [y, m, d] = record.date.split('-').map(Number);
+      let periodMonth = m;
+      let periodYear = y;
+      if (d < 15) {
+        if (m === 1) {
+          periodMonth = 12;
+          periodYear = y - 1;
+        } else {
+          periodMonth = m - 1;
+        }
+      }
+      const monthKey = `${periodYear}-${periodMonth}`;
+      
+      if (!rebuiltData[monthKey]) rebuiltData[monthKey] = {};
+      if (!rebuiltData[monthKey][record.staffName]) rebuiltData[monthKey][record.staffName] = { overtime: 0, lateCount: 0 };
+      
+      if (record.type === 'overtime') {
+        rebuiltData[monthKey][record.staffName].overtime = (rebuiltData[monthKey][record.staffName].overtime || 0) + record.hours;
+      } else {
+        rebuiltData[monthKey][record.staffName].lateCount = (rebuiltData[monthKey][record.staffName].lateCount || 0) + record.hours;
+      }
+    });
+    localStorage.setItem('overtimeData', JSON.stringify(rebuiltData));
 
     // Reset form và đóng form
     setFormData({
@@ -1941,6 +2056,33 @@ function OvertimeManagement() {
     const updatedRecords = records.filter(r => r.id !== id);
     setRecords(updatedRecords);
     localStorage.setItem('overtimeRecords', JSON.stringify(updatedRecords));
+    
+    // Rebuild lại overtimeData từ records còn lại
+    const rebuiltData = {};
+    updatedRecords.forEach(record => {
+      const [y, m, d] = record.date.split('-').map(Number);
+      let periodMonth = m;
+      let periodYear = y;
+      if (d < 15) {
+        if (m === 1) {
+          periodMonth = 12;
+          periodYear = y - 1;
+        } else {
+          periodMonth = m - 1;
+        }
+      }
+      const monthKey = `${periodYear}-${periodMonth}`;
+      
+      if (!rebuiltData[monthKey]) rebuiltData[monthKey] = {};
+      if (!rebuiltData[monthKey][record.staffName]) rebuiltData[monthKey][record.staffName] = { overtime: 0, lateCount: 0 };
+      
+      if (record.type === 'overtime') {
+        rebuiltData[monthKey][record.staffName].overtime = (rebuiltData[monthKey][record.staffName].overtime || 0) + record.hours;
+      } else {
+        rebuiltData[monthKey][record.staffName].lateCount = (rebuiltData[monthKey][record.staffName].lateCount || 0) + record.hours;
+      }
+    });
+    localStorage.setItem('overtimeData', JSON.stringify(rebuiltData));
   };
 
   const getShiftName = (shift) => {
