@@ -80,6 +80,98 @@ function MultiSelectDropdown({ options, value, onChange, placeholder = 'Chọn n
   );
 }
 
+// Simple single-select dropdown for filtering by employee
+function StaffFilterDropdown({ options, value, onChange, placeholder = 'Lọc theo nhân viên' }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const normalized = (s) => (s || '').toString().toLowerCase();
+  const filtered = options.filter(o => normalized(o).includes(normalized(query)));
+
+  const toggle = () => setOpen(o => !o);
+  const handleSelect = (name) => {
+    onChange(name);
+    setOpen(false);
+    setQuery('');
+  };
+  const handleClear = () => {
+    onChange('');
+    setOpen(false);
+    setQuery('');
+  };
+
+  // close when clicking outside
+  React.useEffect(() => {
+    const handler = (e) => {
+      if (!e.target.closest) return;
+      if (!e.target.closest('.staff-filter-root')) setOpen(false);
+    };
+    window.addEventListener('click', handler);
+    return () => window.removeEventListener('click', handler);
+  }, []);
+
+  const label = value || placeholder;
+
+  return (
+    <div className="staff-filter-root" style={{ position: 'relative', minWidth: 200 }}>
+      <button type="button" className="login-button" style={{
+        width: '100%', background:'#fff', color:'#1c222f', border:'1px solid #d6e9f5',
+        borderRadius:8, padding:'6px 8px', textAlign:'left', fontWeight:500
+      }} onClick={(e)=>{e.stopPropagation(); toggle();}}>
+        {label}
+        <span style={{float:'right', opacity:0.6}}>▾</span>
+      </button>
+      {open && (
+        <div style={{ position:'absolute', zIndex:1000, left:0, right:0, marginTop:6,
+          background:'#fff', border:'1px solid #d6e9f5', borderRadius:10,
+          boxShadow:'0 8px 26px rgba(0,0,0,0.08)', padding:8 }}
+          onClick={(e)=>e.stopPropagation()}
+        >
+          <input
+            placeholder="Tìm nhân viên..."
+            value={query}
+            onChange={(e)=>setQuery(e.target.value)}
+            style={{ width:'100%', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, marginBottom:8 }}
+            onClick={(e)=>e.stopPropagation()}
+          />
+          <div style={{ maxHeight:180, overflow:'auto', paddingRight:4 }}>
+            {value && (
+              <div 
+                style={{ padding:'8px 4px', cursor:'pointer', color:'#e67e22', fontWeight:600, borderBottom:'1px solid #eef5fa', marginBottom:4 }}
+                onClick={handleClear}
+              >
+                ✕ Xóa lọc
+              </div>
+            )}
+            {options.length === 0 ? (
+              <div style={{padding:'6px 2px', color:'#8a97a8'}}>Đang tải danh sách nhân viên...</div>
+            ) : filtered.length === 0 ? (
+              <div style={{padding:'6px 2px', color:'#8a97a8'}}>Không có kết quả</div>
+            ) : null}
+            {filtered.map(name => (
+              <div 
+                key={name} 
+                style={{ 
+                  padding:'8px 4px', 
+                  cursor:'pointer',
+                  background: value === name ? '#e9f8ef' : 'transparent',
+                  borderRadius:4,
+                  fontWeight: value === name ? 600 : 400
+                }}
+                onClick={()=>handleSelect(name)}
+                onMouseEnter={(e)=>e.target.style.background = value === name ? '#e9f8ef' : '#f5f9fc'}
+                onMouseLeave={(e)=>e.target.style.background = value === name ? '#e9f8ef' : 'transparent'}
+              >
+                {name}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LoginForm() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -635,7 +727,12 @@ function Admin() {
               <input type="date" value={ckFrom} onChange={(e)=>setCkFrom(e.target.value)} />
               <span>đến</span>
               <input type="date" value={ckTo} onChange={(e)=>setCkTo(e.target.value)} />
-              <input placeholder="Lọc theo nhân viên" value={ckUser} onChange={(e)=>setCkUser(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+              <StaffFilterDropdown 
+                options={staffs} 
+                value={ckUser} 
+                onChange={setCkUser}
+                placeholder="Lọc theo nhân viên"
+              />
               <button type="button" className="login-button" onClick={fetchChecklist} disabled={ckLoading}>
                 {ckLoading ? 'Đang tải...' : 'Tải checklist'}
               </button>
@@ -1175,6 +1272,7 @@ function ChecklistReport() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [filterUser, setFilterUser] = useState('');
+  const [staffs, setStaffs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -1186,6 +1284,10 @@ function ChecklistReport() {
       if (fromDate) url.searchParams.set('from', fromDate);
       if (toDate) url.searchParams.set('to', toDate);
       if (filterUser) url.searchParams.set('user', filterUser);
+      
+      console.log('=== FETCHING CHECKLIST ===');
+      console.log('Filter user:', filterUser);
+      console.log('URL:', url.toString());
       
       const res = await fetch(url.toString());
       const text = await res.text();
@@ -1208,6 +1310,21 @@ function ChecklistReport() {
       
       let fetched = Array.isArray(data.items) ? data.items : [];
       
+      // Client-side filter để đảm bảo filter hoạt động (nếu API không filter đúng)
+      if (filterUser) {
+        const beforeFilter = fetched.length;
+        fetched = fetched.filter(item => {
+          const itemUser = (item.user || '').toString().trim();
+          const filterUserTrim = filterUser.trim();
+          const matches = itemUser === filterUserTrim || itemUser.toLowerCase() === filterUserTrim.toLowerCase();
+          if (!matches && beforeFilter > 0) {
+            console.log(`Filtering out item: user="${itemUser}" (doesn't match "${filterUserTrim}")`);
+          }
+          return matches;
+        });
+        console.log(`Client-side filter: ${beforeFilter} items before, ${fetched.length} items after filtering by "${filterUser}"`);
+      }
+      
       // Log first item to check tasks structure
       if (fetched.length > 0) {
         console.log('First item sample:', {
@@ -1226,6 +1343,8 @@ function ChecklistReport() {
             };
           })() : null
         });
+      } else {
+        console.log('No items found after filtering');
       }
       
       setItems(fetched);
@@ -1238,6 +1357,48 @@ function ChecklistReport() {
   };
 
   React.useEffect(() => {
+    // Fetch danh sách nhân viên
+    (async () => {
+      try {
+        console.log('Fetching staff list from:', STAFF_API);
+        const rs = await fetch(STAFF_API);
+        const rsText = await rs.text();
+        console.log('Staff API response text length:', rsText.length);
+        console.log('Staff API response (first 500 chars):', rsText.substring(0, 500));
+        
+        let parsed = {};
+        try { 
+          parsed = JSON.parse(rsText); 
+          if (typeof parsed.body === 'string') {
+            console.log('Parsing body as string...');
+            parsed = JSON.parse(parsed.body);
+          }
+        } catch (parseErr) {
+          console.error('Error parsing staff response:', parseErr);
+          parsed = {};
+        }
+        
+        console.log('Parsed staff data:', parsed);
+        console.log('Parsed keys:', Object.keys(parsed));
+        
+        const itemsStaff = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.items) ? parsed.items : []);
+        console.log('Items staff count:', itemsStaff.length);
+        
+        const list = [];
+        itemsStaff.forEach(s => {
+          const name = (s.Name || s.User_Name || s.name || s['Tên'] || '').toString().trim();
+          if (!name) return;
+          list.push(name);
+        });
+        
+        console.log('Staff list after processing:', list);
+        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+      } catch (e) {
+        console.error('Error fetching staff list:', e);
+        alert('Không thể tải danh sách nhân viên. Vui lòng kiểm tra console để xem chi tiết.');
+      }
+    })();
+
     // Auto-fetch với current pay period
     const today = new Date();
     const y = today.getFullYear();
@@ -1268,6 +1429,14 @@ function ChecklistReport() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only on mount - fetch initial data
 
+  // Auto-fetch khi filterUser thay đổi (nếu đã có date range)
+  React.useEffect(() => {
+    if (fromDate && toDate) {
+      fetchChecklist();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterUser]); // Auto-fetch khi filter user thay đổi
+
   const getWeekdayVi = (dateStr) => {
     const [yy, mm, dd] = dateStr.split('-').map(Number);
     const d = new Date(yy, mm - 1, dd);
@@ -1290,7 +1459,12 @@ function ChecklistReport() {
           <input type="date" value={fromDate} onChange={(e)=>setFromDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
           <span>đến</span>
           <input type="date" value={toDate} onChange={(e)=>setToDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
-          <input placeholder="Lọc theo nhân viên" value={filterUser} onChange={(e)=>setFilterUser(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+          <StaffFilterDropdown 
+            options={staffs} 
+            value={filterUser} 
+            onChange={setFilterUser}
+            placeholder="Lọc theo nhân viên"
+          />
           <button className="login-button" onClick={fetchChecklist} disabled={loading}>
             {loading ? 'Đang tải...' : 'Tải dữ liệu'}
           </button>
