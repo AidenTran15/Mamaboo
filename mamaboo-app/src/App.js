@@ -445,8 +445,31 @@ function Admin() {
   const [ckLoading, setCkLoading] = useState(false);
   const [ckItems, setCkItems] = useState([]);
   const today = new Date();
-  const [year, setYear] = useState(today.getFullYear());
-  const [month, setMonth] = useState(today.getMonth()); // 0-11
+  // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 14 tháng sau
+  // Nếu ngày hiện tại < 15: chu kỳ là tháng trước (ví dụ: 4/11 → chu kỳ 10-11)
+  // Nếu ngày hiện tại >= 15: chu kỳ là tháng hiện tại (ví dụ: 20/11 → chu kỳ 11-12)
+  const getCurrentPayPeriod = () => {
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
+    const currentDay = today.getDate();
+    
+    if (currentDay < 15) {
+      // Thuộc chu kỳ tháng trước
+      if (currentMonth === 0) {
+        // Tháng 1 → chu kỳ 12 năm trước
+        return { year: currentYear - 1, month: 11 };
+      } else {
+        return { year: currentYear, month: currentMonth - 1 };
+      }
+    } else {
+      // Thuộc chu kỳ tháng hiện tại
+      return { year: currentYear, month: currentMonth };
+    }
+  };
+  
+  const currentPeriod = getCurrentPayPeriod();
+  const [year, setYear] = useState(currentPeriod.year);
+  const [month, setMonth] = useState(currentPeriod.month); // 0-11
   const [monthData, setMonthData] = useState([]); // [{date: 'YYYY-MM-DD', sang:[], trua:[], toi:[]}] hiện tại tháng
   const [monthEdit, setMonthEdit] = useState([]);
   // State cho tăng ca và đi trễ: { [year-month]: { [name]: { overtime: 0, lateCount: 0 } } }
