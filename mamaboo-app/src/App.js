@@ -1009,9 +1009,59 @@ function Admin() {
         </div>
 
         <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
-          <button className="login-button" style={{width:120}} onClick={prevMonth}>{'← Tháng trước'}</button>
-          <div style={{fontWeight:700, color:'#1c222f'}}>{monthLabel}</div>
-          <button className="login-button" style={{width:120}} onClick={nextMonth}>{'Tháng sau →'}</button>
+          <button 
+            onClick={prevMonth}
+            style={{ 
+              background: '#6c9bdc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 20px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 140,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#5a8bc8';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#6c9bdc';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            ← Tháng trước
+          </button>
+          <div style={{fontWeight:700, color:'#1c222f', fontSize:'16px'}}>{monthLabel}</div>
+          <button 
+            onClick={nextMonth}
+            style={{ 
+              background: '#6c9bdc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 20px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 140,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#5a8bc8';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#6c9bdc';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            Tháng sau →
+          </button>
         </div>
 
         <h3 style={{alignSelf:'flex-start', margin:'8px 0 6px'}}>Lịch phân ca theo tháng</h3>
