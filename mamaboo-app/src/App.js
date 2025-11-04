@@ -2010,12 +2010,19 @@ function OvertimeManagement() {
     setSubmitting(true);
 
     try {
+      // Ensure hours is a number (support decimals)
+      const hoursValue = parseFloat(formData.hours);
+      if (isNaN(hoursValue) || hoursValue <= 0) {
+        alert('Số giờ/lần phải là số dương!');
+        return;
+      }
+
       const recordData = {
         staffName: formData.staffName,
         date: formData.date,
         shift: formData.shift,
         type: formData.type,
-        hours: Number(formData.hours)
+        hours: hoursValue  // Use parseFloat to preserve decimals
       };
 
       let newRecord;
@@ -2332,11 +2339,11 @@ function OvertimeManagement() {
                   <input
                     type="number"
                     min="0"
-                    step={formData.type === 'overtime' ? '0.25' : '1'}
+                    step="0.25"
                     value={formData.hours}
                     onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
                     required
-                    placeholder={formData.type === 'overtime' ? 'Ví dụ: 1.5' : 'Ví dụ: 2'}
+                    placeholder={formData.type === 'overtime' ? 'Ví dụ: 1.5' : 'Ví dụ: 0.5, 1.5'}
                     style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
                   />
                 </div>

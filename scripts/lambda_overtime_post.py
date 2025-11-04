@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from datetime import datetime, timezone
+from decimal import Decimal
 
 """
 Lambda POST overtime records
@@ -75,28 +76,45 @@ def lambda_handler(event, context):
             return _response(400, {'error': f'shift must be one of: {", ".join(ALLOWED_SHIFTS)}'})
         if record_type not in ALLOWED_TYPES:
             return _response(400, {'error': f'type must be one of: {", ".join(ALLOWED_TYPES)}'})
-        if not isinstance(hours, (int, float)) or hours <= 0:
+        # Validate and convert hours to number (support both int and float)
+        try:
+            hours_num = float(hours) if hours is not None else None
+        except (ValueError, TypeError):
+            hours_num = None
+        
+        if hours_num is None or hours_num <= 0:
             return _response(400, {'error': 'hours must be a positive number'})
 
         # Generate unique ID (timestamp)
         record_id = str(int(datetime.now(timezone.utc).timestamp() * 1000))
         createdAt = datetime.now(timezone.utc).isoformat() + 'Z'
 
-        # Create record
+        # Create record - convert to Decimal for DynamoDB (preserves decimal precision)
         item = {
             'id': record_id,
             'staffName': staff_name,
             'date': date_str,
             'shift': shift,
             'type': record_type,
-            'hours': int(hours) if isinstance(hours, float) and hours.is_integer() else hours,
+            'hours': Decimal(str(hours_num)),  # Convert to Decimal for DynamoDB compatibility
             'createdAt': createdAt
         }
 
         # Save to DynamoDB
         table.put_item(Item=item)
 
-        return _response(200, {'item': item, 'ok': True})
+        # Convert Decimal back to float for JSON response
+        response_item = {
+            'id': item['id'],
+            'staffName': item['staffName'],
+            'date': item['date'],
+            'shift': item['shift'],
+            'type': item['type'],
+            'hours': float(item['hours']),  # Convert Decimal to float for JSON
+            'createdAt': item['createdAt']
+        }
+
+        return _response(200, {'item': response_item, 'ok': True})
 
     except Exception as e:
         print(f'Error: {e}')
