@@ -922,9 +922,10 @@ function Admin() {
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
         <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
 
-        <div style={{display:'flex', justifyContent:'center', gap:16, marginBottom:24, flexWrap:'wrap'}}>
+        <div className="admin-buttons-container" style={{display:'flex', justifyContent:'center', gap:16, marginBottom:24, flexWrap:'wrap'}}>
           <button 
             onClick={() => navigate('/checklist-report')} 
+            className="admin-nav-button"
             style={{ 
               background: '#6c9bdc',
               color: '#fff',
@@ -953,6 +954,7 @@ function Admin() {
           
           <button 
             onClick={() => navigate('/overtime-management')} 
+            className="admin-nav-button"
             style={{ 
               background: '#6c9bdc',
               color: '#fff',
@@ -981,6 +983,7 @@ function Admin() {
           
           <button 
             onClick={() => navigate('/penalty-management')} 
+            className="admin-nav-button"
             style={{ 
               background: '#6c9bdc',
               color: '#fff',
@@ -1008,9 +1011,10 @@ function Admin() {
           </button>
         </div>
 
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
+        <div className="admin-date-nav" style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
           <button 
             onClick={prevMonth}
+            className="admin-date-button"
             style={{ 
               background: '#6c9bdc',
               color: '#fff',
@@ -1035,9 +1039,10 @@ function Admin() {
           >
             ← Tháng trước
           </button>
-          <div style={{fontWeight:700, color:'#1c222f', fontSize:'16px'}}>{monthLabel}</div>
+          <div className="admin-month-label" style={{fontWeight:700, color:'#1c222f', fontSize:'16px'}}>{monthLabel}</div>
           <button 
             onClick={nextMonth}
+            className="admin-date-button"
             style={{ 
               background: '#6c9bdc',
               color: '#fff',
