@@ -1931,6 +1931,8 @@ function OvertimeManagement() {
   });
   const [records, setRecords] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [filterStaff, setFilterStaff] = useState(''); // Filter theo nhân viên
+  const [filterType, setFilterType] = useState(''); // Filter theo loại: 'overtime', 'late', hoặc '' (tất cả)
 
   // Fetch records từ API hoặc localStorage
   React.useEffect(() => {
@@ -2365,8 +2367,45 @@ function OvertimeManagement() {
           </div>
         )}
 
+        {/* Filter section */}
         {records.length > 0 && (
-          <div style={{marginTop:24}}>
+          <div style={{marginTop:24, marginBottom:16}}>
+            <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo nhân viên:</label>
+                <StaffFilterDropdown 
+                  options={staffs} 
+                  value={filterStaff} 
+                  onChange={setFilterStaff}
+                  placeholder="Tất cả nhân viên"
+                />
+              </div>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo loại:</label>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  style={{
+                    padding:'8px 12px',
+                    border:'1px solid #e6eef5',
+                    borderRadius:8,
+                    fontSize:'14px',
+                    minWidth:140,
+                    background:'#fff',
+                    cursor:'pointer'
+                  }}
+                >
+                  <option value="">Tất cả</option>
+                  <option value="overtime">Tăng ca</option>
+                  <option value="late">Đi trễ</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {records.length > 0 && (
+          <div style={{marginTop:records.length > 0 ? 0 : 24}}>
             <h3 style={{marginBottom:16, color:'#1c222f'}}>Danh sách đã thêm</h3>
             <div className="roster-scroll">
               <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
@@ -2381,28 +2420,47 @@ function OvertimeManagement() {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((record) => (
-                    <tr key={record.id} style={{background:'#fff'}}>
-                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
-                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
-                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{getShiftName(record.shift)}</td>
-                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
-                        {record.type === 'overtime' ? 'Tăng ca' : 'Đi trễ'}
-                      </td>
-                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>
-                        {record.hours}
-                      </td>
-                      <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(record.id)}
-                          style={{padding:'6px 12px', background:'#e67e22', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:'14px'}}
-                        >
-                          Xóa
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {(() => {
+                    // Filter records
+                    const filtered = records.filter(record => {
+                      if (filterStaff && record.staffName !== filterStaff) return false;
+                      if (filterType && record.type !== filterType) return false;
+                      return true;
+                    });
+                    
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={6} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
+                            Không có dữ liệu phù hợp với bộ lọc
+                          </td>
+                        </tr>
+                      );
+                    }
+                    
+                    return filtered.map((record) => (
+                      <tr key={record.id} style={{background:'#fff'}}>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{getShiftName(record.shift)}</td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                          {record.type === 'overtime' ? 'Tăng ca' : 'Đi trễ'}
+                        </td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>
+                          {record.hours}
+                        </td>
+                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(record.id)}
+                            style={{padding:'6px 12px', background:'#e67e22', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:'14px'}}
+                          >
+                            Xóa
+                          </button>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
                 </tbody>
               </table>
             </div>
