@@ -289,6 +289,33 @@ function NhanVien() {
   });
 
   const handleCheckIn = (dateStr, type) => {
+    try {
+      const user = localStorage.getItem('userName') || '';
+      const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+      const startedAtIso = tzNow.toISOString();
+      const checkKey = `${user}__${dateStr}__${type}`;
+      const status = JSON.parse(localStorage.getItem('checkinStatus') || '{}');
+      status[checkKey] = { startedAt: startedAtIso };
+      localStorage.setItem('checkinStatus', JSON.stringify(status));
+
+      // Fire-and-forget: Save startedAt to backend as 'bat_dau'
+      try {
+        const CHECKLIST_API = 'https://5q97j7q6ce.execute-api.ap-southeast-2.amazonaws.com/prod/';
+        const payload = {
+          user,
+          date: dateStr,
+          shift: type,
+          tasks: {},
+          checklistType: 'bat_dau',
+          startedAt: startedAtIso
+        };
+        fetch(CHECKLIST_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(() => {});
+      } catch {}
+    } catch {}
     // Chuyển đến trang checklist
     navigate(`/checkin?date=${encodeURIComponent(dateStr)}&shift=${encodeURIComponent(type)}`);
   };
@@ -1529,7 +1556,8 @@ function Checkin() {
       date: dateStr, 
       shift, 
       tasks: tasksMap, 
-      checklistType: 'ket_ca' // Lưu với type 'ket_ca' khi bấm "Kết ca"
+      checklistType: 'ket_ca', // Lưu với type 'ket_ca' khi bấm "Kết ca"
+      startedAt: (() => { try { return (JSON.parse(localStorage.getItem('checkinStatus') || '{}'))[`${userName}__${dateStr}__${shift}`]?.startedAt || null; } catch { return null; } })()
     };
     
     // Log payload size (truncate for readability)
@@ -1727,6 +1755,18 @@ function Checkin() {
         <h2 className="login-title" style={{color:'#43a8ef', alignSelf:'center'}}>Checklist ca làm việc</h2>
         <div className="login-underline" style={{ background: '#43a8ef', alignSelf:'center' }}></div>
         <div style={{textAlign:'center', marginBottom:16}}>Ngày {dateStr} · {shift === 'sang' ? 'Ca sáng' : shift === 'trua' ? 'Ca trưa' : 'Ca tối'}</div>
+        {(() => {
+          const key = `${userName}__${dateStr}__${shift}`;
+          const status = (() => { try { return JSON.parse(localStorage.getItem('checkinStatus') || '{}'); } catch { return {}; } })();
+          const startedAt = status[key]?.startedAt;
+          if (!startedAt) return null;
+          const vnTime = new Date(startedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          return (
+            <div style={{marginBottom:10, padding:10, background:'#fff6e5', border:'1px solid #ffe0b2', borderRadius:8, color:'#8d6e63'}}>
+              Bắt đầu lúc: <strong>{vnTime}</strong>
+            </div>
+          );
+        })()}
         <div style={{marginBottom:12, padding:12, background:'#e9f8ef', borderRadius:8, color:'#1e7e34'}}>
           <strong>📋 Checklist các công việc cần làm trong ca:</strong>
         </div>

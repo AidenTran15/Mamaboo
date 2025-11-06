@@ -259,7 +259,7 @@ def lambda_handler(event, context):
             Key=key,
             UpdateExpression=(
                 'SET #date = :date, #shift = :shift, #tasks = :tasks, #checklistType = :checklistType, #updatedAt = :updatedAt, '
-                '#createdAt = if_not_exists(#createdAt, :updatedAt)'
+                '#createdAt = if_not_exists(#createdAt, :updatedAt), #startedAt = if_not_exists(#startedAt, :startedAt)'
             ),
             ExpressionAttributeNames={
                 '#date': 'date',
@@ -267,14 +267,16 @@ def lambda_handler(event, context):
                 '#tasks': 'tasks',
                 '#checklistType': 'checklistType',
                 '#updatedAt': 'updatedAt',
-                '#createdAt': 'createdAt'
+                '#createdAt': 'createdAt',
+                '#startedAt': 'startedAt'
             },
             ExpressionAttributeValues={
                 ':date': date,
                 ':shift': shift,
                 ':tasks': tasks,
                 ':checklistType': checklist_type,
-                ':updatedAt': now_iso
+                ':updatedAt': now_iso,
+                ':startedAt': (body.get('startedAt') if isinstance(body, dict) and body.get('startedAt') else now_iso)
             },
             ReturnValues='ALL_NEW'
         )
