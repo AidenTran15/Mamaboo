@@ -556,9 +556,10 @@ function Admin() {
     })();
   }, []);
   
-  // Penalty rates: mức 1 = 50k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
+  // Penalty rates: mức 0 = 0k (nhắc nhở), mức 1 = 40k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
   const PENALTY_RATES = {
-    '1': 50000,
+    '0': 0,
+    '1': 40000,
     '2': 80000,
     '3': 100000,
     '4': 150000,
@@ -1302,17 +1303,29 @@ function Checkin() {
   // Checklist các task cần làm trong ca (theo từng ca)
   const SHIFT_TASK_TEMPLATES = {
     sang: [
-      { id: 'setup bàn tiếp khách, quầy thu ngân', label: 'setup bàn tiếp khách, quầy thu ngân' },
+      { id: 'Lau chùi quầy pha chế', label: 'Lau chùi quầy pha chế' },
+      { id: ' Set up bàn tiếp khách, quầy thu ngân', label: 'Set up bàn tiếp khách, quầy thu ngân' },
       { id: 'Quét và lau sàn', label: 'Quét và lau sàn' },
+      { id: 'Set up khu vực cashier', label: 'Set up khu vực cashier' },
+      { id: 'Setup bàn ghế ngay ngắn, khăn bàn (khu vực trong và ngoài trời)', label: 'Setup bàn ghế ngay ngắn, khăn bàn (khu vực trong và ngoài trời)' },
+      { id: 'Tưới cây', label: 'Tưới cây' }, // không cần upload ảnh
+      { id: 'Quét sân', label: 'Quét sân' },
       { id: 'Kiểm tra nhà vệ sinh', label: 'Kiểm tra nhà vệ sinh' },
-      { id: 'set up khu vực cashier', label: 'set up khu vực cashier' },
-      { id: 'Chuẩn bị nguyên liệu cho ca sáng', label: 'Chuẩn bị nguyên liệu cho ca sáng' }
+      { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
+      { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
+      { id: 'Bật nhạc, đèn, điều hòa/quạt ', label: 'Bật nhạc, đèn, điều hòa/quạt' }, // không cần upload ảnh
+      { id: 'Đốt nhang, pha bạc sỉu để cúng (A)', label: 'Đốt nhang, pha bạc sỉu để cúng (A)' },
+      { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ' } // không cần upload ảnh
     ],
     trua: [
-      { id: 'stock_mid', label: 'Bổ sung nguyên liệu giữa ca' },
-      { id: 'wc_mid', label: 'Vệ sinh nhà vệ sinh giữa ca' },
-      { id: 'bar_mid', label: 'Vệ sinh quầy Barista giữa ca' },
-      { id: 'check_orders', label: 'Kiểm tra đơn hàng và tồn kho' }
+      { id: 'Set up khu vực cashier', label: 'Set up khu vực cashier' },
+      { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
+      { id: 'Kiểm tra nhà vệ sinh', label: 'Kiểm tra nhà vệ sinh' },
+      { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
+      { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
+      { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
+      { id: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)', label: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)' }, // không cần upload ảnh
+
     ],
     toi: [
       { id: 'Đổ rác', label: 'Đổ rác' },
@@ -1320,9 +1333,13 @@ function Checkin() {
       { id: 'Chà bồn cầu', label: 'Chà bồn cầu' },
       { id: 'Chà lababo', label: 'Chà lababo' },
       { id: 'Cắm sạc loa', label: 'Cắm sạc loa' },
-      { id: 'Dắt xe', label: 'Dắt xe' },
       { id: 'Giặt cây lau nhà', label: 'Giặt cây lau nhà' },
       { id: 'Kiểm tra két', label: 'Kiểm tra két' },
+      { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
+      { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
+      { id: 'Khoá cửa', label: 'Khoá cửa' },
+      { id: 'Dắt xe', label: 'Dắt xe' },
+      { id: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ', label: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ' }
     ]
   };
 
@@ -2909,6 +2926,22 @@ function PenaltyManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Penalty rates: mức 0 = 0k (nhắc nhở), mức 1 = 40k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
+  const PENALTY_RATES = {
+    '0': 0,
+    '1': 40000,
+    '2': 80000,
+    '3': 100000,
+    '4': 150000,
+    '5': 200000
+  };
+
+  // Format penalty rate to display (e.g., 40000 -> "40k")
+  const formatPenaltyRate = (rate) => {
+    if (rate === 0) return '';
+    return `${rate / 1000}k`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.staffName || !formData.penaltyLevel || !formData.date || !formData.reason.trim()) {
@@ -3125,11 +3158,16 @@ function PenaltyManagement() {
                     style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
                   >
                     <option value="">-- Chọn mức độ --</option>
-                    <option value="1">Mức 1</option>
-                    <option value="2">Mức 2</option>
-                    <option value="3">Mức 3</option>
-                    <option value="4">Mức 4</option>
-                    <option value="5">Mức 5</option>
+                    {Object.entries(PENALTY_RATES)
+                      .sort(([a], [b]) => Number(a) - Number(b))
+                      .map(([level, rate]) => (
+                        <option key={level} value={level}>
+                          {level === '0' 
+                            ? 'Mức 0 (nhắc nhở)'
+                            : `Mức ${level} - ${formatPenaltyRate(rate)}`
+                          }
+                        </option>
+                      ))}
                   </select>
                 </div>
 
@@ -3229,14 +3267,20 @@ function PenaltyManagement() {
                       );
                     }
                     
-                    return filtered.map((record) => (
-                      <tr key={record.id} style={{background:'#fff'}}>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>Mức {record.penaltyLevel}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.reason}</td>
-                      </tr>
-                    ));
+                    return filtered.map((record) => {
+                      const penaltyRate = PENALTY_RATES[record.penaltyLevel] || 0;
+                      const penaltyLabel = record.penaltyLevel === '0' 
+                        ? 'Mức 0 (nhắc nhở)'
+                        : `Mức ${record.penaltyLevel} - ${formatPenaltyRate(penaltyRate)}`;
+                      return (
+                        <tr key={record.id} style={{background:'#fff'}}>
+                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
+                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{penaltyLabel}</td>
+                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
+                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.reason}</td>
+                        </tr>
+                      );
+                    });
                   })()}
                 </tbody>
               </table>

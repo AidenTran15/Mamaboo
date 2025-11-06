@@ -11,7 +11,7 @@ Query parameters (all optional):
 - staffName: filter by staff name
 - from: inclusive start date YYYY-MM-DD
 - to  : inclusive end date YYYY-MM-DD
-- penaltyLevel: filter by penalty level (1|2|3|4|5)
+- penaltyLevel: filter by penalty level (0|1|2|3|4|5, 0 = nhắc nhở)
 
 Returns all records sorted by date (newest first).
 """
@@ -22,7 +22,7 @@ REGION = os.getenv('AWS_REGION', 'ap-southeast-2')
 dynamodb = boto3.resource('dynamodb', region_name=REGION)
 table = dynamodb.Table(TABLE_NAME)
 
-ALLOWED_PENALTY_LEVELS = {'1', '2', '3', '4', '5'}
+ALLOWED_PENALTY_LEVELS = {'0', '1', '2', '3', '4', '5'}
 
 
 def convert_decimal(obj):
