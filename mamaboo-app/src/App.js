@@ -296,34 +296,7 @@ function NhanVien() {
   }, []);
 
   const handleCheckIn = (dateStr, type) => {
-    try {
-      const user = localStorage.getItem('userName') || '';
-      const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-      const startedAtIso = tzNow.toISOString();
-      // Không lưu checkinStatus vào localStorage nữa để tránh vượt quota
-      // const checkKey = `${user}__${dateStr}__${type}`;
-      // const status = JSON.parse(localStorage.getItem('checkinStatus') || '{}');
-      // status[checkKey] = { startedAt: startedAtIso };
-      // localStorage.setItem('checkinStatus', JSON.stringify(status));
-
-      // Fire-and-forget: Save startedAt to backend as 'bat_dau'
-      try {
-        const CHECKLIST_API = 'https://5q97j7q6ce.execute-api.ap-southeast-2.amazonaws.com/prod/';
-        const payload = {
-          user,
-          date: dateStr,
-          shift: type,
-          tasks: {},
-          checklistType: 'bat_dau',
-          startedAt: startedAtIso
-        };
-        fetch(CHECKLIST_API, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(() => {});
-      } catch {}
-    } catch {}
+    // Không gửi "bat_dau" lên DynamoDB nữa, chỉ gửi "ket_ca" khi kết ca
     // Chuyển đến trang checklist
     navigate(`/checkin?date=${encodeURIComponent(dateStr)}&shift=${encodeURIComponent(type)}`);
   };
