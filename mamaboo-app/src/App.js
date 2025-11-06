@@ -3389,7 +3389,8 @@ function PenaltyManagement() {
                 boxShadow:'0 3px 14px rgba(0,0,0,0.06)', 
                 margin:'0 auto', 
                 width:'100%',
-                minWidth: isMobile ? 600 : 'auto'
+                minWidth: isMobile ? 600 : 'auto',
+                tableLayout: 'fixed'
               }}>
                 <thead>
                   <tr style={{background:'#f7fafc'}}>
@@ -3412,7 +3413,10 @@ function PenaltyManagement() {
                     <th style={{
                       padding: isMobile ? '10px 6px' : '12px 8px', 
                       borderBottom:'1px solid #eaeef2',
-                      fontSize: isMobile ? '13px' : '14px'
+                      fontSize: isMobile ? '13px' : '14px',
+                      maxWidth: isMobile ? '200px' : '300px',
+                      wordWrap: 'break-word',
+                      overflowWrap: 'break-word'
                     }}>Lý do phạt</th>
                   </tr>
                 </thead>
@@ -3464,7 +3468,10 @@ function PenaltyManagement() {
                             borderBottom:'1px solid #f1f4f7',
                             fontSize: isMobile ? '13px' : '14px',
                             wordBreak: 'break-word',
-                            maxWidth: isMobile ? '200px' : 'none'
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            whiteSpace: 'normal',
+                            maxWidth: isMobile ? '200px' : '300px'
                           }}>{record.reason}</td>
                         </tr>
                       );
