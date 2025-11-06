@@ -2956,6 +2956,16 @@ function PenaltyManagement() {
   const [records, setRecords] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [filterStaff, setFilterStaff] = useState(''); // Filter theo nhân viên
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 600);
+  
+  // Track window size for responsive design
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 600);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch penalty records từ API hoặc localStorage
   React.useEffect(() => {
@@ -3146,8 +3156,15 @@ function PenaltyManagement() {
   }
 
   return (
-    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
-      <div className="login-container" style={{width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32}}>
+    <div className="login-page" style={{justifyContent:'center', alignItems:'center', padding:'16px'}}>
+      <div className="login-container" style={{
+        width: '100%', 
+        maxWidth: 900, 
+        marginTop: 16, 
+        marginBottom: 16,
+        marginLeft: 'auto',
+        marginRight: 'auto'
+      }}>
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý hình phạt</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
@@ -3323,31 +3340,76 @@ function PenaltyManagement() {
         {/* Filter section */}
         {records.length > 0 && (
           <div style={{marginTop:24, marginBottom:16}}>
-            <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
-              <div style={{display:'flex', alignItems:'center', gap:8}}>
-                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo nhân viên:</label>
-                <StaffFilterDropdown 
-                  options={staffs} 
-                  value={filterStaff} 
-                  onChange={setFilterStaff}
-                  placeholder="Tất cả nhân viên"
-                />
+            <div style={{
+              display:'flex', 
+              gap:12, 
+              flexWrap:'wrap',
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'stretch' : 'center'
+            }}>
+              <div style={{
+                display:'flex', 
+                alignItems:'center', 
+                gap:8,
+                flexDirection: isMobile ? 'column' : 'row',
+                width: isMobile ? '100%' : 'auto'
+              }}>
+                <label style={{
+                  fontWeight:600, 
+                  color:'#2b4c66', 
+                  fontSize:'14px',
+                  marginBottom: isMobile ? 8 : 0,
+                  width: isMobile ? '100%' : 'auto'
+                }}>Lọc theo nhân viên:</label>
+                <div style={{width: isMobile ? '100%' : 'auto', minWidth: 200}}>
+                  <StaffFilterDropdown 
+                    options={staffs} 
+                    value={filterStaff} 
+                    onChange={setFilterStaff}
+                    placeholder="Tất cả nhân viên"
+                  />
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {records.length > 0 && (
-          <div style={{marginTop:records.length > 0 ? 0 : 24}}>
-            <h3 style={{marginBottom:16, color:'#1c222f'}}>Danh sách đã thêm</h3>
-            <div className="roster-scroll">
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', width:'100%' }}>
+          <div style={{marginTop:records.length > 0 ? 0 : 24, width:'100%', overflowX:'auto'}}>
+            <h3 style={{marginBottom:16, color:'#1c222f', fontSize: isMobile ? '18px' : '20px'}}>Danh sách đã thêm</h3>
+            <div className="roster-scroll" style={{width:'100%', overflowX:'auto'}}>
+              <table className="roster-table" style={{ 
+                borderCollapse: 'separate', 
+                borderSpacing:0, 
+                borderRadius:10, 
+                boxShadow:'0 3px 14px rgba(0,0,0,0.06)', 
+                margin:'0 auto', 
+                width:'100%',
+                minWidth: isMobile ? 600 : 'auto'
+              }}>
                 <thead>
                   <tr style={{background:'#f7fafc'}}>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Mức độ phạt</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ngày phạt</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Lý do phạt</th>
+                    <th style={{
+                      padding: isMobile ? '10px 6px' : '12px 8px', 
+                      borderBottom:'1px solid #eaeef2', 
+                      textAlign:'left',
+                      fontSize: isMobile ? '13px' : '14px'
+                    }}>Nhân viên</th>
+                    <th style={{
+                      padding: isMobile ? '10px 6px' : '12px 8px', 
+                      borderBottom:'1px solid #eaeef2',
+                      fontSize: isMobile ? '13px' : '14px'
+                    }}>Mức độ phạt</th>
+                    <th style={{
+                      padding: isMobile ? '10px 6px' : '12px 8px', 
+                      borderBottom:'1px solid #eaeef2',
+                      fontSize: isMobile ? '13px' : '14px'
+                    }}>Ngày phạt</th>
+                    <th style={{
+                      padding: isMobile ? '10px 6px' : '12px 8px', 
+                      borderBottom:'1px solid #eaeef2',
+                      fontSize: isMobile ? '13px' : '14px'
+                    }}>Lý do phạt</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -3375,10 +3437,31 @@ function PenaltyManagement() {
                         : `Mức ${record.penaltyLevel} - ${formatPenaltyRate(penaltyRate)}`;
                       return (
                         <tr key={record.id} style={{background:'#fff'}}>
-                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
-                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{penaltyLabel}</td>
-                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
-                          <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.reason}</td>
+                          <td style={{
+                            padding: isMobile ? '8px 6px' : '10px 8px', 
+                            borderBottom:'1px solid #f1f4f7', 
+                            fontWeight:600,
+                            fontSize: isMobile ? '13px' : '14px'
+                          }}>{record.staffName}</td>
+                          <td style={{
+                            padding: isMobile ? '8px 6px' : '10px 8px', 
+                            borderBottom:'1px solid #f1f4f7', 
+                            textAlign:'center', 
+                            fontWeight:600,
+                            fontSize: isMobile ? '12px' : '14px'
+                          }}>{penaltyLabel}</td>
+                          <td style={{
+                            padding: isMobile ? '8px 6px' : '10px 8px', 
+                            borderBottom:'1px solid #f1f4f7',
+                            fontSize: isMobile ? '13px' : '14px'
+                          }}>{record.date}</td>
+                          <td style={{
+                            padding: isMobile ? '8px 6px' : '10px 8px', 
+                            borderBottom:'1px solid #f1f4f7',
+                            fontSize: isMobile ? '13px' : '14px',
+                            wordBreak: 'break-word',
+                            maxWidth: isMobile ? '200px' : 'none'
+                          }}>{record.reason}</td>
                         </tr>
                       );
                     });
