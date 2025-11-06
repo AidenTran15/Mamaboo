@@ -3156,7 +3156,11 @@ function PenaltyManagement() {
   }
 
   return (
-    <div className="login-page" style={{justifyContent:'center', alignItems:'center', padding:'16px'}}>
+    <div className="login-page" style={{
+      justifyContent:'center', 
+      alignItems:'center', 
+      padding: isMobile ? '16px 24px' : '16px 48px'
+    }}>
       <div className="login-container" style={{
         width: '100%', 
         maxWidth: 900, 
