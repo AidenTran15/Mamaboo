@@ -261,8 +261,10 @@ function LoginForm() {
 function NhanVien() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState([]); // [{date, weekday, shifts:[{text,type,canCheckOut}], isToday}]
+  const [refreshKey, setRefreshKey] = useState(0); // Key để force reload
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
 
@@ -284,19 +286,25 @@ function NhanVien() {
     return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= end.getTime();
   };
 
-  const [checkinStatus, setCheckinStatus] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('checkinStatus') || '{}'); } catch { return {}; }
-  });
+  // Không lưu checkinStatus vào localStorage nữa để tránh vượt quota
+  // Chỉ lưu danh sách các ca đã kết vào 'checkinDone' (chỉ lưu key, rất nhẹ)
+  // Xóa checkinStatus cũ để giải phóng dung lượng
+  React.useEffect(() => {
+    try {
+      localStorage.removeItem('checkinStatus');
+    } catch {}
+  }, []);
 
   const handleCheckIn = (dateStr, type) => {
     try {
       const user = localStorage.getItem('userName') || '';
       const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
       const startedAtIso = tzNow.toISOString();
-      const checkKey = `${user}__${dateStr}__${type}`;
-      const status = JSON.parse(localStorage.getItem('checkinStatus') || '{}');
-      status[checkKey] = { startedAt: startedAtIso };
-      localStorage.setItem('checkinStatus', JSON.stringify(status));
+      // Không lưu checkinStatus vào localStorage nữa để tránh vượt quota
+      // const checkKey = `${user}__${dateStr}__${type}`;
+      // const status = JSON.parse(localStorage.getItem('checkinStatus') || '{}');
+      // status[checkKey] = { startedAt: startedAtIso };
+      // localStorage.setItem('checkinStatus', JSON.stringify(status));
 
       // Fire-and-forget: Save startedAt to backend as 'bat_dau'
       try {
@@ -357,8 +365,18 @@ function NhanVien() {
           // Cho phép hiển thị nút bắt đầu ca cho TẤT CẢ các ca để test (bỏ điều kiện thời gian và ngày)
           const canCheckIn = true; // Hiển thị nút cho tất cả ca để test
           const canCheckOut = true; // Cho phép kết ca cho tất cả
-          const hasCheckedIn = !!checkinStatus[key];
-          const hasCheckedOut = !!checkinStatus[key + '_done'];
+          const hasCheckedIn = false; // Không track nữa
+          // Đọc từ localStorage
+          let doneSet = new Set();
+          try {
+            const saved = localStorage.getItem('checkinDone');
+            if (saved) doneSet = new Set(JSON.parse(saved));
+          } catch {}
+          const hasCheckedOut = doneSet.has(key);
+          // Debug: log để kiểm tra
+          if (hasCheckedOut) {
+            console.log('Ca đã kết:', key);
+          }
           return { text, type, canCheckIn, canCheckOut, hasCheckedIn, hasCheckedOut };
         };
 
@@ -382,7 +400,7 @@ function NhanVien() {
       }
     })();
     return () => { mounted = false; };
-  }, [userName, checkinStatus]);
+  }, [userName, location.pathname, refreshKey]); // Reload khi quay lại trang hoặc refreshKey thay đổi
 
   React.useEffect(() => {
     const el = document.getElementById('today-card');
@@ -390,6 +408,25 @@ function NhanVien() {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, [rows.length]);
+
+  // Force reload khi quay lại trang từ checklist
+  React.useEffect(() => {
+    // Mỗi khi location thay đổi về /nhan-vien, force reload
+    if (location.pathname === '/nhan-vien') {
+      // Force reload bằng cách tăng refreshKey
+      setRefreshKey(prev => prev + 1);
+    }
+  }, [location.pathname]);
+
+  // Thêm listener để reload khi window focus (khi quay lại tab)
+  React.useEffect(() => {
+    const handleFocus = () => {
+      // Reload khi quay lại tab
+      setRefreshKey(prev => prev + 1);
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
 
   const chipStyle = (type) => {
     const colors = { sang: '#e9f8ef', trua: '#fff5e5', toi: '#f3eaff' };
@@ -1557,7 +1594,7 @@ function Checkin() {
       shift, 
       tasks: tasksMap, 
       checklistType: 'ket_ca', // Lưu với type 'ket_ca' khi bấm "Kết ca"
-      startedAt: (() => { try { return (JSON.parse(localStorage.getItem('checkinStatus') || '{}'))[`${userName}__${dateStr}__${shift}`]?.startedAt || null; } catch { return null; } })()
+      startedAt: null // Không lưu checkinStatus vào localStorage nữa, để null
     };
     
     // Log payload size (truncate for readability)
@@ -1735,12 +1772,64 @@ function Checkin() {
         alert('Đã kết ca và lưu checklist!');
       }
       
-      // Đánh dấu đã bắt đầu ca và đã kết ca
+      // Lưu trạng thái đã kết ca (chỉ lưu key, rất nhẹ)
+      // Giới hạn chỉ lưu các ca trong 30 ngày gần nhất để tránh vượt quota
       const checkKey = `${userName}__${dateStr}__${shift}`;
-      const status = JSON.parse(localStorage.getItem('checkinStatus') || '{}');
-      status[checkKey] = { startedAt: new Date().toISOString() };
-      status[checkKey + '_done'] = { doneAt: new Date().toISOString() };
-      localStorage.setItem('checkinStatus', JSON.stringify(status));
+      try {
+        // Xóa checkinStatus cũ để giải phóng dung lượng
+        try {
+          localStorage.removeItem('checkinStatus');
+        } catch {}
+        
+        // Đọc từ localStorage
+        let doneSet = new Set();
+        try {
+          const saved = localStorage.getItem('checkinDone');
+          if (saved) doneSet = new Set(JSON.parse(saved));
+        } catch {}
+        
+        // Xóa các ca cũ hơn 30 ngày để giải phóng dung lượng
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const filteredKeys = Array.from(doneSet).filter(key => {
+          // Key format: userName__YYYY-MM-DD__shift
+          const parts = key.split('__');
+          if (parts.length !== 3) return false;
+          const keyDateStr = parts[1];
+          try {
+            const [y, m, d] = keyDateStr.split('-').map(Number);
+            const keyDate = new Date(y, m - 1, d);
+            return keyDate >= thirtyDaysAgo;
+          } catch {
+            return false;
+          }
+        });
+        doneSet = new Set(filteredKeys);
+        
+        // Thêm ca mới
+        doneSet.add(checkKey);
+        
+        // Lưu vào localStorage (chỉ lưu array các key, rất nhẹ)
+        localStorage.setItem('checkinDone', JSON.stringify(Array.from(doneSet)));
+        console.log('Đã lưu checkinDone:', checkKey, 'Tổng số ca đã kết:', doneSet.size);
+      } catch (e) {
+        console.warn('Không thể lưu checkinDone:', e);
+        // Nếu vẫn vượt quota, thử xóa tất cả và chỉ lưu ca hiện tại
+        try {
+          // Xóa tất cả dữ liệu cũ trước
+          try {
+            localStorage.removeItem('checkinDone');
+            localStorage.removeItem('checkinStatus');
+          } catch {}
+          const minimalSet = new Set([checkKey]);
+          localStorage.setItem('checkinDone', JSON.stringify(Array.from(minimalSet)));
+          console.log('Đã lưu checkinDone (minimal, đã xóa dữ liệu cũ):', checkKey);
+        } catch (e2) {
+          console.error('Không thể lưu checkinDone ngay cả với minimal set:', e2);
+          // Không lưu vào localStorage nữa, nhưng vẫn navigate về để user thấy đã lưu
+          // Trạng thái sẽ không được lưu, nhưng ít nhất checklist đã được lưu vào backend
+        }
+      }
       
       navigate('/nhan-vien');
     } catch (e) {
@@ -1755,18 +1844,7 @@ function Checkin() {
         <h2 className="login-title" style={{color:'#43a8ef', alignSelf:'center'}}>Checklist ca làm việc</h2>
         <div className="login-underline" style={{ background: '#43a8ef', alignSelf:'center' }}></div>
         <div style={{textAlign:'center', marginBottom:16}}>Ngày {dateStr} · {shift === 'sang' ? 'Ca sáng' : shift === 'trua' ? 'Ca trưa' : 'Ca tối'}</div>
-        {(() => {
-          const key = `${userName}__${dateStr}__${shift}`;
-          const status = (() => { try { return JSON.parse(localStorage.getItem('checkinStatus') || '{}'); } catch { return {}; } })();
-          const startedAt = status[key]?.startedAt;
-          if (!startedAt) return null;
-          const vnTime = new Date(startedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-          return (
-            <div style={{marginBottom:10, padding:10, background:'#fff6e5', border:'1px solid #ffe0b2', borderRadius:8, color:'#8d6e63'}}>
-              Bắt đầu lúc: <strong>{vnTime}</strong>
-            </div>
-          );
-        })()}
+        {/* Không hiển thị giờ bắt đầu ca nữa vì không lưu vào localStorage */}
         <div style={{marginBottom:12, padding:12, background:'#e9f8ef', borderRadius:8, color:'#1e7e34'}}>
           <strong>📋 Checklist các công việc cần làm trong ca:</strong>
         </div>
