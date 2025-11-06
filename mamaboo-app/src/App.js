@@ -1308,14 +1308,14 @@ function Checkin() {
       { id: 'Quét và lau sàn', label: 'Quét và lau sàn' },
       { id: 'Set up khu vực cashier', label: 'Set up khu vực cashier' },
       { id: 'Setup bàn ghế ngay ngắn, khăn bàn (khu vực trong và ngoài trời)', label: 'Setup bàn ghế ngay ngắn, khăn bàn (khu vực trong và ngoài trời)' },
-      { id: 'Tưới cây', label: 'Tưới cây' }, // không cần upload ảnh
+      { id: 'Tưới cây', label: 'Tưới cây', requiresImage: false },
       { id: 'Quét sân', label: 'Quét sân' },
       { id: 'Kiểm tra nhà vệ sinh', label: 'Kiểm tra nhà vệ sinh' },
       { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
       { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
-      { id: 'Bật nhạc, đèn, điều hòa/quạt ', label: 'Bật nhạc, đèn, điều hòa/quạt' }, // không cần upload ảnh
-      { id: 'Đốt nhang, pha bạc sỉu để cúng (A)', label: 'Đốt nhang, pha bạc sỉu để cúng (A)' },
-      { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ' } // không cần upload ảnh
+      { id: 'Bật nhạc, đèn, điều hòa/quạt ', label: 'Bật nhạc, đèn, điều hòa/quạt', requiresImage: false },
+      { id: 'Đốt nhang, pha bạc sỉu để cúng', label: 'Đốt nhang, pha bạc sỉu để cúng' },
+      { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ', requiresImage: false }
     ],
     trua: [
       { id: 'Set up khu vực cashier', label: 'Set up khu vực cashier' },
@@ -1324,7 +1324,7 @@ function Checkin() {
       { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
       { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
-      { id: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)', label: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)' }, // không cần upload ảnh
+      { id: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)', label: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)', requiresImage: false },
 
     ],
     toi: [
@@ -1355,10 +1355,11 @@ function Checkin() {
       return defaultTasks.map(t => ({
         ...t,
         done: !!(saved.tasks?.[t.id]?.done),
-        image: saved.tasks?.[t.id]?.image || ''
+        image: saved.tasks?.[t.id]?.image || '',
+        requiresImage: t.requiresImage !== false // Giữ lại thuộc tính requiresImage từ template
       }));
     } catch {
-      return defaultTasks.map(t => ({ ...t, done: false, image: '' }));
+      return defaultTasks.map(t => ({ ...t, done: false, image: '', requiresImage: t.requiresImage !== false }));
     }
   });
 
@@ -1507,9 +1508,13 @@ function Checkin() {
       imageLength: tasksMap[k].imageUrl ? tasksMap[k].imageUrl.length : 0
     })));
     
-    // Count tasks with valid images
-    const tasksWithImages = Object.values(tasksMap).filter(t => t.imageUrl && t.imageUrl.length > 100).length;
-    console.log(`Tổng số tasks: ${tasks.length}, Tasks có ảnh hợp lệ: ${tasksWithImages}`);
+    // Count tasks with valid images (chỉ đếm các task yêu cầu ảnh)
+    const tasksRequiringImages = tasks.filter(t => t.requiresImage !== false);
+    const tasksWithImages = tasksRequiringImages.filter(t => {
+      const taskData = tasksMap[t.id];
+      return taskData && taskData.imageUrl && taskData.imageUrl.length > 100;
+    }).length;
+    console.log(`Tổng số tasks: ${tasks.length}, Tasks yêu cầu ảnh: ${tasksRequiringImages.length}, Tasks có ảnh hợp lệ: ${tasksWithImages}`);
     
     // Kiểm tra xem có task nào chưa hoàn thành không (không bắt buộc)
     const allDone = tasks.every(t => t.done);
@@ -1565,11 +1570,12 @@ function Checkin() {
       
       console.log('✅ Lưu checklist thành công!');
       console.log('Response data:', data);
-      const tasksWithImagesCount = Object.keys(tasksMap).filter(k => {
-        const t = tasksMap[k];
-        return t.imageUrl && t.imageUrl.length > 100;
+      // Chỉ đếm các task yêu cầu ảnh
+      const tasksWithImagesCount = tasksRequiringImages.filter(t => {
+        const taskData = tasksMap[t.id];
+        return taskData && taskData.imageUrl && taskData.imageUrl.length > 100;
       }).length;
-      console.log('Payload tasks có ảnh:', tasksWithImagesCount, '/', Object.keys(tasksMap).length);
+      console.log('Payload tasks có ảnh:', tasksWithImagesCount, '/', tasksRequiringImages.length, '(tổng tasks:', tasks.length, ')');
       
       // Verify: Fetch lại từ DynamoDB để xác nhận ảnh đã được lưu
       if (tasksWithImagesCount > 0) {
@@ -1660,19 +1666,21 @@ function Checkin() {
             })));
             
             let verifiedImages = 0;
-            for (const [taskId, taskData] of Object.entries(savedTasks)) {
+            // Chỉ verify các task yêu cầu ảnh
+            for (const task of tasksRequiringImages) {
+              const taskData = savedTasks[task.id];
               if (taskData && typeof taskData === 'object') {
                 const imgUrl = taskData.imageUrl || taskData.image || '';
-                console.log(`Verify task ${taskId}: imageUrl length=${imgUrl.length}, type=${typeof imgUrl}`);
+                console.log(`Verify task ${task.id}: imageUrl length=${imgUrl.length}, type=${typeof imgUrl}`);
                 if (imgUrl && imgUrl.length > 100) {
                   verifiedImages++;
-                  console.log(`✅ Verified task ${taskId}: image saved, length=${imgUrl.length}`);
+                  console.log(`✅ Verified task ${task.id}: image saved, length=${imgUrl.length}`);
                 } else {
-                  console.warn(`⚠ Task ${taskId}: imageUrl empty or too short (length=${imgUrl.length})`);
+                  console.warn(`⚠ Task ${task.id}: imageUrl empty or too short (length=${imgUrl.length})`);
                   console.warn(`  Task data:`, taskData);
                 }
               } else {
-                console.warn(`⚠ Task ${taskId}: taskData is not an object, type=${typeof taskData}`, taskData);
+                console.warn(`⚠ Task ${task.id}: taskData is not an object, type=${typeof taskData}`, taskData);
               }
             }
             
@@ -1730,12 +1738,14 @@ function Checkin() {
                   <input type="checkbox" checked={t.done} onChange={()=>toggleTask(t.id)} />
                   <span style={{fontWeight:600}}>{t.label}</span>
                 </label>
-                <div style={{display:'flex', alignItems:'center', gap:10}}>
-                  <label style={{cursor:'pointer', padding:'6px 12px', background:'#43a8ef', color:'#fff', borderRadius:6, fontSize:'0.9em'}}>
-                    Upload ảnh
-                    <input type="file" accept="image/*" onChange={(e)=>onUpload(t.id, e.target.files?.[0])} style={{display:'none'}} />
-                  </label>
-                </div>
+                {t.requiresImage !== false && (
+                  <div style={{display:'flex', alignItems:'center', gap:10}}>
+                    <label style={{cursor:'pointer', padding:'6px 12px', background:'#43a8ef', color:'#fff', borderRadius:6, fontSize:'0.9em'}}>
+                      Upload ảnh
+                      <input type="file" accept="image/*" onChange={(e)=>onUpload(t.id, e.target.files?.[0])} style={{display:'none'}} />
+                    </label>
+                  </div>
+                )}
               </div>
               {t.image && (
                 <div style={{marginTop:10}}>
