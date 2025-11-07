@@ -14,6 +14,163 @@ const PENALTY_GET_API = 'https://lfp8b72mc5.execute-api.ap-southeast-2.amazonaws
 const PENALTY_POST_API = 'https://1w4hxsqrtc.execute-api.ap-southeast-2.amazonaws.com/prod';
 const PENALTY_DELETE_API = 'YOUR_API_GATEWAY_URL'; // Cập nhật URL sau khi deploy Lambda DELETE
 
+// Inventory API - tạm thời dùng localStorage, có thể thay bằng API sau
+const INVENTORY_STORAGE_KEY = 'inventoryRecords';
+const INVENTORY_ALERTS_KEY = 'inventoryAlerts';
+
+// Cấu trúc dữ liệu nguyên vật liệu
+const INVENTORY_CATEGORIES = {
+  packaging: {
+    name: 'PACKAGING',
+    items: [
+      { id: 'tui-dung-ly-doi', name: 'Túi đựng ly đôi', unit: 'kg' },
+      { id: 'tui-dung-ly-don', name: 'Túi đựng ly đơn', unit: 'kg' },
+      { id: 'tui-dung-da', name: 'Túi đựng đá', unit: 'kg' },
+      { id: 'giay-nen', name: 'Giấy nến', unit: 'bịch' },
+      { id: 'ong-hut', name: 'Ống hút', unit: 'bịch' },
+      { id: 'muong', name: 'Muỗng', unit: 'bịch' },
+      { id: 'ly-500ml', name: 'Ly 500ml', unit: 'ống' },
+      { id: 'ly-700ml', name: 'Ly 700ml', unit: 'ống' },
+      { id: 'ly-1lit', name: 'Ly 1 lít', unit: 'ống' },
+      { id: 'nap-phang-sm', name: 'Nắp phẳng S,M', unit: 'ống' },
+      { id: 'nap-cau-sm', name: 'Nắp cầu S,M', unit: 'ống' },
+      { id: 'nap-cau-l', name: 'Nắp cầu L', unit: 'cái' },
+      { id: 'the-tich-diem', name: 'Thẻ tích điểm', unit: 'hộp' },
+      { id: 'bang-keo-co-dinh-ly', name: 'Băng keo cố định ly', unit: 'cuộn' }
+    ]
+  },
+  guestCheck: {
+    name: 'GUEST CHECK',
+    items: [
+      { id: 'biscoff-ca-he', name: 'Biscoff Cà Hê', unit: 'tờ' },
+      { id: 'banofee-latte', name: 'Banofee Latte', unit: 'tờ' },
+      { id: 'tiramisu-ca-he', name: 'Tiramisu Cà Hệ', unit: 'tờ' },
+      { id: 'salted-caramel-ca-he', name: 'Salted Caramel Cà Hê', unit: 'tờ' },
+      { id: 'maple-latte', name: 'Maple Latte', unit: 'tờ' },
+      { id: 'matcha-original', name: 'Matcha Original', unit: 'tờ' },
+      { id: 'matcha-chuoi-pu-di', name: 'Matcha Chúi Pú Đi', unit: 'tờ' },
+      { id: 'matcha-rim-bu-le', name: 'Matcha Rim Bù Lé', unit: 'tờ' },
+      { id: 'matcha-phom-biec', name: 'Matcha Phom Biéc', unit: 'tờ' },
+      { id: 'matcha-e-gey', name: 'Matcha Ê Gêy', unit: 'tờ' },
+      { id: 'matcha-zau-te', name: 'Matcha Zâu Te', unit: 'tờ' },
+      { id: 'matcha-trui', name: 'Matcha Trúi', unit: 'tờ' },
+      { id: 'matcha-j97', name: 'Matcha J97', unit: 'tờ' },
+      { id: 'matcha-canada', name: 'Matcha Canada', unit: 'tờ' },
+      { id: 'matcha-thon', name: 'Matcha Thon', unit: 'tờ' },
+      { id: 'houjicha-original', name: 'Houjicha Original', unit: 'tờ' },
+      { id: 'houjicha-chuoi-pu-di', name: 'Houjicha Chúi Pú Đi', unit: 'tờ' },
+      { id: 'houjicha-phom-biec', name: 'Houjicha Phom Biéc', unit: 'tờ' },
+      { id: 'houjicha-rim-bu-le', name: 'Houjicha Rim Bù Lé', unit: 'tờ' },
+      { id: 'houjicha-e-gey', name: 'Houjicha Ê Gêy', unit: 'tờ' },
+      { id: 'houjicha-carameo', name: 'Houjicha Carameo', unit: 'tờ' },
+      { id: 'houjicha-j97', name: 'Houjicha J97', unit: 'tờ' },
+      { id: 'houjicha-canada', name: 'Houjicha Canada', unit: 'tờ' },
+      { id: 'houjicha-thon', name: 'Houjicha Thon', unit: 'tờ' },
+      { id: 'cacao-original', name: 'Cacao Original', unit: 'tờ' },
+      { id: 'cacao-chuoi-pu-di', name: 'Cacao Chúi Pú Đi', unit: 'tờ' },
+      { id: 'cacao-6-mui', name: 'Cacao 6 múi', unit: 'tờ' },
+      { id: 'cacao-pmb', name: 'Cacao PMB', unit: 'tờ' },
+      { id: 'cacao-caramel', name: 'Cacao Caramel', unit: 'tờ' },
+      { id: 'cacao-rim-bu-le', name: 'Cacao Rim Bù Lé', unit: 'tờ' },
+      { id: 'ori-makiato', name: 'Ori Makiato', unit: 'tờ' }
+    ]
+  },
+  bot: {
+    name: 'BỘT',
+    items: [
+      { id: 'matcha-thuong', name: 'Matcha Thường', unit: 'hủ' },
+      { id: 'matcha-premium', name: 'Matcha Premium', unit: 'hủ' },
+      { id: 'houjicha-thuong', name: 'Houjicha Thường', unit: 'hủ' },
+      { id: 'houjicha-premium', name: 'Houjicha Premium', unit: 'hủ' },
+      { id: 'cacao-bot', name: 'Cacao', unit: 'bịch' },
+      { id: 'ca-phe', name: 'Cà phê', unit: 'bịch' }
+    ]
+  },
+  sot: {
+    name: 'SỐT (BÁO TÌNH TRẠNG)',
+    items: [
+      { id: 'maple-syrup', name: 'Maple Syrup', unit: 'chai' },
+      { id: 'sot-dau', name: 'Sốt Dâu', unit: 'hủ' },
+      { id: 'sot-caramel', name: 'Sốt Caramel', unit: 'chai' },
+      { id: 'earl-grey', name: 'Earl Grey', unit: 'chai' },
+      { id: 'sot-lotus', name: 'Sốt Lotus', unit: 'chai' },
+      { id: 'hershey-scl', name: 'Hershey Scl', unit: 'chai' },
+      { id: 'sot-chuoi', name: 'Sốt Chuối', unit: 'hủ' },
+      { id: 'sot-tiramisu', name: 'Sốt Tiramisu', unit: 'chai' }
+    ]
+  },
+  botFoam: {
+    name: 'BỘT FOAM (BÁO TÌNH TRẠNG)',
+    items: [
+      { id: 'bot-kem-beo', name: 'Bột Kem béo', unit: 'hủ' },
+      { id: 'bot-whipping-cream', name: 'Bột Whipping Cream', unit: 'hủ' },
+      { id: 'bot-foam-pho-mai', name: 'Bột Foam Phô Mai', unit: 'hủ' },
+      { id: 'bot-milk-foam', name: 'Bột Milk Foam', unit: 'hủ' },
+      { id: 'bot-milk-foam-muoi', name: 'Bột Milk Foam Muối', unit: 'hủ' },
+      { id: 'bot-hdb', name: 'Bột HĐB', unit: 'hủ' },
+      { id: 'bot-pudding-trung', name: 'Bột Pudding Trứng', unit: 'hủ' },
+      { id: 'bot-cream-brulee', name: 'Bột Cream Brulee', unit: 'hủ' }
+    ]
+  },
+  topping: {
+    name: 'TOPPING',
+    items: [
+      { id: 'dalgona', name: 'Dalgona', unit: 'bịch' },
+      { id: 'tran-chau-dua', name: 'Trân Châu Dừa', unit: 'bịch' },
+      { id: 'panna-cotta', name: 'Panna Cotta', unit: 'hủ' },
+      { id: 'banana-pudding-combo', name: 'Banana Pudding combo (Báo tình trạng)', unit: 'hộp' }
+    ]
+  },
+  bananaPudding: {
+    name: 'Banana Pudding',
+    items: [
+      { id: 'banana-pudding-s', name: 'Banana Pudding size S', unit: 'hộp' },
+      { id: 'banana-pudding-l', name: 'Banana Pudding size L', unit: 'hộp' }
+    ]
+  },
+  sua: {
+    name: 'SỮA',
+    items: [
+      { id: 'sua-do', name: 'Sữa đỏ', unit: 'hộp' },
+      { id: 'sua-milklab-bo', name: 'Sữa Milklab Bò', unit: 'hộp' },
+      { id: 'sua-milklab-oat', name: 'Sữa Milklab Oat', unit: 'hộp' },
+      { id: 'boring-milk', name: 'Boring Milk', unit: 'hộp' },
+      { id: 'sua-dac', name: 'Sữa đặc', unit: 'hộp' },
+      { id: 'arla', name: 'Arla', unit: 'hộp' }
+    ]
+  },
+  cookies: {
+    name: 'COOKIES',
+    items: [
+      { id: 'redvelvet', name: 'Redvelvet', unit: 'cái' },
+      { id: 'double-choco', name: 'Double choco', unit: 'cái' },
+      { id: 'brownie', name: 'Brownie', unit: 'cái' },
+      { id: 'tra-xanh-pho-mai', name: 'Trà xanh Phô Mai', unit: 'cái' },
+      { id: 'salted-caramel-cookie', name: 'Salted Caramel', unit: 'cái' },
+      { id: 'ba-tuoc-vo-cam-pho-mai', name: 'Bá tước vỏ cam Phô mai', unit: 'cái' }
+    ]
+  },
+  veSinh: {
+    name: 'VỆ SINH (BÁO TÌNH TRẠNG)',
+    items: [
+      { id: 'xa-bong-rua-tay', name: 'Xà bông rửa tay', unit: 'chai' },
+      { id: 'con-rua-tay', name: 'Cồn rửa tay', unit: 'chai' },
+      { id: 'nuoc-rua-chen', name: 'Nước rửa chén', unit: 'chai' },
+      { id: 'nuoc-lau-san', name: 'Nước lau sàn', unit: 'chai' },
+      { id: 'khan-giay', name: 'Khăn giấy (báo số lượng)', unit: 'bịch' },
+      { id: 'binh-xit-phong', name: 'Bình xịt phòng', unit: 'chai' }
+    ]
+  },
+  others: {
+    name: 'OTHERS (BÁO TÌNH TRẠNG)',
+    items: [
+      { id: 'nuoc-duong', name: 'Nước đường', unit: 'bình' },
+      { id: 'banh-lotus', name: 'Bánh Lotus', unit: 'gram' },
+      { id: 'oreo', name: 'Oreo (báo số lượng)', unit: 'bịch' }
+    ]
+  }
+};
+
 function ProtectedRoute({ children }) {
   const loggedIn = !!localStorage.getItem('userName');
   if (!loggedIn) {
@@ -661,33 +818,59 @@ function NhanVien() {
         <div className="login-underline" style={{ background: '#2ecc71', alignSelf:'center' }}></div>
         <div style={{textAlign: 'center', fontSize: 20, marginTop: 10, marginBottom: 16}}>Xin chào {userName ? userName : 'bạn'}!</div>
 
-        <button 
-          onClick={calculateMonthlyStats}
-          style={{
-            alignSelf: 'center',
-            marginBottom: 20,
-            padding: '12px 24px',
-            background: '#2ecc71',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 12,
-            fontSize: '16px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'all 0.2s ease',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.background = '#27ae60';
-            e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.background = '#2ecc71';
-            e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-          }}
-        >
-          Xem thống kê tháng này
-        </button>
+        <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap'}}>
+          <button 
+            onClick={calculateMonthlyStats}
+            style={{
+              padding: '12px 24px',
+              background: '#2ecc71',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#27ae60';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#2ecc71';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            Xem thống kê tháng này
+          </button>
+          
+          <button 
+            onClick={() => navigate('/inventory-check')}
+            style={{
+              padding: '12px 24px',
+              background: '#3498db',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              fontSize: '16px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#2980b9';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#3498db';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            Kiểm tra nguyên vật liệu
+          </button>
+        </div>
 
         <h3 style={{alignSelf:'center', margin:'12px 0 14px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
         {loading ? (
@@ -1192,11 +1375,9 @@ function Admin() {
         if (Object.keys(rebuilt).length > 0) {
           setOvertimeData(rebuilt);
         } else {
-          // Fallback to old overtimeData format
-          const savedOld = localStorage.getItem('overtimeData');
-          if (savedOld) {
-            setOvertimeData(JSON.parse(savedOld));
-          }
+          // Không cần fallback từ localStorage nữa vì có thể tính lại từ records
+          // Nếu records rỗng thì overtimeData cũng rỗng
+          setOvertimeData({});
         }
       } catch (e) {
         console.error('Error loading overtime data:', e);
@@ -1310,8 +1491,14 @@ function Admin() {
     if (overtimeRecords.length > 0) {
       const rebuilt = rebuildOvertimeDataFromRecords(overtimeRecords);
       setOvertimeData(rebuilt);
-      // Vẫn lưu vào localStorage để tương thích ngược
-      localStorage.setItem('overtimeData', JSON.stringify(rebuilt));
+      // Không lưu vào localStorage nữa vì có thể tính lại từ overtimeRecords
+      // và để tránh vượt quota. Nếu cần, có thể tính lại từ overtimeRecords khi load.
+      try {
+        // Thử xóa overtimeData cũ nếu có để giải phóng dung lượng
+        localStorage.removeItem('overtimeData');
+      } catch (e) {
+        // Ignore errors when removing
+      }
     }
   }, [overtimeRecords]);
 
@@ -1542,6 +1729,35 @@ function Admin() {
             }}
           >
             Quản lý hình phạt
+          </button>
+          
+          <button 
+            onClick={() => navigate('/inventory-management')} 
+            className="admin-nav-button"
+            style={{ 
+              background: '#3498db',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '16px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 180,
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#2980b9';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#3498db';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            Quản lý nguyên vật liệu
           </button>
         </div>
 
@@ -3398,6 +3614,496 @@ function OvertimeManagement() {
   );
 }
 
+// Trang kiểm tra nguyên vật liệu cho nhân viên
+function InventoryCheck() {
+  const userName = localStorage.getItem('userName');
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [lastCheckDate, setLastCheckDate] = useState('');
+
+  // Load dữ liệu kiểm tra gần nhất
+  React.useEffect(() => {
+    try {
+      const records = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY) || '[]');
+      if (records.length > 0) {
+        // Hỗ trợ cả format cũ và format mới (minimal)
+        const latest = records[0]; // Đã là bản ghi mới nhất
+        const date = latest.d || latest.date; // Hỗ trợ cả format viết tắt và đầy đủ
+        const items = latest.i || latest.items; // Hỗ trợ cả format viết tắt và đầy đủ
+        
+        setLastCheckDate(date);
+        
+        // Load giá trị từ lần kiểm tra gần nhất
+        const initialData = {};
+        Object.keys(INVENTORY_CATEGORIES).forEach(categoryKey => {
+          INVENTORY_CATEGORIES[categoryKey].items.forEach(item => {
+            // Nếu có giá trị trong items thì dùng, không thì để rỗng
+            initialData[item.id] = items && items[item.id] !== undefined ? items[item.id] : '';
+          });
+        });
+        setFormData(initialData);
+      } else {
+        // Khởi tạo form rỗng
+        const initialData = {};
+        Object.keys(INVENTORY_CATEGORIES).forEach(categoryKey => {
+          INVENTORY_CATEGORIES[categoryKey].items.forEach(item => {
+            initialData[item.id] = '';
+          });
+        });
+        setFormData(initialData);
+      }
+    } catch (e) {
+      console.error('Error loading inventory data:', e);
+    }
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    try {
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      
+      // Tối ưu: chỉ lưu các giá trị không rỗng để tiết kiệm dung lượng
+      const optimizedItems = {};
+      Object.keys(formData).forEach(key => {
+        const value = formData[key];
+        if (value !== '' && value !== null && value !== undefined) {
+          optimizedItems[key] = value;
+        }
+      });
+
+      // Tối ưu tối đa: chỉ lưu bản ghi mới nhất và tối giản dữ liệu
+      // Loại bỏ các trường không cần thiết để tiết kiệm dung lượng
+      const minimalRecord = {
+        d: dateStr, // date (viết tắt)
+        c: userName, // checkedBy (viết tắt)
+        i: optimizedItems // items (viết tắt)
+      };
+      
+      try {
+        // Xóa dữ liệu cũ trước để giải phóng dung lượng
+        try {
+          localStorage.removeItem(INVENTORY_STORAGE_KEY);
+        } catch (e) {
+          console.warn('Could not remove old data:', e);
+        }
+        
+        // Lưu chỉ bản ghi mới nhất với format tối giản
+        localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify([minimalRecord]));
+        
+        alert('Đã lưu kết quả kiểm tra nguyên vật liệu!');
+        navigate('/nhan-vien');
+      } catch (storageError) {
+        // Nếu vẫn lỗi, thử xóa các localStorage key không cần thiết khác
+        if (storageError.name === 'QuotaExceededError') {
+          console.warn('Storage quota exceeded, attempting cleanup...');
+          
+          try {
+            // Xóa các key không quan trọng để giải phóng dung lượng
+            const keysToRemove = ['checkinStatus', 'overtimeData']; // Các key có thể xóa
+            keysToRemove.forEach(key => {
+              try {
+                localStorage.removeItem(key);
+              } catch (e) {
+                console.warn(`Could not remove ${key}:`, e);
+              }
+            });
+            
+            // Thử lưu lại
+            localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify([minimalRecord]));
+            alert('Đã lưu kết quả kiểm tra nguyên vật liệu! (Đã dọn dẹp localStorage)');
+            navigate('/nhan-vien');
+          } catch (finalError) {
+            // Nếu vẫn không được, có thể dữ liệu quá lớn
+            console.error('Final error saving inventory:', finalError);
+            alert('Dữ liệu quá lớn, không thể lưu vào localStorage. Vui lòng liên hệ admin hoặc thử xóa dữ liệu cũ trong trình duyệt.');
+          }
+        } else {
+          throw storageError;
+        }
+      }
+    } catch (error) {
+      console.error('Error saving inventory:', error);
+      alert('Có lỗi xảy ra khi lưu dữ liệu! Vui lòng thử lại.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleInputChange = (itemId, value) => {
+    setFormData(prev => ({ ...prev, [itemId]: value }));
+  };
+
+  return (
+    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container" style={{width: 900, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
+        <h2 className="login-title" style={{color: '#3498db', alignSelf:'center'}}>Kiểm tra nguyên vật liệu</h2>
+        <div className="login-underline" style={{ background: '#3498db', alignSelf:'center' }}></div>
+        
+        {lastCheckDate && (
+          <div style={{textAlign: 'center', marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
+            Lần kiểm tra gần nhất: {lastCheckDate}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+          {Object.keys(INVENTORY_CATEGORIES).map(categoryKey => {
+            const category = INVENTORY_CATEGORIES[categoryKey];
+            return (
+              <div key={categoryKey} style={{
+                background: '#fff',
+                border: '1px solid #e5e7eb',
+                borderRadius: 12,
+                padding: '20px'
+              }}>
+                <h3 style={{
+                  color: '#2b4c66',
+                  marginBottom: 16,
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  borderBottom: '2px solid #3498db',
+                  paddingBottom: 8
+                }}>
+                  {category.name}
+                </h3>
+                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16}}>
+                  {category.items.map(item => (
+                    <div key={item.id} style={{display: 'flex', flexDirection: 'column', gap: 6}}>
+                      <label style={{fontSize: '14px', fontWeight: 600, color: '#2b4c66'}}>
+                        {item.name} ({item.unit})
+                      </label>
+                      <input
+                        type="text"
+                        value={formData[item.id] || ''}
+                        onChange={(e) => handleInputChange(item.id, e.target.value)}
+                        placeholder={`Nhập số lượng...`}
+                        style={{
+                          padding: '10px 12px',
+                          border: '1px solid #e6eef5',
+                          borderRadius: 8,
+                          fontSize: '14px'
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+
+          <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16}}>
+            <button
+              type="button"
+              onClick={() => navigate('/nhan-vien')}
+              style={{
+                padding: '12px 24px',
+                background: '#95a5a6',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 12,
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Hủy
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                padding: '12px 24px',
+                background: '#3498db',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 12,
+                fontSize: '16px',
+                fontWeight: 600,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                opacity: submitting ? 0.6 : 1
+              }}
+            >
+              {submitting ? 'Đang lưu...' : 'Lưu kết quả kiểm tra'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Trang quản lý nguyên vật liệu cho admin
+function InventoryManagement() {
+  const navigate = useNavigate();
+  const [inventoryRecords, setInventoryRecords] = useState([]);
+  const [alerts, setAlerts] = useState({});
+  const [editingAlert, setEditingAlert] = useState(null);
+  const [alertValue, setAlertValue] = useState('');
+
+  // Load dữ liệu
+  React.useEffect(() => {
+    try {
+      const records = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY) || '[]');
+      // Hỗ trợ cả format cũ và format mới (minimal)
+      const normalizedRecords = records.map(record => ({
+        date: record.d || record.date,
+        checkedBy: record.c || record.checkedBy,
+        items: record.i || record.items || {}
+      }));
+      setInventoryRecords(normalizedRecords.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      
+      const savedAlerts = JSON.parse(localStorage.getItem(INVENTORY_ALERTS_KEY) || '{}');
+      setAlerts(savedAlerts);
+    } catch (e) {
+      console.error('Error loading inventory data:', e);
+    }
+  }, []);
+
+  // Lấy dữ liệu mới nhất
+  const getLatestInventory = () => {
+    if (inventoryRecords.length === 0) return {};
+    return inventoryRecords[0].items || {};
+  };
+
+  const latestInventory = getLatestInventory();
+
+  // Kiểm tra alert
+  const checkAlert = (itemId) => {
+    const alertThreshold = alerts[itemId];
+    if (!alertThreshold || alertThreshold === '') return null;
+    
+    const currentValue = parseFloat(latestInventory[itemId] || 0);
+    const threshold = parseFloat(alertThreshold);
+    
+    if (isNaN(currentValue) || isNaN(threshold)) return null;
+    
+    return currentValue < threshold;
+  };
+
+  // Lưu alert
+  const saveAlert = (itemId) => {
+    const newAlerts = { ...alerts, [itemId]: alertValue };
+    setAlerts(newAlerts);
+    localStorage.setItem(INVENTORY_ALERTS_KEY, JSON.stringify(newAlerts));
+    setEditingAlert(null);
+    setAlertValue('');
+  };
+
+  // Xóa alert
+  const deleteAlert = (itemId) => {
+    const newAlerts = { ...alerts };
+    delete newAlerts[itemId];
+    setAlerts(newAlerts);
+    localStorage.setItem(INVENTORY_ALERTS_KEY, JSON.stringify(newAlerts));
+  };
+
+  return (
+    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container" style={{width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
+        <h2 className="login-title" style={{color: '#3498db'}}>Quản lý nguyên vật liệu</h2>
+        <div className="login-underline" style={{ background: '#3498db' }}></div>
+
+        {inventoryRecords.length === 0 ? (
+          <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
+            Chưa có dữ liệu kiểm tra nguyên vật liệu
+          </div>
+        ) : (
+          <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+            <div style={{background: '#f0f8ff', padding: '16px', borderRadius: 12, border: '1px solid #3498db'}}>
+              <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 4}}>Lần kiểm tra gần nhất</div>
+              <div style={{fontSize: '18px', fontWeight: 700, color: '#2b4c66'}}>
+                {inventoryRecords[0].date} - Kiểm tra bởi: {inventoryRecords[0].checkedBy}
+              </div>
+            </div>
+
+            {Object.keys(INVENTORY_CATEGORIES).map(categoryKey => {
+              const category = INVENTORY_CATEGORIES[categoryKey];
+              return (
+                <div key={categoryKey} style={{
+                  background: '#fff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: 12,
+                  padding: '20px'
+                }}>
+                  <h3 style={{
+                    color: '#2b4c66',
+                    marginBottom: 16,
+                    fontSize: '18px',
+                    fontWeight: 700,
+                    borderBottom: '2px solid #3498db',
+                    paddingBottom: 8
+                  }}>
+                    {category.name}
+                  </h3>
+                  <div style={{overflowX: 'auto'}}>
+                    <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                      <thead>
+                        <tr style={{background: '#f9fafb', borderBottom: '2px solid #e5e7eb'}}>
+                          <th style={{padding: '12px', textAlign: 'left', fontWeight: 600, color: '#2b4c66'}}>Sản phẩm</th>
+                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Đơn vị</th>
+                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Số lượng</th>
+                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
+                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
+                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {category.items.map(item => {
+                          const currentValue = latestInventory[item.id] || '';
+                          const hasAlert = checkAlert(item.id);
+                          return (
+                            <tr key={item.id} style={{
+                              borderBottom: '1px solid #f1f4f7',
+                              background: hasAlert ? '#fff5f5' : '#fff'
+                            }}>
+                              <td style={{padding: '12px', fontWeight: 600, color: '#2b4c66'}}>{item.name}</td>
+                              <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>{item.unit}</td>
+                              <td style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>
+                                {currentValue || '0'}
+                              </td>
+                              <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
+                                {alerts[item.id] ? `< ${alerts[item.id]} ${item.unit}` : '-'}
+                              </td>
+                              <td style={{padding: '12px', textAlign: 'center'}}>
+                                {hasAlert ? (
+                                  <span style={{
+                                    background: '#fee2e2',
+                                    color: '#dc2626',
+                                    padding: '4px 12px',
+                                    borderRadius: 12,
+                                    fontSize: '12px',
+                                    fontWeight: 600
+                                  }}>
+                                    ⚠️ Sắp hết hàng
+                                  </span>
+                                ) : (
+                                  <span style={{
+                                    background: '#d1fae5',
+                                    color: '#059669',
+                                    padding: '4px 12px',
+                                    borderRadius: 12,
+                                    fontSize: '12px',
+                                    fontWeight: 600
+                                  }}>
+                                    ✓ Đủ hàng
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{padding: '12px', textAlign: 'center'}}>
+                                {editingAlert === item.id ? (
+                                  <div style={{display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center'}}>
+                                    <input
+                                      type="number"
+                                      value={alertValue}
+                                      onChange={(e) => setAlertValue(e.target.value)}
+                                      placeholder="Ngưỡng"
+                                      style={{
+                                        width: '80px',
+                                        padding: '6px 8px',
+                                        border: '1px solid #e6eef5',
+                                        borderRadius: 6,
+                                        fontSize: '14px'
+                                      }}
+                                    />
+                                    <button
+                                      onClick={() => saveAlert(item.id)}
+                                      style={{
+                                        padding: '6px 12px',
+                                        background: '#3498db',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: 6,
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Lưu
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setEditingAlert(null);
+                                        setAlertValue('');
+                                      }}
+                                      style={{
+                                        padding: '6px 12px',
+                                        background: '#95a5a6',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: 6,
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      Hủy
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div style={{display: 'flex', gap: 8, justifyContent: 'center'}}>
+                                    <button
+                                      onClick={() => {
+                                        setEditingAlert(item.id);
+                                        setAlertValue(alerts[item.id] || '');
+                                      }}
+                                      style={{
+                                        padding: '6px 12px',
+                                        background: '#3498db',
+                                        color: '#fff',
+                                        border: 'none',
+                                        borderRadius: 6,
+                                        fontSize: '12px',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      {alerts[item.id] ? 'Sửa' : 'Thêm'}
+                                    </button>
+                                    {alerts[item.id] && (
+                                      <button
+                                        onClick={() => deleteAlert(item.id)}
+                                        style={{
+                                          padding: '6px 12px',
+                                          background: '#ef4444',
+                                          color: '#fff',
+                                          border: 'none',
+                                          borderRadius: 6,
+                                          fontSize: '12px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        Xóa
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div style={{marginTop: 24, display: 'flex', justifyContent: 'center'}}>
+          <button
+            onClick={() => navigate('/admin')}
+            className="login-button"
+            style={{padding: '12px 36px'}}
+          >
+            Quay lại
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   return (
     <Router>
@@ -3410,6 +4116,8 @@ function App() {
         <Route path="/checkin" element={<ProtectedRoute><Checkin /></ProtectedRoute>} />
         <Route path="/overtime-management" element={<ProtectedRoute><OvertimeManagement /></ProtectedRoute>} />
         <Route path="/penalty-management" element={<ProtectedRoute><PenaltyManagement /></ProtectedRoute>} />
+        <Route path="/inventory-check" element={<ProtectedRoute><InventoryCheck /></ProtectedRoute>} />
+        <Route path="/inventory-management" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
