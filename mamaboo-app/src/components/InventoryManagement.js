@@ -6,8 +6,9 @@ function InventoryManagement() {
   const navigate = useNavigate();
   const [inventoryRecords, setInventoryRecords] = useState([]);
   const [alerts, setAlerts] = useState({});
-  const [editingAlert, setEditingAlert] = useState(null);
-  const [alertValue, setAlertValue] = useState('');
+  const [showingInputModal, setShowingInputModal] = useState(false);
+  const [inputItemId, setInputItemId] = useState(null);
+  const [inputQuantity, setInputQuantity] = useState('');
 
   // Load dữ liệu
   React.useEffect(() => {
@@ -49,21 +50,67 @@ function InventoryManagement() {
     return currentValue < threshold;
   };
 
-  // Lưu alert
-  const saveAlert = (itemId) => {
-    const newAlerts = { ...alerts, [itemId]: alertValue };
-    setAlerts(newAlerts);
-    localStorage.setItem(INVENTORY_ALERTS_KEY, JSON.stringify(newAlerts));
-    setEditingAlert(null);
-    setAlertValue('');
+  // Xử lý nhập hàng
+  const handleInputInventory = (itemId) => {
+    setInputItemId(itemId);
+    setInputQuantity('');
+    setShowingInputModal(true);
   };
 
-  // Xóa alert
-  const deleteAlert = (itemId) => {
-    const newAlerts = { ...alerts };
-    delete newAlerts[itemId];
-    setAlerts(newAlerts);
-    localStorage.setItem(INVENTORY_ALERTS_KEY, JSON.stringify(newAlerts));
+  // Lưu số lượng nhập
+  const saveInputQuantity = () => {
+    if (!inputItemId) return;
+    
+    const quantity = parseFloat(inputQuantity);
+    if (isNaN(quantity) || quantity <= 0) {
+      alert('Vui lòng nhập số lượng hợp lệ (lớn hơn 0)');
+      return;
+    }
+
+    try {
+      // Lấy dữ liệu hiện tại
+      const records = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY) || '[]');
+      if (records.length === 0) {
+        alert('Chưa có dữ liệu kiểm tra. Vui lòng kiểm tra nguyên vật liệu trước.');
+        setShowingInputModal(false);
+        return;
+      }
+
+      // Cập nhật số lượng = số lượng hiện tại + số lượng nhập
+      const currentValue = parseFloat(latestInventory[inputItemId] || 0);
+      const newValue = currentValue + quantity;
+
+      // Cập nhật record mới nhất
+      const updatedRecords = [...records];
+      const latestRecord = { ...updatedRecords[0] };
+      const items = { ...(latestRecord.i || latestRecord.items || {}) };
+      items[inputItemId] = newValue.toString();
+      
+      latestRecord.i = items;
+      updatedRecords[0] = latestRecord;
+
+      // Lưu lại
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(updatedRecords));
+      
+      // Cập nhật state để UI refresh
+      const normalizedRecords = updatedRecords.map(record => ({
+        date: record.d || record.date,
+        checkedBy: record.c || record.checkedBy,
+        items: record.i || record.items || {}
+      }));
+      setInventoryRecords(normalizedRecords.sort((a, b) => new Date(b.date) - new Date(a.date)));
+
+      alert(`Đã nhập ${quantity} ${INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
+        INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
+      )].items.find(item => item.id === inputItemId).unit}. Tổng số lượng hiện tại: ${newValue}`);
+      
+      setShowingInputModal(false);
+      setInputItemId(null);
+      setInputQuantity('');
+    } catch (error) {
+      console.error('Error saving input quantity:', error);
+      alert('Có lỗi xảy ra khi lưu số lượng!');
+    }
   };
 
   return (
@@ -160,90 +207,20 @@ function InventoryManagement() {
                                 )}
                               </td>
                               <td style={{padding: '12px', textAlign: 'center'}}>
-                                {editingAlert === item.id ? (
-                                  <div style={{display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'center'}}>
-                                    <input
-                                      type="number"
-                                      value={alertValue}
-                                      onChange={(e) => setAlertValue(e.target.value)}
-                                      placeholder="Ngưỡng"
-                                      style={{
-                                        width: '80px',
-                                        padding: '6px 8px',
-                                        border: '1px solid #e6eef5',
-                                        borderRadius: 6,
-                                        fontSize: '14px'
-                                      }}
-                                    />
-                                    <button
-                                      onClick={() => saveAlert(item.id)}
-                                      style={{
-                                        padding: '6px 12px',
-                                        background: '#3498db',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: 6,
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Lưu
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setEditingAlert(null);
-                                        setAlertValue('');
-                                      }}
-                                      style={{
-                                        padding: '6px 12px',
-                                        background: '#95a5a6',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: 6,
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      Hủy
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div style={{display: 'flex', gap: 8, justifyContent: 'center'}}>
-                                    <button
-                                      onClick={() => {
-                                        setEditingAlert(item.id);
-                                        setAlertValue(alerts[item.id] || '');
-                                      }}
-                                      style={{
-                                        padding: '6px 12px',
-                                        background: '#3498db',
-                                        color: '#fff',
-                                        border: 'none',
-                                        borderRadius: 6,
-                                        fontSize: '12px',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      {alerts[item.id] ? 'Sửa' : 'Thêm'}
-                                    </button>
-                                    {alerts[item.id] && (
-                                      <button
-                                        onClick={() => deleteAlert(item.id)}
-                                        style={{
-                                          padding: '6px 12px',
-                                          background: '#ef4444',
-                                          color: '#fff',
-                                          border: 'none',
-                                          borderRadius: 6,
-                                          fontSize: '12px',
-                                          cursor: 'pointer'
-                                        }}
-                                      >
-                                        Xóa
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
+                                <button
+                                  onClick={() => handleInputInventory(item.id)}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#3498db',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    fontSize: '12px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Nhập
+                                </button>
                               </td>
                               <td style={{padding: '12px', textAlign: 'center'}}>
                                 <button
@@ -289,6 +266,113 @@ function InventoryManagement() {
           </button>
         </div>
       </div>
+
+      {/* Modal nhập số lượng */}
+      {showingInputModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: '24px',
+            width: '400px',
+            maxWidth: '90vw',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+          }}>
+            <h3 style={{
+              marginTop: 0,
+              marginBottom: 16,
+              color: '#2b4c66',
+              fontSize: '18px',
+              fontWeight: 700
+            }}>
+              Nhập số lượng
+            </h3>
+            {inputItemId && (
+              <div style={{marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
+                Sản phẩm: <strong>{INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
+                  INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
+                )].items.find(item => item.id === inputItemId).name}</strong>
+                <br />
+                Số lượng hiện tại: <strong>{latestInventory[inputItemId] || '0'}</strong> {INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
+                  INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
+                )].items.find(item => item.id === inputItemId).unit}
+              </div>
+            )}
+            <div style={{marginBottom: 20}}>
+              <label style={{display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 600, color: '#2b4c66'}}>
+                Số lượng nhập:
+              </label>
+              <input
+                type="number"
+                value={inputQuantity}
+                onChange={(e) => setInputQuantity(e.target.value)}
+                placeholder="Nhập số lượng..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #e6eef5',
+                  borderRadius: 8,
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+                autoFocus
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    saveInputQuantity();
+                  }
+                }}
+              />
+            </div>
+            <div style={{display: 'flex', gap: 12, justifyContent: 'flex-end'}}>
+              <button
+                onClick={() => {
+                  setShowingInputModal(false);
+                  setInputItemId(null);
+                  setInputQuantity('');
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#95a5a6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={saveInputQuantity}
+                style={{
+                  padding: '10px 20px',
+                  background: '#3498db',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
