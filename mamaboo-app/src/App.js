@@ -3948,6 +3948,7 @@ function InventoryManagement() {
                           <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
                           <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
                           <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Thao tác</th>
+                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Mua</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -4077,6 +4078,28 @@ function InventoryManagement() {
                                     )}
                                   </div>
                                 )}
+                              </td>
+                              <td style={{padding: '12px', textAlign: 'center'}}>
+                                <button
+                                  onClick={() => {
+                                    if (item.purchaseLink && item.purchaseLink.trim() !== '') {
+                                      window.open(item.purchaseLink, '_blank', 'noopener,noreferrer');
+                                    } else {
+                                      alert('Chưa có link sản phẩm');
+                                    }
+                                  }}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#3498db',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: 6,
+                                    fontSize: '12px',
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  Mua
+                                </button>
                               </td>
                             </tr>
                           );
