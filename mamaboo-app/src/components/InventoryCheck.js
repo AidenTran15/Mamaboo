@@ -9,6 +9,7 @@ function InventoryCheck() {
   const [inventoryItems, setInventoryItems] = useState({}); // Map itemId -> item data
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line no-unused-vars
   const [lastCheckDate, setLastCheckDate] = useState('');
 
   // Fetch inventory items from API and load last check date
