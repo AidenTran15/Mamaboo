@@ -2046,6 +2046,7 @@ function Checkin() {
       { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
       { id: 'Bật nhạc, đèn, điều hòa/quạt ', label: 'Bật nhạc, đèn, điều hòa/quạt', requiresImage: false },
       { id: 'Đốt nhang, pha bạc sỉu để cúng', label: 'Đốt nhang, pha bạc sỉu để cúng' },
+      { id: 'Kiểm két', label: 'Kiểm két'},
       { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ', requiresImage: false }
     ],
     trua: [
@@ -2055,7 +2056,7 @@ function Checkin() {
       { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
       { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
-      { id: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)', label: 'Kiểm tra tồn kho nguyên liệu bao gồm cả cookie (ghi số lượng còn lại)', requiresImage: false },
+      { id: 'Kiểm két', label: 'Kiểm két'},
 
     ],
     toi: [
@@ -2071,6 +2072,7 @@ function Checkin() {
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
       { id: 'Khoá cửa', label: 'Khoá cửa' },
       { id: 'Dắt xe', label: 'Dắt xe' },
+      { id: 'Kiểm két', label: 'Kiểm két'},
       { id: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ', label: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ' }
     ]
   };
@@ -2805,21 +2807,20 @@ function ChecklistReport() {
       
       // Log first item to check tasks structure
       if (fetched.length > 0) {
+        const firstItem = fetched[0];
+        const inventoryTask = firstItem.tasks?.['Kiểm tra nguyên vật liệu'];
         console.log('First item sample:', {
-          user: fetched[0].user,
-          date: fetched[0].date,
-          shift: fetched[0].shift,
-          tasksKeys: fetched[0].tasks ? Object.keys(fetched[0].tasks) : [],
-          firstTaskSample: fetched[0].tasks ? (() => {
-            const firstTaskKey = Object.keys(fetched[0].tasks)[0];
-            const firstTask = fetched[0].tasks[firstTaskKey];
-            return {
-              taskId: firstTaskKey,
-              done: firstTask?.done,
-              hasImageUrl: !!(firstTask?.imageUrl),
-              imageUrlLength: firstTask?.imageUrl ? String(firstTask.imageUrl).length : 0
-            };
-          })() : null
+          user: firstItem.user,
+          date: firstItem.date,
+          shift: firstItem.shift,
+          tasksKeys: firstItem.tasks ? Object.keys(firstItem.tasks) : [],
+          inventoryTaskExists: !!inventoryTask,
+          inventoryFormDataExists: !!(inventoryTask?.inventoryFormData),
+          inventoryFormDataKeys: inventoryTask?.inventoryFormData ? Object.keys(inventoryTask.inventoryFormData) : [],
+          inventoryFormDataSample: inventoryTask?.inventoryFormData ? Object.keys(inventoryTask.inventoryFormData).slice(0, 3).reduce((acc, key) => {
+            acc[key] = inventoryTask.inventoryFormData[key];
+            return acc;
+          }, {}) : null
         });
       } else {
         console.log('No items found after filtering');
@@ -3143,6 +3144,19 @@ function ChecklistReport() {
                 <strong>Cập nhật:</strong> {new Date(selectedItem.updatedAt).toLocaleString('vi-VN')}
               </div>
               <h4 style={{marginTop:16, marginBottom:8}}>Tasks:</h4>
+              {(() => {
+                // Debug: Log selectedItem khi mở modal
+                console.log('[ChecklistDetail Modal] selectedItem:', {
+                  user: selectedItem.user,
+                  date: selectedItem.date,
+                  shift: selectedItem.shift,
+                  tasksKeys: selectedItem.tasks ? Object.keys(selectedItem.tasks) : [],
+                  hasInventoryTask: !!(selectedItem.tasks?.['Kiểm tra nguyên vật liệu']),
+                  inventoryTask: selectedItem.tasks?.['Kiểm tra nguyên vật liệu'],
+                  inventoryFormData: selectedItem.tasks?.['Kiểm tra nguyên vật liệu']?.inventoryFormData
+                });
+                return null;
+              })()}
               {Object.keys(selectedItem.tasks || {}).length === 0 ? (
                 <div style={{color:'#6b7a86'}}>Không có task</div>
               ) : (
@@ -3163,7 +3177,21 @@ function ChecklistReport() {
                         </span>
                       </div>
                       {/* Hiển thị form kiểm tra nguyên vật liệu nếu có */}
-                      {taskId === 'Kiểm tra nguyên vật liệu' && task.inventoryFormData && Object.keys(task.inventoryFormData).length > 0 && (
+                      {(() => {
+                        // Debug: Log khi render task "Kiểm tra nguyên vật liệu"
+                        if (taskId === 'Kiểm tra nguyên vật liệu') {
+                          console.log('[ChecklistDetail] Task "Kiểm tra nguyên vật liệu":', {
+                            taskId,
+                            hasInventoryFormData: !!(task.inventoryFormData),
+                            inventoryFormDataType: typeof task.inventoryFormData,
+                            inventoryFormDataKeys: task.inventoryFormData ? Object.keys(task.inventoryFormData) : [],
+                            inventoryFormDataLength: task.inventoryFormData ? Object.keys(task.inventoryFormData).length : 0,
+                            allTaskKeys: Object.keys(task),
+                            task: task
+                          });
+                        }
+                        return taskId === 'Kiểm tra nguyên vật liệu' && task.inventoryFormData && Object.keys(task.inventoryFormData).length > 0;
+                      })() && (
                         <div style={{marginTop:12, padding:12, background:'#f8f9fa', borderRadius:8, border:'1px solid #e0e0e0'}}>
                           <h5 style={{marginTop:0, marginBottom:12, color:'#e67e22', fontSize:'0.95em'}}>Kết quả kiểm tra nguyên vật liệu:</h5>
                           {(() => {
