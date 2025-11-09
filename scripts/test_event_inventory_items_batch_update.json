@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"items\": {\"ly-500ml\": \"100\", \"ly-700ml\": \"50\", \"matcha-thuong\": \"5\"}, \"date\": \"2025-11-04\", \"checkedBy\": \"Kim Thu\"}"
+}
+

@@ -15,6 +15,7 @@ export const PENALTY_DELETE_API = 'YOUR_API_GATEWAY_URL'; // Cập nhật URL sa
 export const INVENTORY_ITEMS_GET_API = 'https://fdsm4lvybc.execute-api.ap-southeast-2.amazonaws.com/prod';
 export const INVENTORY_ITEMS_POST_API = 'https://fdsm4lvybc.execute-api.ap-southeast-2.amazonaws.com/prod';
 export const INVENTORY_ITEMS_DELETE_API = 'https://fdsm4lvybc.execute-api.ap-southeast-2.amazonaws.com/prod';
+export const INVENTORY_ITEMS_BATCH_UPDATE_API = 'https://fv9a6383sg.execute-api.ap-southeast-2.amazonaws.com/prod';
 
 // Inventory Records API (Lịch sử kiểm kê) - Cập nhật sau khi deploy
 export const INVENTORY_RECORDS_GET_API = 'YOUR_API_GATEWAY_URL';

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import InventoryManagement from './components/InventoryManagement';
+import InventoryCheck from './components/InventoryCheck';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
@@ -3616,7 +3617,9 @@ function OvertimeManagement() {
 }
 
 // Trang kiểm tra nguyên vật liệu cho nhân viên
-function InventoryCheck() {
+// NOTE: Component này đã được move ra file riêng: components/InventoryCheck.js
+// Function này được giữ lại để tránh breaking changes, nhưng route đang dùng component từ file riêng
+function InventoryCheck_OLD() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
   const [formData, setFormData] = useState({});
