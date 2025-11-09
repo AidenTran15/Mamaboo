@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INVENTORY_ALERTS_KEY } from '../constants/inventory';
 import { INVENTORY_ITEMS_GET_API, INVENTORY_ITEMS_POST_API } from '../constants/api';
 
 function InventoryManagement() {
@@ -8,7 +7,6 @@ function InventoryManagement() {
   const [inventoryItems, setInventoryItems] = useState({}); // Map itemId -> item data from API
   const [itemsByCategory, setItemsByCategory] = useState({}); // Grouped by category
   const [loading, setLoading] = useState(true);
-  const [alerts, setAlerts] = useState({});
   const [showingInputModal, setShowingInputModal] = useState(false);
   const [inputItemId, setInputItemId] = useState(null);
   const [inputQuantity, setInputQuantity] = useState('');
@@ -69,10 +67,6 @@ function InventoryManagement() {
         
         console.log('Grouped by category:', Object.keys(grouped).length, 'categories');
         setItemsByCategory(grouped);
-        
-        // Load alerts from localStorage (still using localStorage for alerts)
-        const savedAlerts = JSON.parse(localStorage.getItem(INVENTORY_ALERTS_KEY) || '{}');
-        setAlerts(savedAlerts);
       } catch (e) {
         console.error('Error loading inventory items:', e);
         alert('Không thể tải dữ liệu nguyên vật liệu từ API. Vui lòng kiểm tra kết nối và thử lại.\n\nLỗi: ' + e.message);
@@ -99,10 +93,21 @@ function InventoryManagement() {
     return item ? (item.purchaseLink || '') : '';
   };
 
+  // Get alert threshold for an item (from database)
+  const getItemAlertThreshold = (itemId) => {
+    const item = inventoryItems[itemId];
+    if (item && item.alertThreshold) {
+      // If alertThreshold is '0' or empty, return empty string
+      const threshold = item.alertThreshold.trim();
+      return (threshold === '' || threshold === '0') ? '' : threshold;
+    }
+    return '';
+  };
+
   // Kiểm tra alert
   const checkAlert = (itemId) => {
-    const alertThreshold = alerts[itemId];
-    if (!alertThreshold || alertThreshold === '') return null;
+    const alertThreshold = getItemAlertThreshold(itemId);
+    if (!alertThreshold || alertThreshold === '' || alertThreshold === '0') return null;
     
     const currentValue = parseFloat(getItemQuantity(itemId));
     const threshold = parseFloat(alertThreshold);
@@ -271,9 +276,12 @@ function InventoryManagement() {
                                 <td style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>
                                   {currentQuantity}
                                 </td>
-                                <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
-                                  {alerts[item.itemId] ? `< ${alerts[item.itemId]} ${item.unit}` : '-'}
-                                </td>
+                                 <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
+                                   {(() => {
+                                     const alertThreshold = getItemAlertThreshold(item.itemId);
+                                     return alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-';
+                                   })()}
+                                 </td>
                                 <td style={{padding: '12px', textAlign: 'center'}}>
                                   {hasAlert ? (
                                     <span style={{

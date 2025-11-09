@@ -187,6 +187,7 @@ for category_key, category_data in INVENTORY_CATEGORIES.items():
             'categoryName': category_name,
             'purchaseLink': purchase_link,
             'quantity': '0',  # Default quantity = 0
+            'alertThreshold': '0',  # Default alert threshold = empty (no alert)
             'createdAt': now,
             'updatedAt': now
         }
