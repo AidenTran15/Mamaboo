@@ -3,6 +3,7 @@ import './App.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import InventoryManagement from './components/InventoryManagement';
 import InventoryCheck from './components/InventoryCheck';
+import EveningInventoryCheck from './components/EveningInventoryCheck';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
@@ -2059,6 +2060,7 @@ function Checkin() {
     toi: [
       { id: 'Đổ rác', label: 'Đổ rác' },
       { id: 'Dọn bàn ghé', label: 'Dọn bàn ghé' },
+      { id: 'Kiểm tra nguyên vật liệu', label: 'Kiểm tra nguyên vật liệu', requiresImage: false, useForm: true },
       { id: 'Chà bồn cầu', label: 'Chà bồn cầu' },
       { id: 'Chà lababo', label: 'Chà lababo' },
       { id: 'Cắm sạc loa', label: 'Cắm sạc loa' },
@@ -2085,12 +2087,21 @@ function Checkin() {
         ...t,
         done: !!(saved.tasks?.[t.id]?.done),
         image: saved.tasks?.[t.id]?.image || '',
-        requiresImage: t.requiresImage !== false // Giữ lại thuộc tính requiresImage từ template
+        requiresImage: t.requiresImage !== false, // Giữ lại thuộc tính requiresImage từ template
+        useForm: t.useForm || false // Giữ lại thuộc tính useForm từ template
       }));
     } catch {
-      return defaultTasks.map(t => ({ ...t, done: false, image: '', requiresImage: t.requiresImage !== false }));
+      return defaultTasks.map(t => ({ 
+        ...t, 
+        done: false, 
+        image: '', 
+        requiresImage: t.requiresImage !== false,
+        useForm: t.useForm || false
+      }));
     }
   });
+
+  const [showInventoryForm, setShowInventoryForm] = useState(false);
 
   const saveState = (nextTasks) => {
     try {
@@ -2521,7 +2532,17 @@ function Checkin() {
                   <input type="checkbox" checked={t.done} onChange={()=>toggleTask(t.id)} />
                   <span style={{fontWeight:600}}>{t.label}</span>
                 </label>
-                {t.requiresImage !== false && (
+                {t.useForm ? (
+                  <div style={{display:'flex', alignItems:'center', gap:10}}>
+                    <button
+                      type="button"
+                      onClick={() => setShowInventoryForm(true)}
+                      style={{cursor:'pointer', padding:'6px 12px', background:'#3498db', color:'#fff', border:'none', borderRadius:6, fontSize:'0.9em', fontWeight:600}}
+                    >
+                      Điền form
+                    </button>
+                  </div>
+                ) : t.requiresImage !== false && (
                   <div style={{display:'flex', alignItems:'center', gap:10}}>
                     <label style={{cursor:'pointer', padding:'6px 12px', background:'#43a8ef', color:'#fff', borderRadius:6, fontSize:'0.9em'}}>
                       Upload ảnh
@@ -2580,6 +2601,25 @@ function Checkin() {
           </button>
         </div>
       </div>
+      
+      {/* Modal form kiểm tra nguyên vật liệu cho ca tối */}
+      {showInventoryForm && (
+        <EveningInventoryCheck
+          onClose={() => setShowInventoryForm(false)}
+          onSave={(itemsUpdated) => {
+            // Đánh dấu task "Kiểm tra nguyên vật liệu" là done
+            const inventoryTask = tasks.find(t => t.id === 'Kiểm tra nguyên vật liệu');
+            if (inventoryTask && !inventoryTask.done) {
+              const next = tasks.map(t => 
+                t.id === 'Kiểm tra nguyên vật liệu' ? { ...t, done: true } : t
+              );
+              setTasks(next);
+              saveState(next);
+            }
+            setShowInventoryForm(false);
+          }}
+        />
+      )}
     </div>
   );
 }
