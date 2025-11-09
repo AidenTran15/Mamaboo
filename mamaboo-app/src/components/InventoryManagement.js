@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INVENTORY_ITEMS_GET_API, INVENTORY_ITEMS_POST_API } from '../constants/api';
+import { INVENTORY_ITEMS_GET_API } from '../constants/api';
 
 function InventoryManagement() {
   const navigate = useNavigate();
   const [inventoryItems, setInventoryItems] = useState({}); // Map itemId -> item data from API
   const [itemsByCategory, setItemsByCategory] = useState({}); // Grouped by category
   const [loading, setLoading] = useState(true);
-  const [showingInputModal, setShowingInputModal] = useState(false);
-  const [inputItemId, setInputItemId] = useState(null);
-  const [inputQuantity, setInputQuantity] = useState('');
 
   // Fetch inventory items from API
   React.useEffect(() => {
@@ -117,100 +114,6 @@ function InventoryManagement() {
     return currentValue < threshold;
   };
 
-  // Xử lý nhập hàng
-  const handleInputInventory = (itemId) => {
-    setInputItemId(itemId);
-    setInputQuantity('');
-    setShowingInputModal(true);
-  };
-
-  // Lưu số lượng nhập
-  const saveInputQuantity = async () => {
-    if (!inputItemId) return;
-    
-    const quantity = parseFloat(inputQuantity);
-    if (isNaN(quantity) || quantity <= 0) {
-      alert('Vui lòng nhập số lượng hợp lệ (lớn hơn 0)');
-      return;
-    }
-
-    try {
-      // Lấy item hiện tại từ API
-      const currentItem = inventoryItems[inputItemId];
-      if (!currentItem) {
-        alert('Không tìm thấy sản phẩm. Vui lòng tải lại trang.');
-        setShowingInputModal(false);
-        return;
-      }
-
-      // Tính số lượng mới = số lượng hiện tại + số lượng nhập
-      const currentValue = parseFloat(currentItem.quantity || '0');
-      const newValue = currentValue + quantity;
-
-      // Update item via API
-      const updateData = {
-        itemId: currentItem.itemId,
-        name: currentItem.name,
-        unit: currentItem.unit,
-        category: currentItem.category,
-        categoryName: currentItem.categoryName || '',
-        purchaseLink: currentItem.purchaseLink || '',
-        quantity: newValue.toString()
-      };
-
-      const response = await fetch(INVENTORY_ITEMS_POST_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      const result = await response.json();
-      const body = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
-
-      if (response.ok && body.ok) {
-        // Update local state
-        const updatedItem = {
-          ...currentItem,
-          quantity: newValue.toString()
-        };
-        
-        setInventoryItems(prev => ({
-          ...prev,
-          [inputItemId]: updatedItem
-        }));
-
-        // Update itemsByCategory
-        setItemsByCategory(prev => {
-          const updated = { ...prev };
-          const category = currentItem.category || 'others';
-          if (updated[category]) {
-            updated[category] = {
-              ...updated[category],
-              items: updated[category].items.map(item => 
-                item.itemId === inputItemId ? updatedItem : item
-              )
-            };
-          }
-          return updated;
-        });
-
-        const unit = currentItem.unit || '';
-
-        alert(`Đã nhập ${quantity} ${unit}. Tổng số lượng hiện tại: ${newValue}`);
-        
-        setShowingInputModal(false);
-        setInputItemId(null);
-        setInputQuantity('');
-      } else {
-        throw new Error(body.error || 'Failed to update quantity');
-      }
-    } catch (error) {
-      console.error('Error saving input quantity:', error);
-      alert('Có lỗi xảy ra khi lưu số lượng! ' + error.message);
-    }
-  };
 
   return (
     <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
@@ -257,7 +160,6 @@ function InventoryManagement() {
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Số lượng</th>
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
-                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Thao tác</th>
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Mua</th>
                           </tr>
                         </thead>
@@ -306,24 +208,8 @@ function InventoryManagement() {
                                       ✓ Đủ hàng
                                     </span>
                                   )}
-                                </td>
-                                <td style={{padding: '12px', textAlign: 'center'}}>
-                                  <button
-                                    onClick={() => handleInputInventory(item.itemId)}
-                                    style={{
-                                      padding: '6px 12px',
-                                      background: '#3498db',
-                                      color: '#fff',
-                                      border: 'none',
-                                      borderRadius: 6,
-                                      fontSize: '12px',
-                                      cursor: 'pointer'
-                                    }}
-                                  >
-                                    Nhập
-                                  </button>
-                                </td>
-                                <td style={{padding: '12px', textAlign: 'center'}}>
+                                 </td>
+                                 <td style={{padding: '12px', textAlign: 'center'}}>
                                   <button
                                     onClick={() => {
                                       if (purchaseLink && purchaseLink.trim() !== '') {
@@ -369,111 +255,6 @@ function InventoryManagement() {
         </div>
       </div>
 
-      {/* Modal nhập số lượng */}
-      {showingInputModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: '#fff',
-            borderRadius: 12,
-            padding: '24px',
-            width: '400px',
-            maxWidth: '90vw',
-            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
-          }}>
-            <h3 style={{
-              marginTop: 0,
-              marginBottom: 16,
-              color: '#2b4c66',
-              fontSize: '18px',
-              fontWeight: 700
-            }}>
-              Nhập số lượng
-            </h3>
-            {inputItemId && (() => {
-              const item = inventoryItems[inputItemId];
-              return item ? (
-                <div style={{marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
-                  Sản phẩm: <strong>{item.name}</strong>
-                  <br />
-                  Số lượng hiện tại: <strong>{getItemQuantity(inputItemId)}</strong> {item.unit}
-                </div>
-              ) : null;
-            })()}
-            <div style={{marginBottom: 20}}>
-              <label style={{display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 600, color: '#2b4c66'}}>
-                Số lượng nhập:
-              </label>
-              <input
-                type="number"
-                value={inputQuantity}
-                onChange={(e) => setInputQuantity(e.target.value)}
-                placeholder="Nhập số lượng..."
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #e6eef5',
-                  borderRadius: 8,
-                  fontSize: '14px',
-                  boxSizing: 'border-box'
-                }}
-                autoFocus
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    saveInputQuantity();
-                  }
-                }}
-              />
-            </div>
-            <div style={{display: 'flex', gap: 12, justifyContent: 'flex-end'}}>
-              <button
-                onClick={() => {
-                  setShowingInputModal(false);
-                  setInputItemId(null);
-                  setInputQuantity('');
-                }}
-                style={{
-                  padding: '10px 20px',
-                  background: '#95a5a6',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                Hủy
-              </button>
-              <button
-                onClick={saveInputQuantity}
-                style={{
-                  padding: '10px 20px',
-                  background: '#3498db',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  fontSize: '14px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                Xác nhận
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
