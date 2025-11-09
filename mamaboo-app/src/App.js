@@ -16,7 +16,7 @@ const OVERTIME_POST_API = 'https://c659yzs9hb.execute-api.ap-southeast-2.amazona
 const OVERTIME_DELETE_API = 'https://rbyhzws278.execute-api.ap-southeast-2.amazonaws.com/prod';
 const PENALTY_GET_API = 'https://lfp8b72mc5.execute-api.ap-southeast-2.amazonaws.com/prod';
 const PENALTY_POST_API = 'https://1w4hxsqrtc.execute-api.ap-southeast-2.amazonaws.com/prod';
-const PENALTY_DELETE_API = 'YOUR_API_GATEWAY_URL'; // Cập nhật URL sau khi deploy Lambda DELETE
+// const PENALTY_DELETE_API = 'YOUR_API_GATEWAY_URL'; // Cập nhật URL sau khi deploy Lambda DELETE
 
 // Inventory API - tạm thời dùng localStorage, có thể thay bằng API sau
 const INVENTORY_STORAGE_KEY = 'inventoryRecords';
@@ -439,23 +439,23 @@ function NhanVien() {
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
 
-  const canCheckInNow = (dateStr, type) => {
-    // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
-    const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
-    const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    const [y, mo, da] = dateStr.split('-').map(Number);
-    const start = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
-    return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= start.getTime();
-  };
+  // const canCheckInNow = (dateStr, type) => {
+  //   // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
+  //   const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
+  //   const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+  //   const [y, mo, da] = dateStr.split('-').map(Number);
+  //   const start = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
+  //   return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= start.getTime();
+  // };
 
-  const canCheckOutNow = (dateStr, type) => {
-    // Shift end times: sang 13:30, trua 18:30, toi 22:30 (24h)
-    const endMap = { sang: { h:13, m:30 }, trua: { h:18, m:30 }, toi: { h:22, m:30 } };
-    const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    const [y, mo, da] = dateStr.split('-').map(Number);
-    const end = new Date(y, mo - 1, da, (endMap[type]||{h:0}).h, (endMap[type]||{m:0}).m, 0);
-    return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= end.getTime();
-  };
+  // const canCheckOutNow = (dateStr, type) => {
+  //   // Shift end times: sang 13:30, trua 18:30, toi 22:30 (24h)
+  //   const endMap = { sang: { h:13, m:30 }, trua: { h:18, m:30 }, toi: { h:22, m:30 } };
+  //   const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+  //   const [y, mo, da] = dateStr.split('-').map(Number);
+  //   const end = new Date(y, mo - 1, da, (endMap[type]||{h:0}).h, (endMap[type]||{m:0}).m, 0);
+  //   return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= end.getTime();
+  // };
 
   // Không lưu checkinStatus vào localStorage nữa để tránh vượt quota
   // Chỉ lưu danh sách các ca đã kết vào 'checkinDone' (chỉ lưu key, rất nhẹ)
@@ -680,6 +680,7 @@ function NhanVien() {
         if (!r) continue;
         
         // Kiểm tra các ca
+        // eslint-disable-next-line no-loop-func
         ['sang', 'trua', 'toi'].forEach(type => {
           const nameArr = r[type];
           const members = Array.isArray(nameArr) ? nameArr.filter(Boolean).map(norm) : (nameArr ? [norm(nameArr)] : []);
@@ -1141,6 +1142,7 @@ function Admin() {
   const [saving, setSaving] = useState(false);
   const [info, setInfo] = useState('');
   const [staffs, setStaffs] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [staffSalary, setStaffSalary] = useState({});
   // Checklist state
   const [ckFrom, setCkFrom] = useState('');
@@ -1217,6 +1219,7 @@ function Admin() {
     }
   };
   
+  // eslint-disable-next-line no-unused-vars
   const [overtimeData, setOvertimeData] = useState({});
   const [overtimeRecords, setOvertimeRecords] = useState([]); // Lưu records để dùng cho rebuild
   
@@ -1390,8 +1393,8 @@ function Admin() {
   }, []);
 
   const pad = (n) => (n < 10 ? `0${n}` : `${n}`);
-  const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
+  // const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  // const daysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
 
   React.useEffect(() => {
     let isMounted = true;
@@ -2886,7 +2889,7 @@ function ChecklistReport() {
     const m = today.getMonth();
     const day = today.getDate();
     
-    let fromY = y, fromM = m, fromD = 15;
+    let fromY = y, fromM = m; // fromD = 15; // Unused variable
     if (day < 15) {
       fromM = m - 1;
       if (fromM < 0) {
@@ -3870,6 +3873,7 @@ function OvertimeManagement() {
 // Trang kiểm tra nguyên vật liệu cho nhân viên
 // NOTE: Component này đã được move ra file riêng: components/InventoryCheck.js
 // Function này được giữ lại để tránh breaking changes, nhưng route đang dùng component từ file riêng
+// eslint-disable-next-line no-unused-vars
 function InventoryCheck_OLD() {
   const userName = localStorage.getItem('userName');
   const navigate = useNavigate();
@@ -4093,6 +4097,7 @@ function InventoryCheck_OLD() {
 // Trang quản lý nguyên vật liệu cho admin
 // NOTE: Component này đã được move ra file riêng: components/InventoryManagement.js
 // Function này được giữ lại để tránh breaking changes, nhưng route đang dùng component từ file riêng
+// eslint-disable-next-line no-unused-vars
 function InventoryManagement_OLD() {
   const navigate = useNavigate();
   const [inventoryRecords, setInventoryRecords] = useState([]);

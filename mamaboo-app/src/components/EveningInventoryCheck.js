@@ -93,7 +93,8 @@ function EveningInventoryCheck({ onClose, onSave }) {
     };
 
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // REQUIRED_ITEMS is a constant, no need to include in dependencies
 
   const handleInputChange = (itemId, value) => {
     setFormData(prev => ({ ...prev, [itemId]: value }));
@@ -187,15 +188,15 @@ function EveningInventoryCheck({ onClose, onSave }) {
     }
   };
 
-  const getItemName = (itemId) => {
-    const item = inventoryItems[itemId];
-    return item ? item.name : itemId;
-  };
+  // const getItemName = (itemId) => {
+  //   const item = inventoryItems[itemId];
+  //   return item ? item.name : itemId;
+  // };
 
-  const getItemUnit = (itemId) => {
-    const item = inventoryItems[itemId];
-    return item ? item.unit : '';
-  };
+  // const getItemUnit = (itemId) => {
+  //   const item = inventoryItems[itemId];
+  //   return item ? item.unit : '';
+  // };
 
   if (loading) {
     return (
