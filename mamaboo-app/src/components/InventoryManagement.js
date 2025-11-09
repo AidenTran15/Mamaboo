@@ -1,48 +1,110 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INVENTORY_STORAGE_KEY, INVENTORY_ALERTS_KEY, INVENTORY_CATEGORIES } from '../constants/inventory';
+import { INVENTORY_ALERTS_KEY } from '../constants/inventory';
+import { INVENTORY_ITEMS_GET_API, INVENTORY_ITEMS_POST_API } from '../constants/api';
 
 function InventoryManagement() {
   const navigate = useNavigate();
-  const [inventoryRecords, setInventoryRecords] = useState([]);
+  const [inventoryItems, setInventoryItems] = useState({}); // Map itemId -> item data from API
+  const [itemsByCategory, setItemsByCategory] = useState({}); // Grouped by category
+  const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState({});
   const [showingInputModal, setShowingInputModal] = useState(false);
   const [inputItemId, setInputItemId] = useState(null);
   const [inputQuantity, setInputQuantity] = useState('');
 
-  // Load dữ liệu
+  // Fetch inventory items from API
   React.useEffect(() => {
-    try {
-      const records = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY) || '[]');
-      // Hỗ trợ cả format cũ và format mới (minimal)
-      const normalizedRecords = records.map(record => ({
-        date: record.d || record.date,
-        checkedBy: record.c || record.checkedBy,
-        items: record.i || record.items || {}
-      }));
-      setInventoryRecords(normalizedRecords.sort((a, b) => new Date(b.date) - new Date(a.date)));
-      
-      const savedAlerts = JSON.parse(localStorage.getItem(INVENTORY_ALERTS_KEY) || '{}');
-      setAlerts(savedAlerts);
-    } catch (e) {
-      console.error('Error loading inventory data:', e);
-    }
+    const fetchInventoryItems = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching inventory items from API:', INVENTORY_ITEMS_GET_API);
+        
+        const response = await fetch(INVENTORY_ITEMS_GET_API);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('API Response:', data);
+        
+        // Parse body if it's a string
+        const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        const items = body.items || [];
+        
+        console.log('Items from API:', items.length, 'items');
+        
+        if (items.length === 0) {
+          console.warn('No items found in API response');
+        }
+        
+        // Convert array to map for easy lookup
+        const itemsMap = {};
+        items.forEach(item => {
+          itemsMap[item.itemId] = item;
+        });
+        
+        setInventoryItems(itemsMap);
+        
+        // Group items by category
+        const grouped = {};
+        items.forEach(item => {
+          const category = item.category || 'others';
+          const categoryName = item.categoryName || 'OTHERS';
+          
+          if (!grouped[category]) {
+            grouped[category] = {
+              name: categoryName,
+              items: []
+            };
+          }
+          grouped[category].items.push(item);
+        });
+        
+        // Sort items within each category by name
+        Object.keys(grouped).forEach(category => {
+          grouped[category].items.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        });
+        
+        console.log('Grouped by category:', Object.keys(grouped).length, 'categories');
+        setItemsByCategory(grouped);
+        
+        // Load alerts from localStorage (still using localStorage for alerts)
+        const savedAlerts = JSON.parse(localStorage.getItem(INVENTORY_ALERTS_KEY) || '{}');
+        setAlerts(savedAlerts);
+      } catch (e) {
+        console.error('Error loading inventory items:', e);
+        alert('Không thể tải dữ liệu nguyên vật liệu từ API. Vui lòng kiểm tra kết nối và thử lại.\n\nLỗi: ' + e.message);
+        // Không fallback về localStorage - để trống để user biết có lỗi
+        setInventoryItems({});
+        setItemsByCategory({});
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInventoryItems();
   }, []);
 
-  // Lấy dữ liệu mới nhất
-  const getLatestInventory = () => {
-    if (inventoryRecords.length === 0) return {};
-    return inventoryRecords[0].items || {};
+  // Get quantity for an item
+  const getItemQuantity = (itemId) => {
+    const item = inventoryItems[itemId];
+    return item ? (item.quantity || '0') : '0';
   };
 
-  const latestInventory = getLatestInventory();
+  // Get purchase link for an item
+  const getItemPurchaseLink = (itemId) => {
+    const item = inventoryItems[itemId];
+    return item ? (item.purchaseLink || '') : '';
+  };
 
   // Kiểm tra alert
   const checkAlert = (itemId) => {
     const alertThreshold = alerts[itemId];
     if (!alertThreshold || alertThreshold === '') return null;
     
-    const currentValue = parseFloat(latestInventory[itemId] || 0);
+    const currentValue = parseFloat(getItemQuantity(itemId));
     const threshold = parseFloat(alertThreshold);
     
     if (isNaN(currentValue) || isNaN(threshold)) return null;
@@ -58,7 +120,7 @@ function InventoryManagement() {
   };
 
   // Lưu số lượng nhập
-  const saveInputQuantity = () => {
+  const saveInputQuantity = async () => {
     if (!inputItemId) return;
     
     const quantity = parseFloat(inputQuantity);
@@ -68,48 +130,80 @@ function InventoryManagement() {
     }
 
     try {
-      // Lấy dữ liệu hiện tại
-      const records = JSON.parse(localStorage.getItem(INVENTORY_STORAGE_KEY) || '[]');
-      if (records.length === 0) {
-        alert('Chưa có dữ liệu kiểm tra. Vui lòng kiểm tra nguyên vật liệu trước.');
+      // Lấy item hiện tại từ API
+      const currentItem = inventoryItems[inputItemId];
+      if (!currentItem) {
+        alert('Không tìm thấy sản phẩm. Vui lòng tải lại trang.');
         setShowingInputModal(false);
         return;
       }
 
-      // Cập nhật số lượng = số lượng hiện tại + số lượng nhập
-      const currentValue = parseFloat(latestInventory[inputItemId] || 0);
+      // Tính số lượng mới = số lượng hiện tại + số lượng nhập
+      const currentValue = parseFloat(currentItem.quantity || '0');
       const newValue = currentValue + quantity;
 
-      // Cập nhật record mới nhất
-      const updatedRecords = [...records];
-      const latestRecord = { ...updatedRecords[0] };
-      const items = { ...(latestRecord.i || latestRecord.items || {}) };
-      items[inputItemId] = newValue.toString();
-      
-      latestRecord.i = items;
-      updatedRecords[0] = latestRecord;
+      // Update item via API
+      const updateData = {
+        itemId: currentItem.itemId,
+        name: currentItem.name,
+        unit: currentItem.unit,
+        category: currentItem.category,
+        categoryName: currentItem.categoryName || '',
+        purchaseLink: currentItem.purchaseLink || '',
+        quantity: newValue.toString()
+      };
 
-      // Lưu lại
-      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(updatedRecords));
-      
-      // Cập nhật state để UI refresh
-      const normalizedRecords = updatedRecords.map(record => ({
-        date: record.d || record.date,
-        checkedBy: record.c || record.checkedBy,
-        items: record.i || record.items || {}
-      }));
-      setInventoryRecords(normalizedRecords.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      const response = await fetch(INVENTORY_ITEMS_POST_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+      });
 
-      alert(`Đã nhập ${quantity} ${INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
-        INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
-      )].items.find(item => item.id === inputItemId).unit}. Tổng số lượng hiện tại: ${newValue}`);
-      
-      setShowingInputModal(false);
-      setInputItemId(null);
-      setInputQuantity('');
+      const result = await response.json();
+      const body = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+
+      if (response.ok && body.ok) {
+        // Update local state
+        const updatedItem = {
+          ...currentItem,
+          quantity: newValue.toString()
+        };
+        
+        setInventoryItems(prev => ({
+          ...prev,
+          [inputItemId]: updatedItem
+        }));
+
+        // Update itemsByCategory
+        setItemsByCategory(prev => {
+          const updated = { ...prev };
+          const category = currentItem.category || 'others';
+          if (updated[category]) {
+            updated[category] = {
+              ...updated[category],
+              items: updated[category].items.map(item => 
+                item.itemId === inputItemId ? updatedItem : item
+              )
+            };
+          }
+          return updated;
+        });
+
+        const unit = currentItem.unit || '';
+
+        alert(`Đã nhập ${quantity} ${unit}. Tổng số lượng hiện tại: ${newValue}`);
+        
+        setShowingInputModal(false);
+        setInputItemId(null);
+        setInputQuantity('');
+      } else {
+        throw new Error(body.error || 'Failed to update quantity');
+      }
     } catch (error) {
       console.error('Error saving input quantity:', error);
-      alert('Có lỗi xảy ra khi lưu số lượng!');
+      alert('Có lỗi xảy ra khi lưu số lượng! ' + error.message);
     }
   };
 
@@ -119,140 +213,140 @@ function InventoryManagement() {
         <h2 className="login-title" style={{color: '#3498db'}}>Quản lý nguyên vật liệu</h2>
         <div className="login-underline" style={{ background: '#3498db' }}></div>
 
-        {inventoryRecords.length === 0 ? (
+        {loading ? (
           <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
-            Chưa có dữ liệu kiểm tra nguyên vật liệu
+            Đang tải dữ liệu...
           </div>
         ) : (
           <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
-            <div style={{background: '#f0f8ff', padding: '16px', borderRadius: 12, border: '1px solid #3498db'}}>
-              <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 4}}>Lần kiểm tra gần nhất</div>
-              <div style={{fontSize: '18px', fontWeight: 700, color: '#2b4c66'}}>
-                {inventoryRecords[0].date} - Kiểm tra bởi: {inventoryRecords[0].checkedBy}
+            {Object.keys(itemsByCategory).length === 0 ? (
+              <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
+                Chưa có dữ liệu nguyên vật liệu
               </div>
-            </div>
-
-            {Object.keys(INVENTORY_CATEGORIES).map(categoryKey => {
-              const category = INVENTORY_CATEGORIES[categoryKey];
-              return (
-                <div key={categoryKey} style={{
-                  background: '#fff',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: 12,
-                  padding: '20px'
-                }}>
-                  <h3 style={{
-                    color: '#2b4c66',
-                    marginBottom: 16,
-                    fontSize: '18px',
-                    fontWeight: 700,
-                    borderBottom: '2px solid #3498db',
-                    paddingBottom: 8
+            ) : (
+              Object.keys(itemsByCategory).map(categoryKey => {
+                const category = itemsByCategory[categoryKey];
+                return (
+                  <div key={categoryKey} style={{
+                    background: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: 12,
+                    padding: '20px'
                   }}>
-                    {category.name}
-                  </h3>
-                  <div style={{overflowX: 'auto'}}>
-                    <table style={{width: '100%', borderCollapse: 'collapse'}}>
-                      <thead>
-                        <tr style={{background: '#f9fafb', borderBottom: '2px solid #e5e7eb'}}>
-                          <th style={{padding: '12px', textAlign: 'left', fontWeight: 600, color: '#2b4c66'}}>Sản phẩm</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Đơn vị</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Số lượng</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Thao tác</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Mua</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {category.items.map(item => {
-                          const currentValue = latestInventory[item.id] || '';
-                          const hasAlert = checkAlert(item.id);
-                          return (
-                            <tr key={item.id} style={{
-                              borderBottom: '1px solid #f1f4f7',
-                              background: hasAlert ? '#fff5f5' : '#fff'
-                            }}>
-                              <td style={{padding: '12px', fontWeight: 600, color: '#2b4c66'}}>{item.name}</td>
-                              <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>{item.unit}</td>
-                              <td style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>
-                                {currentValue || '0'}
-                              </td>
-                              <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
-                                {alerts[item.id] ? `< ${alerts[item.id]} ${item.unit}` : '-'}
-                              </td>
-                              <td style={{padding: '12px', textAlign: 'center'}}>
-                                {hasAlert ? (
-                                  <span style={{
-                                    background: '#fee2e2',
-                                    color: '#dc2626',
-                                    padding: '4px 12px',
-                                    borderRadius: 12,
-                                    fontSize: '12px',
-                                    fontWeight: 600
-                                  }}>
-                                    ⚠️ Sắp hết hàng
-                                  </span>
-                                ) : (
-                                  <span style={{
-                                    background: '#d1fae5',
-                                    color: '#059669',
-                                    padding: '4px 12px',
-                                    borderRadius: 12,
-                                    fontSize: '12px',
-                                    fontWeight: 600
-                                  }}>
-                                    ✓ Đủ hàng
-                                  </span>
-                                )}
-                              </td>
-                              <td style={{padding: '12px', textAlign: 'center'}}>
-                                <button
-                                  onClick={() => handleInputInventory(item.id)}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: '#3498db',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: 6,
-                                    fontSize: '12px',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Nhập
-                                </button>
-                              </td>
-                              <td style={{padding: '12px', textAlign: 'center'}}>
-                                <button
-                                  onClick={() => {
-                                    if (item.purchaseLink && item.purchaseLink.trim() !== '') {
-                                      window.open(item.purchaseLink, '_blank', 'noopener,noreferrer');
-                                    } else {
-                                      alert('Chưa có link sản phẩm');
-                                    }
-                                  }}
-                                  style={{
-                                    padding: '6px 12px',
-                                    background: '#3498db',
-                                    color: '#fff',
-                                    border: 'none',
-                                    borderRadius: 6,
-                                    fontSize: '12px',
-                                    cursor: 'pointer'
-                                  }}
-                                >
-                                  Mua
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    <h3 style={{
+                      color: '#2b4c66',
+                      marginBottom: 16,
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      borderBottom: '2px solid #3498db',
+                      paddingBottom: 8
+                    }}>
+                      {category.name}
+                    </h3>
+                    <div style={{overflowX: 'auto'}}>
+                      <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                        <thead>
+                          <tr style={{background: '#f9fafb', borderBottom: '2px solid #e5e7eb'}}>
+                            <th style={{padding: '12px', textAlign: 'left', fontWeight: 600, color: '#2b4c66'}}>Sản phẩm</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Đơn vị</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Số lượng</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Thao tác</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Mua</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {category.items.map(item => {
+                            const currentQuantity = getItemQuantity(item.itemId);
+                            const purchaseLink = getItemPurchaseLink(item.itemId);
+                            const hasAlert = checkAlert(item.itemId);
+                            return (
+                              <tr key={item.itemId} style={{
+                                borderBottom: '1px solid #f1f4f7',
+                                background: hasAlert ? '#fff5f5' : '#fff'
+                              }}>
+                                <td style={{padding: '12px', fontWeight: 600, color: '#2b4c66'}}>{item.name}</td>
+                                <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>{item.unit}</td>
+                                <td style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>
+                                  {currentQuantity}
+                                </td>
+                                <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
+                                  {alerts[item.itemId] ? `< ${alerts[item.itemId]} ${item.unit}` : '-'}
+                                </td>
+                                <td style={{padding: '12px', textAlign: 'center'}}>
+                                  {hasAlert ? (
+                                    <span style={{
+                                      background: '#fee2e2',
+                                      color: '#dc2626',
+                                      padding: '4px 12px',
+                                      borderRadius: 12,
+                                      fontSize: '12px',
+                                      fontWeight: 600
+                                    }}>
+                                      ⚠️ Sắp hết hàng
+                                    </span>
+                                  ) : (
+                                    <span style={{
+                                      background: '#d1fae5',
+                                      color: '#059669',
+                                      padding: '4px 12px',
+                                      borderRadius: 12,
+                                      fontSize: '12px',
+                                      fontWeight: 600
+                                    }}>
+                                      ✓ Đủ hàng
+                                    </span>
+                                  )}
+                                </td>
+                                <td style={{padding: '12px', textAlign: 'center'}}>
+                                  <button
+                                    onClick={() => handleInputInventory(item.itemId)}
+                                    style={{
+                                      padding: '6px 12px',
+                                      background: '#3498db',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: 6,
+                                      fontSize: '12px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Nhập
+                                  </button>
+                                </td>
+                                <td style={{padding: '12px', textAlign: 'center'}}>
+                                  <button
+                                    onClick={() => {
+                                      if (purchaseLink && purchaseLink.trim() !== '') {
+                                        window.open(purchaseLink, '_blank', 'noopener,noreferrer');
+                                      } else {
+                                        alert('Chưa có link sản phẩm');
+                                      }
+                                    }}
+                                    style={{
+                                      padding: '6px 12px',
+                                      background: '#3498db',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: 6,
+                                      fontSize: '12px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Mua
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         )}
 
@@ -298,17 +392,16 @@ function InventoryManagement() {
             }}>
               Nhập số lượng
             </h3>
-            {inputItemId && (
-              <div style={{marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
-                Sản phẩm: <strong>{INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
-                  INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
-                )].items.find(item => item.id === inputItemId).name}</strong>
-                <br />
-                Số lượng hiện tại: <strong>{latestInventory[inputItemId] || '0'}</strong> {INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
-                  INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
-                )].items.find(item => item.id === inputItemId).unit}
-              </div>
-            )}
+            {inputItemId && (() => {
+              const item = inventoryItems[inputItemId];
+              return item ? (
+                <div style={{marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
+                  Sản phẩm: <strong>{item.name}</strong>
+                  <br />
+                  Số lượng hiện tại: <strong>{getItemQuantity(inputItemId)}</strong> {item.unit}
+                </div>
+              ) : null;
+            })()}
             <div style={{marginBottom: 20}}>
               <label style={{display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 600, color: '#2b4c66'}}>
                 Số lượng nhập:

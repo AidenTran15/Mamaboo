@@ -1,0 +1,9 @@
+{
+  "httpMethod": "GET",
+  "queryStringParameters": {
+    "from": "2025-11-01",
+    "to": "2025-11-30",
+    "checkedBy": "Kim Thu"
+  }
+}
+

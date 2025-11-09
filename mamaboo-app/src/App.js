@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
+import InventoryManagement from './components/InventoryManagement';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
@@ -3836,7 +3837,9 @@ function InventoryCheck() {
 }
 
 // Trang quản lý nguyên vật liệu cho admin
-function InventoryManagement() {
+// NOTE: Component này đã được move ra file riêng: components/InventoryManagement.js
+// Function này được giữ lại để tránh breaking changes, nhưng route đang dùng component từ file riêng
+function InventoryManagement_OLD() {
   const navigate = useNavigate();
   const [inventoryRecords, setInventoryRecords] = useState([]);
   const [alerts, setAlerts] = useState({});
