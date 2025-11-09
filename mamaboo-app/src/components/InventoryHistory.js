@@ -133,6 +133,22 @@ function InventoryHistory() {
 
   return (
     <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <style>{`
+        .inventory-history-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .inventory-history-scroll::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 4px;
+        }
+        .inventory-history-scroll::-webkit-scrollbar-thumb {
+          background: #3498db;
+          border-radius: 4px;
+        }
+        .inventory-history-scroll::-webkit-scrollbar-thumb:hover {
+          background: #2980b9;
+        }
+      `}</style>
       <div className="login-container" style={{width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
         <h2 className="login-title" style={{color: '#3498db'}}>Lịch sử kiểm kê nguyên vật liệu</h2>
         <div className="login-underline" style={{ background: '#3498db' }}></div>
@@ -296,11 +312,17 @@ function InventoryHistory() {
 
                   {/* Expandable Details */}
                   {isExpanded && (
-                    <div style={{
-                      padding: '20px',
-                      background: '#fafbfc',
-                      borderTop: '1px solid #e5e7eb'
-                    }}>
+                    <div 
+                      className="inventory-history-scroll"
+                      style={{
+                        padding: '20px',
+                        background: '#fafbfc',
+                        borderTop: '1px solid #e5e7eb',
+                        maxHeight: '500px',
+                        overflowY: 'auto',
+                        overflowX: 'hidden'
+                      }}
+                    >
                       {itemIds.length === 0 ? (
                         <div style={{
                           padding: '20px',
