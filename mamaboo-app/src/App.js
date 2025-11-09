@@ -2320,23 +2320,34 @@ function Checkin() {
     const tasksMap = tasks.reduce((acc, t) => {
       const img = t.image || '';
       
+      // Build task data object
+      const taskData = { done: !!t.done };
+      
       // Use S3 URL if available (preferred - no size limit)
       if (imageUrls[t.id]) {
-        acc[t.id] = { done: !!t.done, imageUrl: imageUrls[t.id] };
+        taskData.imageUrl = imageUrls[t.id];
         console.log(`✓ Task ${t.id} using S3 URL: ${imageUrls[t.id]}`);
       } else if (img && img.length < 100) {
         // Image too short, treat as empty
         console.warn(`Task ${t.id}: Image too short (${img.length} chars), treating as empty`);
-        acc[t.id] = { done: !!t.done, imageUrl: '' };
+        taskData.imageUrl = '';
       } else if (img && img.length > 100) {
         // Use base64 as fallback (if S3 upload not configured or failed)
         // We'll keep all images and let Lambda handle size checking
-        acc[t.id] = { done: !!t.done, imageUrl: img };
+        taskData.imageUrl = img;
         console.log(`✓ Task ${t.id} using base64 (length: ${img.length})`);
       } else {
-        acc[t.id] = { done: !!t.done, imageUrl: '' };
+        taskData.imageUrl = '';
         console.log(`✗ Task ${t.id} KHÔNG có ảnh`);
       }
+      
+      // Add inventory form data if exists (for "Kiểm tra nguyên vật liệu" task)
+      if (t.inventoryFormData && Object.keys(t.inventoryFormData).length > 0) {
+        taskData.inventoryFormData = t.inventoryFormData;
+        console.log(`✓ Task ${t.id} có dữ liệu form kiểm tra nguyên vật liệu`);
+      }
+      
+      acc[t.id] = taskData;
       return acc;
     }, {});
     
@@ -2713,12 +2724,14 @@ function Checkin() {
       {showInventoryForm && (
         <EveningInventoryCheck
           onClose={() => setShowInventoryForm(false)}
-          onSave={(itemsUpdated) => {
-            // Đánh dấu task "Kiểm tra nguyên vật liệu" là done
+          onSave={(itemsUpdated, formData) => {
+            // Đánh dấu task "Kiểm tra nguyên vật liệu" là done và lưu dữ liệu form
             const inventoryTask = tasks.find(t => t.id === 'Kiểm tra nguyên vật liệu');
-            if (inventoryTask && !inventoryTask.done) {
+            if (inventoryTask) {
               const next = tasks.map(t => 
-                t.id === 'Kiểm tra nguyên vật liệu' ? { ...t, done: true } : t
+                t.id === 'Kiểm tra nguyên vật liệu' 
+                  ? { ...t, done: true, inventoryFormData: formData || {} } 
+                  : t
               );
               setTasks(next);
               saveState(next);
@@ -3149,6 +3162,69 @@ function ChecklistReport() {
                           {task.done ? '✓ Hoàn thành' : '✗ Chưa xong'}
                         </span>
                       </div>
+                      {/* Hiển thị form kiểm tra nguyên vật liệu nếu có */}
+                      {taskId === 'Kiểm tra nguyên vật liệu' && task.inventoryFormData && Object.keys(task.inventoryFormData).length > 0 && (
+                        <div style={{marginTop:12, padding:12, background:'#f8f9fa', borderRadius:8, border:'1px solid #e0e0e0'}}>
+                          <h5 style={{marginTop:0, marginBottom:12, color:'#e67e22', fontSize:'0.95em'}}>Kết quả kiểm tra nguyên vật liệu:</h5>
+                          {(() => {
+                            // Group items by category (same structure as EveningInventoryCheck)
+                            const REQUIRED_ITEMS = {
+                              'bot': { name: 'BỘT', items: ['matcha-thuong', 'matcha-premium', 'houjicha-thuong', 'houjicha-premium', 'cacao-bot', 'ca-phe'] },
+                              'topping': { name: 'TOPPING', items: ['panna-cotta', 'banana-pudding-s', 'banana-pudding-l'] },
+                              'sua': { name: 'SỮA', items: ['sua-do', 'sua-milklab-bo', 'sua-milklab-oat', 'boring-milk', 'sua-dac'] },
+                              'cookies': { name: 'COOKIES', items: ['redvelvet', 'double-choco', 'brownie', 'tra-xanh-pho-mai', 'salted-caramel-cookie', 'ba-tuoc-vo-cam-pho-mai'] }
+                            };
+                            
+                            const itemNames = {
+                              'matcha-thuong': 'Matcha Thường', 'matcha-premium': 'Matcha Premium',
+                              'houjicha-thuong': 'Houjicha Thường', 'houjicha-premium': 'Houjicha Premium',
+                              'cacao-bot': 'Cacao', 'ca-phe': 'Cà phê',
+                              'panna-cotta': 'Panna Cotta', 'banana-pudding-s': 'Banana Pudding size S', 'banana-pudding-l': 'Banana Pudding size L',
+                              'sua-do': 'Sữa đỏ', 'sua-milklab-bo': 'Sữa Milklab Bò', 'sua-milklab-oat': 'Sữa Milklab Oat',
+                              'boring-milk': 'Boring Milk', 'sua-dac': 'Sữa đặc',
+                              'redvelvet': 'Redvelvet', 'double-choco': 'Double choco', 'brownie': 'Brownie',
+                              'tra-xanh-pho-mai': 'Trà xanh Phô Mai', 'salted-caramel-cookie': 'Salted Caramel',
+                              'ba-tuoc-vo-cam-pho-mai': 'Bá tước vỏ cam Phô mai'
+                            };
+                            
+                            const itemUnits = {
+                              'matcha-thuong': 'hủ', 'matcha-premium': 'hủ', 'houjicha-thuong': 'hủ', 'houjicha-premium': 'hủ',
+                              'cacao-bot': 'bịch', 'ca-phe': 'bịch',
+                              'panna-cotta': 'hủ', 'banana-pudding-s': 'hộp', 'banana-pudding-l': 'hộp',
+                              'sua-do': 'hộp', 'sua-milklab-bo': 'hộp', 'sua-milklab-oat': 'hộp', 'boring-milk': 'hộp', 'sua-dac': 'hộp',
+                              'redvelvet': 'cái', 'double-choco': 'cái', 'brownie': 'cái', 'tra-xanh-pho-mai': 'cái',
+                              'salted-caramel-cookie': 'cái', 'ba-tuoc-vo-cam-pho-mai': 'cái'
+                            };
+                            
+                            return Object.keys(REQUIRED_ITEMS).map(categoryKey => {
+                              const category = REQUIRED_ITEMS[categoryKey];
+                              const itemsWithData = category.items.filter(itemId => 
+                                task.inventoryFormData[itemId] !== undefined && 
+                                task.inventoryFormData[itemId] !== '' && 
+                                task.inventoryFormData[itemId] !== null
+                              );
+                              
+                              if (itemsWithData.length === 0) return null;
+                              
+                              return (
+                                <div key={categoryKey} style={{marginBottom:12}}>
+                                  <div style={{fontWeight:600, marginBottom:6, color:'#2c3e50', fontSize:'0.9em'}}>{category.name}</div>
+                                  <div style={{display:'flex', flexDirection:'column', gap:4, paddingLeft:8}}>
+                                    {itemsWithData.map(itemId => (
+                                      <div key={itemId} style={{display:'flex', justifyContent:'space-between', fontSize:'0.85em'}}>
+                                        <span>{itemNames[itemId] || itemId}</span>
+                                        <span style={{fontWeight:600, color:'#e67e22'}}>
+                                          {task.inventoryFormData[itemId]} {itemUnits[itemId] || ''}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
                       {(task.imageUrl || task.image) && (() => {
                         const imgUrl = (task.imageUrl && String(task.imageUrl).trim()) || (task.image && String(task.image).trim());
                         // Kiểm tra xem ảnh có hợp lệ không

@@ -170,7 +170,7 @@ function EveningInventoryCheck({ onClose, onSave }) {
         }
         
         if (onSave) {
-          onSave(itemsToUpdate);
+          onSave(itemsToUpdate, formData);
         }
         if (onClose) {
           onClose();
