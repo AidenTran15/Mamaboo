@@ -22,3 +22,6 @@ export const INVENTORY_RECORDS_GET_API = 'YOUR_API_GATEWAY_URL';
 export const INVENTORY_RECORDS_POST_API = 'YOUR_API_GATEWAY_URL';
 export const INVENTORY_RECORDS_DELETE_API = 'YOUR_API_GATEWAY_URL';
 
+// Image Upload API (Upload ảnh lên S3)
+export const IMAGE_UPLOAD_API = 'https://bjnflemlf9.execute-api.ap-southeast-2.amazonaws.com/prod';
+

@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocat
 import InventoryManagement from './components/InventoryManagement';
 import InventoryCheck from './components/InventoryCheck';
 import EveningInventoryCheck from './components/EveningInventoryCheck';
+import { IMAGE_UPLOAD_API } from './constants/api';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
 const ROSTER_API = 'https://ud7uaxjwtk.execute-api.ap-southeast-2.amazonaws.com/prod';
@@ -2121,7 +2122,8 @@ function Checkin() {
   };
 
   // Helper function to resize and compress image
-  const compressImage = (file, maxWidth = 800, maxHeight = 800, quality = 0.8) => {
+  // Improved compression to stay under DynamoDB 400KB limit
+  const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.6) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -2131,27 +2133,46 @@ function Checkin() {
           let width = img.width;
           let height = img.height;
           
-          // Calculate new dimensions
-          if (width > height) {
-            if (width > maxWidth) {
-              height = (height * maxWidth) / width;
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = (width * maxHeight) / height;
-              height = maxHeight;
-            }
+          // Calculate new dimensions - more aggressive resizing
+          const maxDimension = Math.max(width, height);
+          if (maxDimension > maxWidth) {
+            const ratio = maxWidth / maxDimension;
+            width = width * ratio;
+            height = height * ratio;
           }
           
           canvas.width = width;
           canvas.height = height;
           
           const ctx = canvas.getContext('2d');
+          // Improve image quality during resize
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'medium';
           ctx.drawImage(img, 0, 0, width, height);
           
           // Convert to base64 with compression
-          const compressed = canvas.toDataURL('image/jpeg', quality);
+          // Try progressively lower quality until under 200KB (to leave room for other data)
+          let compressed = canvas.toDataURL('image/jpeg', quality);
+          let currentQuality = quality;
+          
+          // If still too large, reduce quality further
+          while (compressed.length > 200000 && currentQuality > 0.3) {
+            currentQuality -= 0.1;
+            compressed = canvas.toDataURL('image/jpeg', currentQuality);
+          }
+          
+          // If still too large, reduce dimensions
+          if (compressed.length > 200000) {
+            const smallerCanvas = document.createElement('canvas');
+            const smallerWidth = width * 0.8;
+            const smallerHeight = height * 0.8;
+            smallerCanvas.width = smallerWidth;
+            smallerCanvas.height = smallerHeight;
+            const smallerCtx = smallerCanvas.getContext('2d');
+            smallerCtx.drawImage(img, 0, 0, smallerWidth, smallerHeight);
+            compressed = smallerCanvas.toDataURL('image/jpeg', 0.5);
+          }
+          
           resolve(compressed);
         };
         img.onerror = reject;
@@ -2168,46 +2189,67 @@ function Checkin() {
       return;
     }
     
+    // Check file size before processing
+    if (file.size > 5000000) { // 5MB limit
+      alert('Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.');
+      return;
+    }
+    
     console.log(`Task ${id}: Uploading image, file name:`, file.name, 'size:', file.size, 'type:', file.type);
     
     try {
-      // Compress image before uploading
+      // Compress image before uploading - more aggressive compression
       console.log(`Task ${id}: Compressing image...`);
-      const compressedImage = await compressImage(file, 800, 800, 0.75);
+      const compressedImage = await compressImage(file, 600, 600, 0.6);
       console.log(`Task ${id}: Image compressed, original size:`, file.size, 'compressed length:', compressedImage.length);
       
-      if (compressedImage.length > 300000) { // ~300KB base64 (~200KB raw)
+      // DynamoDB limit is 400KB total item size
+      // Each image should be under 150KB base64 (~100KB raw) to leave room for other data
+      const MAX_IMAGE_SIZE = 150000; // 150KB base64
+      
+      if (compressedImage.length > MAX_IMAGE_SIZE) {
         console.warn(`Task ${id}: Compressed image still large (${compressedImage.length} chars). Compressing further...`);
-        // Compress more aggressively
-        const moreCompressed = await compressImage(file, 600, 600, 0.6);
+        // Compress more aggressively - smaller dimensions and lower quality
+        const moreCompressed = await compressImage(file, 500, 500, 0.5);
         console.log(`Task ${id}: Re-compressed length:`, moreCompressed.length);
         
-        if (moreCompressed.length > 300000) {
-          alert('Ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn.');
-          return;
+        if (moreCompressed.length > MAX_IMAGE_SIZE) {
+          // Final attempt with very aggressive compression
+          const finalCompressed = await compressImage(file, 400, 400, 0.4);
+          console.log(`Task ${id}: Final compressed length:`, finalCompressed.length);
+          
+          if (finalCompressed.length > MAX_IMAGE_SIZE) {
+            alert(`Ảnh quá lớn sau khi nén (${Math.round(finalCompressed.length / 1024)}KB). Vui lòng chọn ảnh nhỏ hơn hoặc chụp lại với độ phân giải thấp hơn.`);
+            return;
+          }
+          
+          const next = tasks.map(t => t.id === id ? { ...t, image: finalCompressed } : t);
+          setTasks(next);
+          console.log(`Task ${id}: Image compressed to acceptable size:`, finalCompressed.length);
+        } else {
+          const next = tasks.map(t => t.id === id ? { ...t, image: moreCompressed } : t);
+          setTasks(next);
+          console.log(`Task ${id}: Image compressed to acceptable size:`, moreCompressed.length);
         }
-        
-        const next = tasks.map(t => t.id === id ? { ...t, image: moreCompressed } : t);
-        setTasks(next);
-        // Don't save to localStorage to avoid quota exceeded
-        // saveState(next); 
-        
-        console.log(`Task ${id}: Image compressed and saved to state`);
       } else {
         const next = tasks.map(t => t.id === id ? { ...t, image: compressedImage } : t);
         setTasks(next);
-        // Try to save to localStorage, but don't fail if quota exceeded
-        try {
-          saveState(next);
-        } catch (e) {
-          console.warn(`Task ${id}: Could not save to localStorage (quota exceeded), but image is in state`);
-        }
-        
         console.log(`Task ${id}: Image saved successfully, verified length:`, compressedImage.length);
+      }
+      
+      // Try to save to localStorage, but don't fail if quota exceeded
+      try {
+        const finalImage = tasks.find(t => t.id === id)?.image || '';
+        if (finalImage) {
+          const currentTasks = tasks.map(t => t.id === id ? { ...t, image: finalImage } : t);
+          saveState(currentTasks);
+        }
+      } catch (e) {
+        console.warn(`Task ${id}: Could not save to localStorage (quota exceeded), but image is in state`);
       }
     } catch (error) {
       console.error(`Task ${id}: Error processing image:`, error);
-      alert('Lỗi khi xử lý ảnh!');
+      alert('Lỗi khi xử lý ảnh! ' + error.message);
     }
   };
 
@@ -2220,23 +2262,80 @@ function Checkin() {
       imageLength: t.image ? t.image.length : 0
     })));
     
+    // Collect images to upload to S3 first
+    const imagesToUpload = {};
+    const tasksWithImagesList = tasks.filter(t => t.image && t.image.length > 100);
+    
+    console.log(`Found ${tasksWithImagesList.length} tasks with images to upload`);
+    
+    // Upload images to S3 if IMAGE_UPLOAD_API is configured
+    let imageUrls = {};
+    
+    if (tasksWithImagesList.length > 0 && IMAGE_UPLOAD_API && IMAGE_UPLOAD_API !== 'YOUR_API_GATEWAY_URL') {
+      try {
+        // Prepare images for upload
+        tasksWithImagesList.forEach(t => {
+          if (t.image && t.image.length > 100) {
+            imagesToUpload[t.id] = t.image;
+          }
+        });
+        
+        console.log(`Uploading ${Object.keys(imagesToUpload).length} images to S3...`);
+        
+        const uploadResponse = await fetch(IMAGE_UPLOAD_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            images: imagesToUpload,
+            user: userName,
+            date: dateStr,
+            shift: shift
+          })
+        });
+        
+        const uploadResult = await uploadResponse.json();
+        const uploadBody = typeof uploadResult.body === 'string' ? JSON.parse(uploadResult.body) : uploadResult.body;
+        
+        if (uploadResponse.ok && uploadBody.ok) {
+          imageUrls = uploadBody.urls || {};
+          console.log(`✅ Uploaded ${Object.keys(imageUrls).length} images to S3`);
+          if (uploadBody.errors && uploadBody.errors.length > 0) {
+            console.warn('Upload errors:', uploadBody.errors);
+            alert(`Cảnh báo: ${uploadBody.errors.length} ảnh không thể upload lên S3:\n${uploadBody.errors.join('\n')}`);
+          }
+        } else {
+          console.warn('Image upload failed, will use base64 fallback');
+        }
+      } catch (error) {
+        console.error('Error uploading images to S3:', error);
+        console.warn('Will use base64 fallback');
+      }
+    }
+    
     // Chuyển đổi tasks sang format cho API
+    // Use S3 URLs if available, otherwise use base64
+    // IMPORTANT: With S3, all images will be saved. Without S3, we may need to compress more.
     const tasksMap = tasks.reduce((acc, t) => {
       const img = t.image || '';
       
-      // Validate image
-      if (img && img.length < 100) {
+      // Use S3 URL if available (preferred - no size limit)
+      if (imageUrls[t.id]) {
+        acc[t.id] = { done: !!t.done, imageUrl: imageUrls[t.id] };
+        console.log(`✓ Task ${t.id} using S3 URL: ${imageUrls[t.id]}`);
+      } else if (img && img.length < 100) {
+        // Image too short, treat as empty
         console.warn(`Task ${t.id}: Image too short (${img.length} chars), treating as empty`);
         acc[t.id] = { done: !!t.done, imageUrl: '' };
-      } else {
+      } else if (img && img.length > 100) {
+        // Use base64 as fallback (if S3 upload not configured or failed)
+        // We'll keep all images and let Lambda handle size checking
         acc[t.id] = { done: !!t.done, imageUrl: img };
-      }
-      
-      // Debug log để kiểm tra ảnh có được lưu không
-      if (img && img.length > 100) {
-        console.log(`✓ Task ${t.id} có ảnh khi lưu, độ dài:`, img.length, 'Preview:', img.substring(0, 50) + '...');
+        console.log(`✓ Task ${t.id} using base64 (length: ${img.length})`);
       } else {
-        console.log(`✗ Task ${t.id} KHÔNG có ảnh khi lưu (length: ${img.length})`);
+        acc[t.id] = { done: !!t.done, imageUrl: '' };
+        console.log(`✗ Task ${t.id} KHÔNG có ảnh`);
       }
       return acc;
     }, {});
@@ -2264,19 +2363,27 @@ function Checkin() {
 
     // Gọi API để lưu checklist
     const CHECKLIST_API = 'https://5q97j7q6ce.execute-api.ap-southeast-2.amazonaws.com/prod/';
+    
+    // Calculate total payload size
     const payload = { 
       user: userName, 
       date: dateStr, 
       shift, 
       tasks: tasksMap, 
-      checklistType: 'ket_ca', // Lưu với type 'ket_ca' khi bấm "Kết ca"
-      startedAt: null // Không lưu checkinStatus vào localStorage nữa, để null
+      checklistType: 'ket_ca',
+      startedAt: null
     };
-    
-    // Log payload size (truncate for readability)
     const payloadStr = JSON.stringify(payload);
-    console.log('Payload size:', payloadStr.length, 'bytes');
-    console.log('Payload preview (first 500 chars):', payloadStr.substring(0, 500));
+    const payloadSize = new Blob([payloadStr]).size;
+    console.log('Total payload size:', payloadSize, 'bytes (', Math.round(payloadSize / 1024), 'KB)');
+    
+    // Warn if approaching limit
+    if (payloadSize > 350000) { // 350KB
+      const confirmMsg = `Cảnh báo: Dữ liệu checklist rất lớn (${Math.round(payloadSize / 1024)}KB), gần giới hạn 400KB của DynamoDB. Một số ảnh có thể bị loại bỏ. Bạn có muốn tiếp tục?`;
+      if (!window.confirm(confirmMsg)) {
+        return;
+      }
+    }
     
     // Verify tasks in payload
     const payloadTasksWithImages = Object.values(payload.tasks).filter(t => t.imageUrl && t.imageUrl.length > 100).length;
