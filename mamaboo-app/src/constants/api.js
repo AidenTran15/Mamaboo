@@ -17,8 +17,8 @@ export const INVENTORY_ITEMS_POST_API = 'https://fdsm4lvybc.execute-api.ap-south
 export const INVENTORY_ITEMS_DELETE_API = 'https://fdsm4lvybc.execute-api.ap-southeast-2.amazonaws.com/prod';
 export const INVENTORY_ITEMS_BATCH_UPDATE_API = 'https://efutaz2jrd.execute-api.ap-southeast-2.amazonaws.com/prod';
 
-// Inventory Records API (Lịch sử kiểm kê) - Cập nhật sau khi deploy
-export const INVENTORY_RECORDS_GET_API = 'YOUR_API_GATEWAY_URL';
+// Inventory Records API (Lịch sử kiểm kê)
+export const INVENTORY_RECORDS_GET_API = 'https://m6m0uurqpg.execute-api.ap-southeast-2.amazonaws.com/prod';
 export const INVENTORY_RECORDS_POST_API = 'YOUR_API_GATEWAY_URL';
 export const INVENTORY_RECORDS_DELETE_API = 'YOUR_API_GATEWAY_URL';
 

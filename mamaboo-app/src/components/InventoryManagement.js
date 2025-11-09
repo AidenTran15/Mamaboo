@@ -346,15 +346,26 @@ function InventoryManagement() {
           </div>
         )}
 
-        <div style={{marginTop: 24, display: 'flex', justifyContent: 'center'}}>
-          <button
-            onClick={() => navigate('/admin')}
-            className="login-button"
-            style={{padding: '12px 36px'}}
-          >
-            Quay lại
-          </button>
-        </div>
+              <div style={{marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12}}>
+                <button
+                  onClick={() => navigate('/inventory-history')}
+                  className="login-button"
+                  style={{
+                    padding: '12px 36px',
+                    background: '#9b59b6',
+                    color: '#fff'
+                  }}
+                >
+                  Lịch sử kiểm kê
+                </button>
+                <button
+                  onClick={() => navigate('/admin')}
+                  className="login-button"
+                  style={{padding: '12px 36px'}}
+                >
+                  Quay lại
+                </button>
+              </div>
       </div>
 
       {/* Modal nhập số lượng */}

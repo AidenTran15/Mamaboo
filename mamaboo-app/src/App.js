@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import InventoryManagement from './components/InventoryManagement';
+import InventoryHistory from './components/InventoryHistory';
 import InventoryCheck from './components/InventoryCheck';
 import EveningInventoryCheck from './components/EveningInventoryCheck';
 import { IMAGE_UPLOAD_API } from './constants/api';
@@ -4549,6 +4550,7 @@ function App() {
         <Route path="/penalty-management" element={<ProtectedRoute><PenaltyManagement /></ProtectedRoute>} />
         <Route path="/inventory-check" element={<ProtectedRoute><InventoryCheck /></ProtectedRoute>} />
         <Route path="/inventory-management" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
+        <Route path="/inventory-history" element={<ProtectedRoute><InventoryHistory /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

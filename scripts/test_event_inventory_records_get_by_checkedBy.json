@@ -1,0 +1,8 @@
+{
+  "httpMethod": "GET",
+  "queryStringParameters": {
+    "checkedBy": "Kim Thu",
+    "limit": "20"
+  }
+}
+
