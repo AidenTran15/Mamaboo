@@ -1,4 +1,9 @@
 {
   "httpMethod": "POST",
+  "headers": {
+    "Content-Type": "application/json",
+    "Origin": "https://your-frontend-domain.com"
+  },
   "body": "{\"items\": {\"ly-500ml\": \"100\", \"ly-700ml\": \"50\", \"matcha-thuong\": \"5\", \"banana-pudding-s\": \"10\"}, \"date\": \"2025-11-04\", \"checkedBy\": \"Kim Thu\"}"
 }
+

@@ -1,0 +1,9 @@
+{
+  "httpMethod": "OPTIONS",
+  "headers": {
+    "Origin": "https://your-frontend-domain.com",
+    "Access-Control-Request-Method": "POST",
+    "Access-Control-Request-Headers": "Content-Type"
+  }
+}
+

@@ -183,8 +183,10 @@ def lambda_handler(event, context):
             for item_id, qty_str in items_to_update.items():
                 items_for_record[item_id] = str(qty_str)  # Store as string
             
+            # Use timestamp as sort key to allow multiple checks per day
             record_item = {
                 'date': date_str,
+                'timestamp': now,  # Sort key: ISO timestamp
                 'checkedBy': checked_by or 'Unknown',
                 'items': items_for_record,  # Items that were submitted (may be empty)
                 'createdAt': now,

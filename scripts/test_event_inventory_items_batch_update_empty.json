@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"items\": {}, \"date\": \"2025-11-04\", \"checkedBy\": \"Kim Thu\"}"
+}
+

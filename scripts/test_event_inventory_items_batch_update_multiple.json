@@ -1,0 +1,5 @@
+{
+  "httpMethod": "POST",
+  "body": "{\"items\": {\"ly-500ml\": \"100\", \"ly-700ml\": \"50\", \"matcha-thuong\": \"5\", \"matcha-premium\": \"3\", \"houjicha-thuong\": \"8\", \"houjicha-premium\": \"2\", \"cacao-bot\": \"15\", \"ca-phe\": \"20\", \"panna-cotta\": \"12\", \"banana-pudding-s\": \"10\", \"banana-pudding-l\": \"8\", \"sua-do\": \"25\", \"sua-milklab-bo\": \"18\", \"sua-milklab-oat\": \"15\", \"boring-milk\": \"20\", \"sua-dac\": \"10\", \"redvelvet\": \"30\", \"double-choco\": \"25\", \"brownie\": \"20\"}, \"date\": \"2025-11-04\", \"checkedBy\": \"Kim Thu\"}"
+}
+
