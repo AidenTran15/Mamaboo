@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { INVENTORY_ITEMS_GET_API } from '../constants/api';
+import { INVENTORY_ITEMS_GET_API, INVENTORY_ITEMS_BATCH_UPDATE_API } from '../constants/api';
 
 function InventoryManagement() {
   const navigate = useNavigate();
   const [inventoryItems, setInventoryItems] = useState({}); // Map itemId -> item data from API
   const [itemsByCategory, setItemsByCategory] = useState({}); // Grouped by category
   const [loading, setLoading] = useState(true);
+  const [showInputModal, setShowInputModal] = useState(false);
+  const [selectedItemForInput, setSelectedItemForInput] = useState(null);
+  const [inputQuantity, setInputQuantity] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Fetch inventory items from API
   React.useEffect(() => {
@@ -114,6 +118,87 @@ function InventoryManagement() {
     return currentValue < threshold;
   };
 
+  // Open modal to input quantity
+  const handleOpenInputModal = (item) => {
+    setSelectedItemForInput(item);
+    setInputQuantity('');
+    setShowInputModal(true);
+  };
+
+  // Close modal
+  const handleCloseInputModal = () => {
+    setShowInputModal(false);
+    setSelectedItemForInput(null);
+    setInputQuantity('');
+  };
+
+  // Update quantity for an item (add to current quantity)
+  const handleUpdateQuantity = async () => {
+    if (!selectedItemForInput) return;
+
+    if (inputQuantity === '' || inputQuantity === null || inputQuantity === undefined) {
+      alert('Vui lòng nhập số lượng!');
+      return;
+    }
+
+    const inputValue = parseFloat(inputQuantity);
+    if (isNaN(inputValue) || inputValue < 0) {
+      alert('Số lượng không hợp lệ!');
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      // Get full item data from inventoryItems to include all required fields
+      const fullItem = inventoryItems[selectedItemForInput.itemId];
+      if (!fullItem) {
+        throw new Error('Không tìm thấy thông tin sản phẩm. Vui lòng refresh trang và thử lại.');
+      }
+
+      // Get current quantity and add input value
+      const currentQuantity = parseFloat(getItemQuantity(selectedItemForInput.itemId)) || 0;
+      const newQuantity = currentQuantity + inputValue;
+
+      // Use batch update API (same as form nguyên vật liệu)
+      const response = await fetch(INVENTORY_ITEMS_BATCH_UPDATE_API, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          items: {
+            [selectedItemForInput.itemId]: newQuantity.toString()
+          }
+        })
+      });
+
+      const result = await response.json();
+      const body = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+
+      if (response.ok && (body.ok || body.statusCode === 200)) {
+        // Update local state
+        setInventoryItems(prev => ({
+          ...prev,
+          [selectedItemForInput.itemId]: {
+            ...prev[selectedItemForInput.itemId],
+            quantity: newQuantity.toString()
+          }
+        }));
+
+        alert(`Đã nhập hàng thành công!\nSố lượng cũ: ${currentQuantity} ${fullItem.unit || selectedItemForInput.unit}\nSố lượng nhập: ${inputValue} ${fullItem.unit || selectedItemForInput.unit}\nSố lượng mới: ${newQuantity} ${fullItem.unit || selectedItemForInput.unit}`);
+        handleCloseInputModal();
+      } else {
+        throw new Error(body?.error || body?.errorMessage || 'Failed to update quantity');
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      alert('Có lỗi xảy ra khi cập nhật số lượng!\n\nChi tiết: ' + error.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
 
   return (
     <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
@@ -160,6 +245,7 @@ function InventoryManagement() {
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Số lượng</th>
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
+                            <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Nhập hàng</th>
                             <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Mua</th>
                           </tr>
                         </thead>
@@ -211,6 +297,22 @@ function InventoryManagement() {
                                  </td>
                                  <td style={{padding: '12px', textAlign: 'center'}}>
                                   <button
+                                    onClick={() => handleOpenInputModal(item)}
+                                    style={{
+                                      padding: '6px 12px',
+                                      background: '#10b981',
+                                      color: '#fff',
+                                      border: 'none',
+                                      borderRadius: 6,
+                                      fontSize: '12px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    Nhập
+                                  </button>
+                                </td>
+                                 <td style={{padding: '12px', textAlign: 'center'}}>
+                                  <button
                                     onClick={() => {
                                       if (purchaseLink && purchaseLink.trim() !== '') {
                                         window.open(purchaseLink, '_blank', 'noopener,noreferrer');
@@ -255,6 +357,98 @@ function InventoryManagement() {
         </div>
       </div>
 
+      {/* Modal nhập số lượng */}
+      {showInputModal && selectedItemForInput && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }} onClick={handleCloseInputModal}>
+          <div style={{
+            background: '#fff',
+            borderRadius: 12,
+            padding: 24,
+            minWidth: 400,
+            maxWidth: '90vw',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+          }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{marginTop: 0, marginBottom: 16, color: '#2b4c66'}}>
+              Nhập hàng: {selectedItemForInput.name}
+            </h3>
+            <div style={{marginBottom: 16}}>
+              <label style={{display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66'}}>
+                Số lượng hiện tại: <span style={{color: '#3498db', fontSize: '16px'}}>{getItemQuantity(selectedItemForInput.itemId)} {selectedItemForInput.unit}</span>
+              </label>
+              <label style={{display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66'}}>
+                Số lượng nhập vào:
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={inputQuantity}
+                onChange={(e) => setInputQuantity(e.target.value)}
+                placeholder="Nhập số lượng cần thêm"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #e6eef5',
+                  borderRadius: 8,
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+                autoFocus
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleUpdateQuantity();
+                  }
+                }}
+              />
+            </div>
+            <div style={{display: 'flex', gap: 12, justifyContent: 'flex-end'}}>
+              <button
+                onClick={handleCloseInputModal}
+                disabled={isUpdating}
+                style={{
+                  padding: '10px 20px',
+                  background: '#e5e7eb',
+                  color: '#2b4c66',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: '14px',
+                  cursor: isUpdating ? 'not-allowed' : 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleUpdateQuantity}
+                disabled={isUpdating}
+                style={{
+                  padding: '10px 20px',
+                  background: isUpdating ? '#94a3b8' : '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  fontSize: '14px',
+                  cursor: isUpdating ? 'not-allowed' : 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {isUpdating ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
