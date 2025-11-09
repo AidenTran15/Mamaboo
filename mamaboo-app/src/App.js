@@ -2049,7 +2049,7 @@ function Checkin() {
       { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
       { id: 'Bật nhạc, đèn, điều hòa/quạt ', label: 'Bật nhạc, đèn, điều hòa/quạt', requiresImage: false },
       { id: 'Đốt nhang, pha bạc sỉu để cúng', label: 'Đốt nhang, pha bạc sỉu để cúng' },
-      { id: 'Kiểm két', label: 'Kiểm két'},
+      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true },
       { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ', requiresImage: false }
     ],
     trua: [
@@ -2059,7 +2059,7 @@ function Checkin() {
       { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
       { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
-      { id: 'Kiểm két', label: 'Kiểm két'},
+      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true },
 
     ],
     toi: [
@@ -2075,7 +2075,7 @@ function Checkin() {
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
       { id: 'Khoá cửa', label: 'Khoá cửa' },
       { id: 'Dắt xe', label: 'Dắt xe' },
-      { id: 'Kiểm két', label: 'Kiểm két'},
+      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true },
       { id: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ', label: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ' }
     ]
   };
@@ -2093,16 +2093,20 @@ function Checkin() {
         ...t,
         done: !!(saved.tasks?.[t.id]?.done),
         image: saved.tasks?.[t.id]?.image || '',
+        text: saved.tasks?.[t.id]?.text || '',
         requiresImage: t.requiresImage !== false, // Giữ lại thuộc tính requiresImage từ template
-        useForm: t.useForm || false // Giữ lại thuộc tính useForm từ template
+        useForm: t.useForm || false, // Giữ lại thuộc tính useForm từ template
+        useTextInput: t.useTextInput || false // Giữ lại thuộc tính useTextInput từ template
       }));
     } catch {
       return defaultTasks.map(t => ({ 
         ...t, 
         done: false, 
         image: '', 
+        text: '',
         requiresImage: t.requiresImage !== false,
-        useForm: t.useForm || false
+        useForm: t.useForm || false,
+        useTextInput: t.useTextInput || false
       }));
     }
   });
@@ -2112,7 +2116,13 @@ function Checkin() {
   const saveState = (nextTasks) => {
     try {
       const payload = { tasks: {} };
-      nextTasks.forEach(t => { payload.tasks[t.id] = { done: t.done, image: t.image }; });
+      nextTasks.forEach(t => { 
+        payload.tasks[t.id] = { 
+          done: t.done, 
+          image: t.image || '', 
+          text: t.text || '' 
+        }; 
+      });
       localStorage.setItem(storageKey, JSON.stringify(payload));
     } catch (e) {
       // Quota exceeded - don't save to localStorage, but continue
@@ -2122,6 +2132,12 @@ function Checkin() {
 
   const toggleTask = (id) => {
     const next = tasks.map(t => t.id === id ? { ...t, done: !t.done } : t);
+    setTasks(next);
+    saveState(next);
+  };
+
+  const handleTextChange = (id, text) => {
+    const next = tasks.map(t => t.id === id ? { ...t, text } : t);
     setTasks(next);
     saveState(next);
   };
@@ -2350,6 +2366,12 @@ function Checkin() {
       if (t.inventoryFormData && Object.keys(t.inventoryFormData).length > 0) {
         taskData.inventoryFormData = t.inventoryFormData;
         console.log(`✓ Task ${t.id} có dữ liệu form kiểm tra nguyên vật liệu`);
+      }
+      
+      // Add text data if exists (for "Kiểm két" task)
+      if (t.text && t.text.trim().length > 0) {
+        taskData.text = t.text.trim();
+        console.log(`✓ Task ${t.id} có dữ liệu text: ${t.text.substring(0, 50)}...`);
       }
       
       acc[t.id] = taskData;
@@ -2674,6 +2696,26 @@ function Checkin() {
                   </div>
                 )}
               </div>
+              {/* Text input cho task "Kiểm két" */}
+              {t.useTextInput && (
+                <div style={{marginTop:12}}>
+                  <textarea
+                    value={t.text || ''}
+                    onChange={(e) => handleTextChange(t.id, e.target.value)}
+                    placeholder="Nhập thông tin kiểm két (ví dụ: NHẬN CA: 914k, TIỀN MẶT: 30k, 100k, 120k, CHI: không có, KẾT CA: 1tr164k)"
+                    style={{
+                      width: '100%',
+                      minHeight: '120px',
+                      padding: '10px',
+                      border: '1px solid #e6eef5',
+                      borderRadius: 8,
+                      fontSize: '14px',
+                      fontFamily: 'inherit',
+                      resize: 'vertical'
+                    }}
+                  />
+                </div>
+              )}
               {t.image && (
                 <div style={{marginTop:10}}>
                   <img src={t.image} alt={t.label} style={{maxWidth:'100%', maxHeight:200, borderRadius:8, border:'1px solid #eef5fa'}} />
@@ -3254,6 +3296,26 @@ function ChecklistReport() {
                               );
                             });
                           })()}
+                        </div>
+                      )}
+                      {/* Hiển thị text cho task "Kiểm két" */}
+                      {taskId === 'Kiểm két' && task.text && task.text.trim().length > 0 && (
+                        <div style={{marginTop:12, padding:12, background:'#f0f7ff', borderRadius:8, border:'1px solid #b3d9ff'}}>
+                          <h5 style={{marginTop:0, marginBottom:8, color:'#2c3e50', fontSize:'0.95em', fontWeight:600}}>Thông tin kiểm két:</h5>
+                          <div style={{
+                            whiteSpace: 'pre-wrap',
+                            wordWrap: 'break-word',
+                            fontSize: '14px',
+                            lineHeight: '1.6',
+                            color: '#2c3e50',
+                            fontFamily: 'monospace',
+                            background: '#fff',
+                            padding: '12px',
+                            borderRadius: '6px',
+                            border: '1px solid #e0e0e0'
+                          }}>
+                            {task.text}
+                          </div>
                         </div>
                       )}
                       {(task.imageUrl || task.image) && (() => {
