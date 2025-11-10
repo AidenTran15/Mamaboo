@@ -818,34 +818,33 @@ function NhanVien() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
+    <div className="login-page nhan-vien-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container nhan-vien-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
         <h2 className="login-title" style={{color: '#2ecc71', alignSelf:'center'}}>Nhân Viên</h2>
         <div className="login-underline" style={{ background: '#2ecc71', alignSelf:'center' }}></div>
-        <div style={{textAlign: 'center', fontSize: 20, marginTop: 10, marginBottom: 16}}>Xin chào {userName ? userName : 'bạn'}!</div>
+        <div style={{textAlign: 'center', fontSize: 18, marginTop: 10, marginBottom: 20, color: '#2b4c66'}}>
+          Xin chào {userName ? userName : 'bạn'}!
+        </div>
 
-        <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap'}}>
+        <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24, flexWrap: 'wrap'}}>
           <button 
             onClick={calculateMonthlyStats}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               background: '#2ecc71',
               color: '#fff',
               border: 'none',
-              borderRadius: 12,
-              fontSize: '16px',
+              borderRadius: 8,
+              fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
               e.target.style.background = '#27ae60';
-              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
             }}
             onMouseLeave={(e) => {
               e.target.style.background = '#2ecc71';
-              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
             }}
           >
             Xem thống kê tháng này
@@ -854,67 +853,193 @@ function NhanVien() {
           <button 
             onClick={() => navigate('/inventory-check')}
             style={{
-              padding: '12px 24px',
+              padding: '10px 20px',
               background: '#3498db',
               color: '#fff',
               border: 'none',
-              borderRadius: 12,
-              fontSize: '16px',
+              borderRadius: 8,
+              fontSize: '14px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              transition: 'all 0.2s ease'
             }}
             onMouseEnter={(e) => {
               e.target.style.background = '#2980b9';
-              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
             }}
             onMouseLeave={(e) => {
               e.target.style.background = '#3498db';
-              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
             }}
           >
             Kiểm tra nguyên vật liệu
           </button>
         </div>
 
-        <h3 style={{alignSelf:'center', margin:'12px 0 14px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
+        <h3 style={{alignSelf:'center', margin:'12px 0 16px', fontSize: '18px', color: '#2b4c66'}}>Ca làm trong chu kỳ lương hiện tại</h3>
         {loading ? (
-          <div style={{textAlign:'center', width:'100%'}}>Đang tải...</div>
+          <div style={{
+            textAlign:'center',
+            width:'100%',
+            padding: '40px 20px',
+            color:'#6b7a86',
+            fontSize: '16px'
+          }}>
+            <div style={{fontSize: '32px', marginBottom: 12}}>⏳</div>
+            Đang tải...
+          </div>
         ) : (
-          <div style={{display:'flex', flexDirection:'column', gap:12, width:'100%', maxWidth: 720, margin:'0 auto 12px'}}>
+          <div style={{display:'flex', flexDirection:'column', gap:16, width:'100%', maxWidth: 720, margin:'0 auto 12px'}}>
             {rows.length === 0 ? (
-              <div style={{textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</div>
-            ) : rows.map((r) => (
-              <div id={r.isToday ? 'today-card' : undefined} key={r.date} style={{
-                background:r.isToday ? '#f0fbff' : '#fff', border:'1px solid #e9f2f8', borderRadius:14,
-                boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px',
-                width:'100%', margin:'0 auto'
+              <div style={{
+                textAlign:'center',
+                color:'#6b7a86',
+                padding: '40px 20px',
+                background: '#f9fafb',
+                borderRadius: 12,
+                border: '1px dashed #e5e7eb'
               }}>
-                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}>
-                  <div style={{fontWeight:700, color:'#2b4c66'}}>{r.weekday}</div>
-                  <div style={{opacity:0.8}}>{formatDate(r.date)}</div>
+                <div style={{fontSize: '48px', marginBottom: 12}}>📋</div>
+                <div style={{fontSize: '16px'}}>Không có ca trong chu kỳ này</div>
+              </div>
+            ) : rows.map((r) => (
+              <div 
+                id={r.isToday ? 'today-card' : undefined} 
+                key={r.date} 
+                className="shift-card"
+                style={{
+                  background: r.isToday ? '#f0fbff' : '#fff',
+                  border: r.isToday ? '2px solid #3498db' : '1px solid #e9f2f8',
+                  borderRadius: 12,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  padding: '14px 16px',
+                  width: '100%',
+                  margin: '0 auto'
+                }}
+              >
+                <div style={{
+                  display:'flex',
+                  justifyContent:'space-between',
+                  alignItems: 'center',
+                  marginBottom: 12
+                }}>
+                  <div style={{fontWeight:700, color:'#2b4c66', fontSize: '16px'}}>{r.weekday}</div>
+                  <div style={{
+                    opacity:0.8,
+                    color: '#6b7a86',
+                    fontSize: '14px'
+                  }}>{formatDate(r.date)}</div>
                 </div>
-                <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
-                  {r.shifts.map((s, idx) => (
-                    <span key={idx} style={chipStyle(s.type)}>{s.text}</span>
-                  ))}
+                {/* Danh sách các ca trong ngày */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 8
+                }}>
                   {r.shifts.map((s, idx) => {
-                    if (s.hasCheckedOut) {
-                      return (
-                        <span key={`done-${idx}`} style={{fontWeight:600, color:'#2ecc71', fontSize:'0.9em'}}>
-                          ✓ Đã kết ca
-                        </span>
-                      );
-                    } else if (s.canCheckIn || s.hasCheckedIn) {
-                      // Hiển thị nút để vào checklist (có thể đã bắt đầu ca hoặc chưa)
-                      return (
-                        <button key={`btn-in-${idx}`} className="login-button" style={{width:'auto', padding:'8px 12px', background: s.hasCheckedIn ? '#43a8ef' : '#43a8ef'}} onClick={()=>handleCheckIn(r.date, s.type)}>
-                          {s.hasCheckedIn ? 'Vào checklist' : `Bắt đầu ca (${s.type === 'sang' ? 'Ca sáng' : s.type === 'trua' ? 'Ca trưa' : 'Ca tối'})`}
-                        </button>
-                      );
-                    }
-                    return null;
+                    const shiftNames = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
+                    const shiftColors = { 
+                      sang: { bg: '#e9f8ef', text: '#1e7e34' },
+                      trua: { bg: '#fff5e5', text: '#c17d00' },
+                      toi: { bg: '#f3eaff', text: '#6f42c1' }
+                    };
+                    const color = shiftColors[s.type] || shiftColors.sang;
+                    
+                    return (
+                      <div 
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          background: s.hasCheckedOut ? '#f0f9ff' : color.bg,
+                          border: `1px solid ${s.hasCheckedOut ? '#e0f2fe' : '#e5e7eb'}`,
+                          borderRadius: 8
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          flex: 1
+                        }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{
+                              fontWeight: 600,
+                              color: s.hasCheckedOut ? '#6b7a86' : color.text,
+                              fontSize: '14px',
+                              marginBottom: 2,
+                              textDecoration: s.hasCheckedOut ? 'line-through' : 'none',
+                              opacity: s.hasCheckedOut ? 0.7 : 1
+                            }}>
+                              {shiftNames[s.type]}
+                            </div>
+                            <div style={{
+                              fontSize: '11px',
+                              color: '#6b7a86',
+                              opacity: 0.8
+                            }}>
+                              {s.text}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          {s.hasCheckedOut ? (
+                            <span style={{
+                              fontWeight: 600,
+                              color: '#2ecc71',
+                              fontSize: '11px',
+                              background: '#d1fae5',
+                              padding: '4px 8px',
+                              borderRadius: 4,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4
+                            }}>
+                              ✅ Đã kết ca
+                            </span>
+                          ) : (s.canCheckIn || s.hasCheckedIn) ? (
+                            <button
+                              onClick={() => handleCheckIn(r.date, s.type)}
+                              style={{
+                                padding: '5px 10px',
+                                background: '#667eea',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: 4,
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.target.style.background = '#5568d3';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.target.style.background = '#667eea';
+                              }}
+                            >
+                              {s.hasCheckedIn ? 'Vào checklist' : 'Bắt đầu'}
+                            </button>
+                          ) : (
+                            <span style={{
+                              fontWeight: 500,
+                              color: '#6b7a86',
+                              fontSize: '11px',
+                              background: '#f0f4f8',
+                              padding: '4px 8px',
+                              borderRadius: 4
+                            }}>
+                              Chưa đến giờ
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
                   })}
                 </div>
               </div>
@@ -922,7 +1047,31 @@ function NhanVien() {
           </div>
         )}
 
-        <button style={{marginTop: 24, alignSelf:'center'}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
+        <button 
+          style={{
+            marginTop: 24,
+            alignSelf:'center',
+            padding: '10px 24px',
+            background: '#e74c3c',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          className="login-button logout-btn"
+          onClick={handleLogout}
+          onMouseEnter={(e) => {
+            e.target.style.background = '#c0392b';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = '#e74c3c';
+          }}
+        >
+          Đăng xuất
+        </button>
       </div>
 
       {/* Modal thống kê tháng */}

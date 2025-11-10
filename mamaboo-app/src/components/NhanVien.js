@@ -399,111 +399,425 @@ function NhanVien() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
-        <h2 className="login-title" style={{color: '#2ecc71', alignSelf:'center'}}>Nhân Viên</h2>
-        <div className="login-underline" style={{ background: '#2ecc71', alignSelf:'center' }}></div>
-        <div style={{textAlign: 'center', fontSize: 20, marginTop: 10, marginBottom: 16}}>Xin chào {userName ? userName : 'bạn'}!</div>
+    <div className="login-page nhan-vien-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container nhan-vien-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
+        {/* Header Section với gradient */}
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: 16,
+          padding: '24px',
+          marginBottom: 24,
+          boxShadow: '0 8px 24px rgba(102, 126, 234, 0.3)',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            margin: '0 auto 16px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '36px',
+            border: '3px solid rgba(255, 255, 255, 0.3)'
+          }}>
+            👤
+          </div>
+          <h2 className="login-title" style={{
+            color: '#fff',
+            alignSelf:'center',
+            marginBottom: 8,
+            fontSize: '28px',
+            textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}>Nhân Viên</h2>
+          <div style={{
+            textAlign: 'center',
+            fontSize: 18,
+            color: 'rgba(255, 255, 255, 0.95)',
+            fontWeight: 500,
+            marginTop: 8
+          }}>
+            Xin chào <span style={{fontWeight: 700}}>{userName ? userName : 'bạn'}</span>! 👋
+          </div>
+        </div>
 
-        <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 20, flexWrap: 'wrap'}}>
+        {/* Action Buttons với card style */}
+        <div style={{display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 32, flexWrap: 'wrap'}}>
           <button 
             onClick={calculateMonthlyStats}
+            className="action-card-btn stats-btn"
             style={{
-              padding: '12px 24px',
-              background: '#2ecc71',
+              flex: '1 1 200px',
+              minWidth: 200,
+              padding: '20px 24px',
+              background: 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)',
               color: '#fff',
               border: 'none',
-              borderRadius: 12,
+              borderRadius: 16,
               fontSize: '16px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(46, 204, 113, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = '#27ae60';
-              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 20px rgba(46, 204, 113, 0.4)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.background = '#2ecc71';
-              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(46, 204, 113, 0.3)';
             }}
           >
-            Xem thống kê tháng này
+            <span style={{fontSize: '28px'}}>📊</span>
+            <span>Xem thống kê tháng này</span>
           </button>
           
           <button 
             onClick={() => navigate('/inventory-check')}
+            className="action-card-btn inventory-btn"
             style={{
-              padding: '12px 24px',
-              background: '#3498db',
+              flex: '1 1 200px',
+              minWidth: 200,
+              padding: '20px 24px',
+              background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
               color: '#fff',
               border: 'none',
-              borderRadius: 12,
+              borderRadius: 16,
               fontSize: '16px',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 12px rgba(52, 152, 219, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 8
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = '#2980b9';
-              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+              e.target.style.transform = 'translateY(-2px)';
+              e.target.style.boxShadow = '0 8px 20px rgba(52, 152, 219, 0.4)';
             }}
             onMouseLeave={(e) => {
-              e.target.style.background = '#3498db';
-              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
             }}
           >
-            Kiểm tra nguyên vật liệu
+            <span style={{fontSize: '28px'}}>📦</span>
+            <span>Kiểm tra nguyên vật liệu</span>
           </button>
         </div>
 
-        <h3 style={{alignSelf:'center', margin:'12px 0 14px'}}>Ca làm trong chu kỳ lương hiện tại</h3>
+        {/* Section Title với icon */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 12,
+          marginBottom: 20,
+          paddingBottom: 12,
+          borderBottom: '2px solid #e9f2f8'
+        }}>
+          <span style={{fontSize: '24px'}}>📅</span>
+          <h3 style={{
+            margin: 0,
+            fontSize: '20px',
+            fontWeight: 700,
+            color: '#2b4c66',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>Ca làm trong chu kỳ lương hiện tại</h3>
+        </div>
         {loading ? (
-          <div style={{textAlign:'center', width:'100%'}}>Đang tải...</div>
+          <div style={{
+            textAlign:'center',
+            width:'100%',
+            padding: '40px 20px',
+            color:'#6b7a86',
+            fontSize: '16px'
+          }}>
+            <div style={{fontSize: '32px', marginBottom: 12}}>⏳</div>
+            Đang tải...
+          </div>
         ) : (
-          <div style={{display:'flex', flexDirection:'column', gap:12, width:'100%', maxWidth: 720, margin:'0 auto 12px'}}>
+          <div style={{display:'flex', flexDirection:'column', gap:16, width:'100%', maxWidth: 720, margin:'0 auto 12px'}}>
             {rows.length === 0 ? (
-              <div style={{textAlign:'center', color:'#6b7a86'}}>Không có ca trong chu kỳ này</div>
-            ) : rows.map((r) => (
-              <div id={r.isToday ? 'today-card' : undefined} key={r.date} style={{
-                background:r.isToday ? '#f0fbff' : '#fff', border:'1px solid #e9f2f8', borderRadius:14,
-                boxShadow:'0 6px 22px rgba(0,0,0,0.06)', padding:'12px 14px',
-                width:'100%', margin:'0 auto'
+              <div style={{
+                textAlign:'center',
+                color:'#6b7a86',
+                padding: '40px 20px',
+                background: '#f9fafb',
+                borderRadius: 12,
+                border: '1px dashed #e5e7eb'
               }}>
-                <div style={{display:'flex', justifyContent:'space-between', marginBottom:8}}>
-                  <div style={{fontWeight:700, color:'#2b4c66'}}>{r.weekday}</div>
-                  <div style={{opacity:0.8}}>{formatDate(r.date)}</div>
+                <div style={{fontSize: '48px', marginBottom: 12}}>📋</div>
+                <div style={{fontSize: '16px'}}>Không có ca trong chu kỳ này</div>
+              </div>
+            ) : rows.map((r) => (
+              <div 
+                id={r.isToday ? 'today-card' : undefined} 
+                key={r.date} 
+                className="shift-card"
+                style={{
+                  background: r.isToday 
+                    ? 'linear-gradient(135deg, #f0fbff 0%, #e6f7ff 100%)' 
+                    : '#fff',
+                  border: r.isToday 
+                    ? '2px solid #3498db' 
+                    : '1px solid #e9f2f8',
+                  borderRadius: 16,
+                  boxShadow: r.isToday
+                    ? '0 8px 24px rgba(52, 152, 219, 0.15)'
+                    : '0 4px 12px rgba(0,0,0,0.08)',
+                  padding: '18px 20px',
+                  width: '100%',
+                  margin: '0 auto',
+                  transition: 'all 0.3s ease',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                onMouseEnter={(e) => {
+                  if (!r.isToday) {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!r.isToday) {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                  }
+                }}
+              >
+                {r.isToday && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    background: '#3498db',
+                    color: '#fff',
+                    padding: '4px 12px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    borderRadius: '0 16px 0 12px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px'
+                  }}>
+                    Hôm nay
+                  </div>
+                )}
+                <div style={{
+                  display:'flex',
+                  justifyContent:'space-between',
+                  alignItems: 'center',
+                  marginBottom: 14,
+                  paddingBottom: 12,
+                  borderBottom: '1px solid #e9f2f8'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10
+                  }}>
+                    <span style={{fontSize: '20px'}}>
+                      {r.weekday === 'Thứ 2' ? '📅' : r.weekday === 'Thứ 3' ? '📆' : r.weekday === 'Thứ 4' ? '🗓️' : r.weekday === 'Thứ 5' ? '📋' : r.weekday === 'Thứ 6' ? '📊' : r.weekday === 'Thứ 7' ? '📝' : '📌'}
+                    </span>
+                    <div style={{fontWeight:700, color:'#2b4c66', fontSize: '18px'}}>{r.weekday}</div>
+                  </div>
+                  <div style={{
+                    opacity:0.8,
+                    color: '#6b7a86',
+                    fontWeight: 500,
+                    fontSize: '15px',
+                    background: '#f0f4f8',
+                    padding: '6px 12px',
+                    borderRadius: 8
+                  }}>{formatDate(r.date)}</div>
                 </div>
-                <div style={{display:'flex', gap:10, flexWrap:'wrap', alignItems:'center'}}>
-                  {r.shifts.map((s, idx) => (
-                    <span key={idx} style={chipStyle(s.type)}>{s.text}</span>
-                  ))}
+                {/* Danh sách các ca trong ngày */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}>
                   {r.shifts.map((s, idx) => {
-                    if (s.hasCheckedOut) {
-                      return (
-                        <span key={`done-${idx}`} style={{fontWeight:600, color:'#2ecc71', fontSize:'0.9em'}}>
-                          ✓ Đã kết ca
-                        </span>
-                      );
-                    } else if (s.canCheckIn || s.hasCheckedIn) {
-                      // Hiển thị nút để vào checklist (có thể đã bắt đầu ca hoặc chưa)
-                      return (
-                        <button key={`btn-in-${idx}`} className="login-button" style={{width:'auto', padding:'8px 12px', background: s.hasCheckedIn ? '#43a8ef' : '#43a8ef'}} onClick={()=>handleCheckIn(r.date, s.type)}>
-                          {s.hasCheckedIn ? 'Vào checklist' : `Bắt đầu ca (${s.type === 'sang' ? 'Ca sáng' : s.type === 'trua' ? 'Ca trưa' : 'Ca tối'})`}
-                        </button>
-                      );
-                    }
-                    return null;
+                    const shiftNames = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
+                    const shiftIcons = { sang: '🌅', trua: '☀️', toi: '🌙' };
+                    const shiftColors = { 
+                      sang: { bg: '#e9f8ef', text: '#1e7e34', border: '#a7f3d0' },
+                      trua: { bg: '#fff5e5', text: '#c17d00', border: '#ffcc80' },
+                      toi: { bg: '#f3eaff', text: '#6f42c1', border: '#d4b5ff' }
+                    };
+                    const color = shiftColors[s.type] || shiftColors.sang;
+                    
+                    return (
+                      <div 
+                        key={idx}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '12px 16px',
+                          background: s.hasCheckedOut ? '#f0f9ff' : color.bg,
+                          border: `1px solid ${s.hasCheckedOut ? '#e0f2fe' : color.border}`,
+                          borderRadius: 12,
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          flex: 1
+                        }}>
+                          <span style={{ fontSize: '24px' }}>{shiftIcons[s.type]}</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{
+                              fontWeight: 600,
+                              color: s.hasCheckedOut ? '#6b7a86' : color.text,
+                              fontSize: '15px',
+                              marginBottom: 4,
+                              textDecoration: s.hasCheckedOut ? 'line-through' : 'none',
+                              opacity: s.hasCheckedOut ? 0.7 : 1
+                            }}>
+                              {shiftNames[s.type]}
+                            </div>
+                            <div style={{
+                              fontSize: '12px',
+                              color: '#6b7a86',
+                              opacity: 0.8
+                            }}>
+                              {s.text}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8
+                        }}>
+                          {s.hasCheckedOut ? (
+                            <span style={{
+                              fontWeight: 600,
+                              color: '#2ecc71',
+                              fontSize: '13px',
+                              background: '#d1fae5',
+                              padding: '6px 12px',
+                              borderRadius: 8,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 6,
+                              border: '1px solid #a7f3d0'
+                            }}>
+                              <span>✅</span>
+                              Đã kết ca
+                            </span>
+                          ) : (
+                            <span style={{
+                              fontWeight: 500,
+                              color: '#6b7a86',
+                              fontSize: '13px',
+                              background: '#f0f4f8',
+                              padding: '6px 12px',
+                              borderRadius: 8
+                            }}>
+                              Chưa bắt đầu
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
                   })}
                 </div>
+                
+                {/* Nút bắt đầu ca tiếp theo - chỉ hiển thị một nút cho ca sớm nhất chưa kết */}
+                {(() => {
+                  const nextShift = r.shifts.find(s => !s.hasCheckedOut && (s.canCheckIn || s.hasCheckedIn));
+                  if (nextShift) {
+                    const shiftNames = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
+                    const shiftIcons = { sang: '🌅', trua: '☀️', toi: '🌙' };
+                    return (
+                      <button 
+                        className="login-button shift-start-btn"
+                        style={{
+                          width: '100%',
+                          marginTop: 12,
+                          padding: '14px 20px',
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: 12,
+                          fontSize: '16px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 10
+                        }}
+                        onClick={() => handleCheckIn(r.date, nextShift.type)}
+                        onMouseEnter={(e) => {
+                          e.target.style.transform = 'translateY(-2px)';
+                          e.target.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.transform = 'translateY(0)';
+                          e.target.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.3)';
+                        }}
+                      >
+                        <span style={{ fontSize: '20px' }}>{shiftIcons[nextShift.type]}</span>
+                        <span>{nextShift.hasCheckedIn ? 'Vào checklist' : `Bắt đầu ${shiftNames[nextShift.type]}`}</span>
+                      </button>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
             ))}
           </div>
         )}
 
-        <button style={{marginTop: 24, alignSelf:'center'}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
+        <button 
+          style={{
+            marginTop: 32,
+            alignSelf:'center',
+            padding: '14px 32px',
+            background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 12,
+            fontSize: '16px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            boxShadow: '0 4px 12px rgba(255, 107, 107, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8
+          }}
+          className="login-button logout-btn"
+          onClick={handleLogout}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'translateY(-2px)';
+            e.target.style.boxShadow = '0 6px 16px rgba(255, 107, 107, 0.4)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'translateY(0)';
+            e.target.style.boxShadow = '0 4px 12px rgba(255, 107, 107, 0.3)';
+          }}
+        >
+          <span>🚪</span>
+          <span>Đăng xuất</span>
+        </button>
       </div>
 
       {/* Modal thống kê tháng */}
