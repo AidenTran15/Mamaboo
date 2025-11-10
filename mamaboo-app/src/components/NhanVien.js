@@ -22,24 +22,6 @@ function NhanVien() {
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
 
-  const canCheckInNow = (dateStr, type) => {
-    // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
-    const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
-    const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    const [y, mo, da] = dateStr.split('-').map(Number);
-    const start = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
-    return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= start.getTime();
-  };
-
-  const canCheckOutNow = (dateStr, type) => {
-    // Shift end times: sang 13:30, trua 18:30, toi 22:30 (24h)
-    const endMap = { sang: { h:13, m:30 }, trua: { h:18, m:30 }, toi: { h:22, m:30 } };
-    const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-    const [y, mo, da] = dateStr.split('-').map(Number);
-    const end = new Date(y, mo - 1, da, (endMap[type]||{h:0}).h, (endMap[type]||{m:0}).m, 0);
-    return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= end.getTime();
-  };
-
   // Không lưu checkinStatus vào localStorage nữa để tránh vượt quota
   // Chỉ lưu danh sách các ca đã kết vào 'checkinDone' (chỉ lưu key, rất nhẹ)
   // Xóa checkinStatus cũ để giải phóng dung lượng
@@ -155,12 +137,6 @@ function NhanVien() {
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  const chipStyle = (type) => {
-    const colors = { sang: '#e9f8ef', trua: '#fff5e5', toi: '#f3eaff' };
-    const text = { sang: '#1e7e34', trua: '#c17d00', toi: '#6f42c1' };
-    return { background: colors[type] || '#eef5ff', color: text[type] || '#1c222f', padding: '6px 10px', borderRadius: 999, fontWeight: 600, fontSize: 14 };
-  };
-
   const formatDate = (dateStr) => {
     // Format từ YYYY-MM-DD sang DD/MM/YYYY
     const [y, m, d] = dateStr.split('-');
@@ -263,11 +239,13 @@ function NhanVien() {
         if (!r) continue;
         
         // Kiểm tra các ca
-        ['sang', 'trua', 'toi'].forEach(type => {
+        const shiftTypes = ['sang', 'trua', 'toi'];
+        for (let i = 0; i < shiftTypes.length; i++) {
+          const type = shiftTypes[i];
           const nameArr = r[type];
           const members = Array.isArray(nameArr) ? nameArr.filter(Boolean).map(norm) : (nameArr ? [norm(nameArr)] : []);
-          if (members.length === 0) return;
-          if (!members.includes(norm(userName))) return;
+          if (members.length === 0) continue;
+          if (!members.includes(norm(userName))) continue;
           
           // Đếm số ca (tất cả ca trong roster)
           totalShifts++;
@@ -285,7 +263,7 @@ function NhanVien() {
           const isSingle = members.length === 1;
           const rate = isSingle ? rateSingle : rateDouble;
           baseSalary += hours * rate;
-        });
+        }
       }
       
       // Tính tăng ca và đi trễ theo chu kỳ lương

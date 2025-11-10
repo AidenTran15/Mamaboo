@@ -584,12 +584,6 @@ function NhanVien() {
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
 
-  const chipStyle = (type) => {
-    const colors = { sang: '#e9f8ef', trua: '#fff5e5', toi: '#f3eaff' };
-    const text = { sang: '#1e7e34', trua: '#c17d00', toi: '#6f42c1' };
-    return { background: colors[type] || '#eef5ff', color: text[type] || '#1c222f', padding: '6px 10px', borderRadius: 999, fontWeight: 600, fontSize: 14 };
-  };
-
   const formatDate = (dateStr) => {
     // Format từ YYYY-MM-DD sang DD/MM/YYYY
     const [y, m, d] = dateStr.split('-');
