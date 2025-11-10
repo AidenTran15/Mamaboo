@@ -2038,29 +2038,31 @@ function Checkin() {
   // Checklist các task cần làm trong ca (theo từng ca)
   const SHIFT_TASK_TEMPLATES = {
     sang: [
-      { id: 'Lau chùi quầy pha chế', label: 'Lau chùi quầy pha chế' },
-      { id: ' Set up bàn tiếp khách, quầy thu ngân', label: 'Set up bàn tiếp khách, quầy thu ngân' },
-      { id: 'Quét và lau sàn', label: 'Quét và lau sàn' },
+      { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
       { id: 'Set up khu vực cashier', label: 'Set up khu vực cashier' },
       { id: 'Setup bàn ghế ngay ngắn, khăn bàn (khu vực trong và ngoài trời)', label: 'Setup bàn ghế ngay ngắn, khăn bàn (khu vực trong và ngoài trời)' },
+      { id: 'Quét và lau sàn', label: 'Quét và lau sàn' },
       { id: 'Tưới cây', label: 'Tưới cây', requiresImage: false },
       { id: 'Quét sân', label: 'Quét sân' },
-      { id: 'Kiểm tra nhà vệ sinh', label: 'Kiểm tra nhà vệ sinh' },
+      { id: 'Kiểm tra vệ sinh toilet', label: 'Kiểm tra vệ sinh toilet' },
       { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
-      { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
       { id: 'Bật nhạc, đèn, điều hòa/quạt ', label: 'Bật nhạc, đèn, điều hòa/quạt', requiresImage: false },
       { id: 'Đốt nhang, pha bạc sỉu để cúng', label: 'Đốt nhang, pha bạc sỉu để cúng' },
-      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true },
-      { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ', requiresImage: false }
+      { id: 'sắp xếp và dọn dẹp tủ lạnh ngăn nắp', label: 'sắp xếp và dọn dẹp tủ lạnh ngăn nắp' },
+      { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ', requiresImage: false },
+      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true }
     ],
     trua: [
       { id: 'Set up khu vực cashier', label: 'Set up khu vực cashier' },
       { id: 'Set up khu vực pha chế', label: 'Set up khu vực pha chế' },
-      { id: 'Kiểm tra nhà vệ sinh', label: 'Kiểm tra nhà vệ sinh' },
+      { id: 'Kiểm tra vệ sinh toilet', label: 'Kiểm tra vệ sinh toilet' },
       { id: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)', label: 'Chuẩn bị foam/ cốt phục vụ trong ngày (Cacao, các loại Foam)' },
       { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
-      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true },
+      { id: 'sắp xếp và dọn dẹp tủ lạnh ngăn nắp', label: 'sắp xếp và dọn dẹp tủ lạnh ngăn nắp' },
+      { id: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...)  ', label: 'Tắt/bảo trì máy móc đúng cách (đổ nước máy nước nóng, rửa bình đánh coldwhisk, cắm sạc máy đánh...) ', requiresImage: false },
+      { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true }
+
 
     ],
     toi: [
@@ -2071,12 +2073,11 @@ function Checkin() {
       { id: 'Chà lababo', label: 'Chà lababo' },
       { id: 'Cắm sạc loa', label: 'Cắm sạc loa' },
       { id: 'Giặt cây lau nhà', label: 'Giặt cây lau nhà' },
-      { id: 'Kiểm tra két', label: 'Kiểm tra két' },
-      { id: 'Chà sàn nhà vệ sinh', label: 'Chà sàn nhà vệ sinh' },
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
       { id: 'Khoá cửa', label: 'Khoá cửa' },
       { id: 'Dắt xe', label: 'Dắt xe' },
       { id: 'Kiểm két', label: 'Kiểm két', useTextInput: true },
+      { id: 'sắp xếp và dọn dẹp tủ lạnh ngăn nắp', label: 'sắp xếp và dọn dẹp tủ lạnh ngăn nắp' },
       { id: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ', label: 'Đảm bảo tắt hết đèn, quạt, máy lạnh ' }
     ]
   };
