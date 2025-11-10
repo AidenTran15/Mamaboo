@@ -282,7 +282,6 @@ function InventoryManagement() {
                         <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Đơn vị</th>
                         <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Số lượng</th>
                         <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Alert</th>
-                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Danh mục</th>
                         <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Nhập hàng</th>
                         <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Mua</th>
                       </tr>
@@ -304,9 +303,6 @@ function InventoryManagement() {
                             </td>
                             <td style={{padding: '12px', textAlign: 'center', color: '#dc2626', fontWeight: 600}}>
                               {alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-'}
-                            </td>
-                            <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86', fontSize: '13px'}}>
-                              {item.categoryName}
                             </td>
                             <td style={{padding: '12px', textAlign: 'center'}}>
                               <button
@@ -386,10 +382,6 @@ function InventoryManagement() {
                           </span>
                         </div>
                         <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px'}}>
-                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                            <span style={{color: '#6b7a86', fontSize: '14px'}}>Danh mục:</span>
-                            <span style={{color: '#2b4c66', fontWeight: 600, fontSize: '14px'}}>{item.categoryName}</span>
-                          </div>
                           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                             <span style={{color: '#6b7a86', fontSize: '14px'}}>Đơn vị:</span>
                             <span style={{color: '#2b4c66', fontWeight: 600, fontSize: '14px'}}>{item.unit}</span>
