@@ -11,6 +11,7 @@ function InventoryManagement() {
   const [selectedItemForInput, setSelectedItemForInput] = useState(null);
   const [inputQuantity, setInputQuantity] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showLowStock, setShowLowStock] = useState(false); // State để quản lý expand/collapse
 
   // Fetch inventory items from API
   React.useEffect(() => {
@@ -235,22 +236,43 @@ function InventoryManagement() {
                 padding: '20px',
                 marginBottom: 24
               }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 16
-                }}>
-                  <span style={{fontSize: '24px'}}>⚠️</span>
-                  <h3 style={{
-                    color: '#dc2626',
-                    margin: 0,
-                    fontSize: '18px',
-                    fontWeight: 700
+                <div 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    userSelect: 'none'
+                  }}
+                  onClick={() => setShowLowStock(!showLowStock)}
+                >
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10
                   }}>
-                    Nguyên liệu sắp hết hàng ({lowStockItems.length})
-                  </h3>
+                    <span style={{fontSize: '24px'}}>⚠️</span>
+                    <h3 style={{
+                      color: '#dc2626',
+                      margin: 0,
+                      fontSize: '18px',
+                      fontWeight: 700
+                    }}>
+                      Nguyên liệu sắp hết hàng ({lowStockItems.length})
+                    </h3>
+                  </div>
+                  <span style={{
+                    fontSize: '20px',
+                    color: '#dc2626',
+                    transition: 'transform 0.3s ease',
+                    transform: showLowStock ? 'rotate(180deg)' : 'rotate(0deg)'
+                  }}>
+                    ▼
+                  </span>
                 </div>
+                
+                {showLowStock && (
+                  <div style={{marginTop: 16}}>
                 {/* Desktop Table View */}
                 <div className="inventory-table-desktop" style={{overflowX: 'auto'}}>
                   <table style={{width: '100%', borderCollapse: 'collapse'}}>
@@ -429,6 +451,8 @@ function InventoryManagement() {
                     );
                   })}
                 </div>
+                  </div>
+                )}
               </div>
             );
           }
