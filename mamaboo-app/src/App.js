@@ -440,14 +440,25 @@ function NhanVien() {
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
 
-  // const canCheckInNow = (dateStr, type) => {
-  //   // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
-  //   const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
-  //   const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
-  //   const [y, mo, da] = dateStr.split('-').map(Number);
-  //   const start = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
-  //   return tzNow.getFullYear() === y && tzNow.getMonth() === (mo - 1) && tzNow.getDate() === da && tzNow.getTime() >= start.getTime();
-  // };
+  // Kiểm tra xem có thể bắt đầu ca không (cho phép bắt đầu từ 1 giờ trước giờ bắt đầu ca)
+  const canCheckInNow = (dateStr, type) => {
+    // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
+    const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
+    const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+    const [y, mo, da] = dateStr.split('-').map(Number);
+    
+    // Tính giờ bắt đầu ca
+    const shiftStart = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
+    
+    // Tính thời điểm cho phép bắt đầu (1 giờ trước giờ bắt đầu ca)
+    const allowedStart = new Date(shiftStart.getTime() - 60 * 60 * 1000); // Trừ 1 giờ (60 phút * 60 giây * 1000ms)
+    
+    // Kiểm tra: phải cùng ngày và thời gian hiện tại >= thời điểm cho phép bắt đầu
+    return tzNow.getFullYear() === y && 
+           tzNow.getMonth() === (mo - 1) && 
+           tzNow.getDate() === da && 
+           tzNow.getTime() >= allowedStart.getTime();
+  };
 
   // const canCheckOutNow = (dateStr, type) => {
   //   // Shift end times: sang 13:30, trua 18:30, toi 22:30 (24h)
@@ -507,8 +518,8 @@ function NhanVien() {
           const mates = members.filter(n => n !== norm(userName));
           const text = mates.length === 0 ? `${tag} · một mình` : `${tag} · cùng: ${mates.join(', ')}`;
           const key = `${userName}__${ds}__${type}`;
-          // Cho phép hiển thị nút bắt đầu ca cho TẤT CẢ các ca để test (bỏ điều kiện thời gian và ngày)
-          const canCheckIn = true; // Hiển thị nút cho tất cả ca để test
+          // Kiểm tra xem có thể bắt đầu ca không (từ 1 giờ trước giờ bắt đầu ca)
+          const canCheckIn = canCheckInNow(ds, type);
           const canCheckOut = true; // Cho phép kết ca cho tất cả
           const hasCheckedIn = false; // Không track nữa
           // Đọc từ localStorage
@@ -1034,7 +1045,7 @@ function NhanVien() {
                               padding: '4px 8px',
                               borderRadius: 4
                             }}>
-                              Chưa đến giờ
+                              Chưa tới giờ bắt đầu ca
                             </span>
                           )}
                         </div>
