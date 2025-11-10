@@ -412,6 +412,16 @@ body, html, #root, .login-page {
     display: block !important;
   }
   
+  /* Low stock section responsive */
+  .low-stock-section {
+    padding: 16px !important;
+    margin-bottom: 20px !important;
+  }
+  
+  .low-stock-section h3 {
+    font-size: 16px !important;
+  }
+  
   /* Container adjustments */
   .inventory-container {
     width: calc(100vw - 20px) !important;

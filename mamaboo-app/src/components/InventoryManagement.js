@@ -118,6 +118,23 @@ function InventoryManagement() {
     return currentValue < threshold;
   };
 
+  // Lấy tất cả các nguyên liệu sắp hết hàng
+  const getLowStockItems = () => {
+    const lowStockItems = [];
+    Object.keys(itemsByCategory).forEach(categoryKey => {
+      const category = itemsByCategory[categoryKey];
+      category.items.forEach(item => {
+        if (checkAlert(item.itemId)) {
+          lowStockItems.push({
+            ...item,
+            categoryName: category.name
+          });
+        }
+      });
+    });
+    return lowStockItems;
+  };
+
   // Open modal to input quantity
   const handleOpenInputModal = (item) => {
     setSelectedItemForInput(item);
@@ -205,6 +222,218 @@ function InventoryManagement() {
       <div className="login-container inventory-container" style={{width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
         <h2 className="login-title" style={{color: '#3498db'}}>Quản lý nguyên vật liệu</h2>
         <div className="login-underline" style={{ background: '#3498db' }}></div>
+
+        {/* Section hiển thị nguyên liệu sắp hết hàng */}
+        {!loading && (() => {
+          const lowStockItems = getLowStockItems();
+          if (lowStockItems.length > 0) {
+            return (
+              <div className="low-stock-section" style={{
+                background: '#fff5f5',
+                border: '2px solid #fecaca',
+                borderRadius: 12,
+                padding: '20px',
+                marginBottom: 24
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  marginBottom: 16
+                }}>
+                  <span style={{fontSize: '24px'}}>⚠️</span>
+                  <h3 style={{
+                    color: '#dc2626',
+                    margin: 0,
+                    fontSize: '18px',
+                    fontWeight: 700
+                  }}>
+                    Nguyên liệu sắp hết hàng ({lowStockItems.length})
+                  </h3>
+                </div>
+                {/* Desktop Table View */}
+                <div className="inventory-table-desktop" style={{overflowX: 'auto'}}>
+                  <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                    <thead>
+                      <tr style={{background: '#fee2e2', borderBottom: '2px solid #fecaca'}}>
+                        <th style={{padding: '12px', textAlign: 'left', fontWeight: 600, color: '#dc2626'}}>Sản phẩm</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Đơn vị</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Số lượng</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Alert</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Danh mục</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Nhập hàng</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>Mua</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lowStockItems.map(item => {
+                        const currentQuantity = getItemQuantity(item.itemId);
+                        const purchaseLink = getItemPurchaseLink(item.itemId);
+                        const alertThreshold = getItemAlertThreshold(item.itemId);
+                        return (
+                          <tr key={item.itemId} style={{
+                            borderBottom: '1px solid #fee2e2',
+                            background: '#fff'
+                          }}>
+                            <td style={{padding: '12px', fontWeight: 600, color: '#2b4c66'}}>{item.name}</td>
+                            <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>{item.unit}</td>
+                            <td style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#dc2626'}}>
+                              {currentQuantity}
+                            </td>
+                            <td style={{padding: '12px', textAlign: 'center', color: '#dc2626', fontWeight: 600}}>
+                              {alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-'}
+                            </td>
+                            <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86', fontSize: '13px'}}>
+                              {item.categoryName}
+                            </td>
+                            <td style={{padding: '12px', textAlign: 'center'}}>
+                              <button
+                                onClick={() => handleOpenInputModal(item)}
+                                className="inventory-action-btn inventory-import-btn"
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#10b981',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: 6,
+                                  fontSize: '12px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Nhập
+                              </button>
+                            </td>
+                            <td style={{padding: '12px', textAlign: 'center'}}>
+                              <button
+                                onClick={() => {
+                                  if (purchaseLink && purchaseLink.trim() !== '') {
+                                    window.open(purchaseLink, '_blank', 'noopener,noreferrer');
+                                  } else {
+                                    alert('Chưa có link sản phẩm');
+                                  }
+                                }}
+                                className="inventory-action-btn inventory-buy-btn"
+                                style={{
+                                  padding: '6px 12px',
+                                  background: '#3498db',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: 6,
+                                  fontSize: '12px',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Mua
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Mobile Card View */}
+                <div className="inventory-cards-mobile" style={{display: 'none'}}>
+                  {lowStockItems.map(item => {
+                    const currentQuantity = getItemQuantity(item.itemId);
+                    const purchaseLink = getItemPurchaseLink(item.itemId);
+                    const alertThreshold = getItemAlertThreshold(item.itemId);
+                    return (
+                      <div key={item.itemId} className="inventory-card" style={{
+                        background: '#fff',
+                        border: '1px solid #fecaca',
+                        borderRadius: 12,
+                        padding: '16px',
+                        marginBottom: '12px'
+                      }}>
+                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px'}}>
+                          <h4 style={{margin: 0, fontWeight: 600, color: '#dc2626', fontSize: '16px', flex: 1}}>
+                            {item.name}
+                          </h4>
+                          <span style={{
+                            background: '#fee2e2',
+                            color: '#dc2626',
+                            padding: '4px 10px',
+                            borderRadius: 12,
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            marginLeft: '8px'
+                          }}>
+                            ⚠️ Sắp hết
+                          </span>
+                        </div>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px'}}>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <span style={{color: '#6b7a86', fontSize: '14px'}}>Danh mục:</span>
+                            <span style={{color: '#2b4c66', fontWeight: 600, fontSize: '14px'}}>{item.categoryName}</span>
+                          </div>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <span style={{color: '#6b7a86', fontSize: '14px'}}>Đơn vị:</span>
+                            <span style={{color: '#2b4c66', fontWeight: 600, fontSize: '14px'}}>{item.unit}</span>
+                          </div>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <span style={{color: '#6b7a86', fontSize: '14px'}}>Số lượng:</span>
+                            <span style={{color: '#dc2626', fontWeight: 600, fontSize: '16px'}}>{currentQuantity}</span>
+                          </div>
+                          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                            <span style={{color: '#6b7a86', fontSize: '14px'}}>Alert:</span>
+                            <span style={{color: '#dc2626', fontSize: '14px', fontWeight: 600}}>
+                              {alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-'}
+                            </span>
+                          </div>
+                        </div>
+                        <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
+                          <button
+                            onClick={() => handleOpenInputModal(item)}
+                            className="inventory-action-btn inventory-import-btn"
+                            style={{
+                              flex: 1,
+                              padding: '10px 16px',
+                              background: '#10b981',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: 8,
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Nhập
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (purchaseLink && purchaseLink.trim() !== '') {
+                                window.open(purchaseLink, '_blank', 'noopener,noreferrer');
+                              } else {
+                                alert('Chưa có link sản phẩm');
+                              }
+                            }}
+                            className="inventory-action-btn inventory-buy-btn"
+                            style={{
+                              flex: 1,
+                              padding: '10px 16px',
+                              background: '#3498db',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: 8,
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Mua
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          }
+          return null;
+        })()}
 
         {loading ? (
           <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
