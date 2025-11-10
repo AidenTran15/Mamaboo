@@ -201,8 +201,8 @@ function InventoryManagement() {
 
 
   return (
-    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container" style={{width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
+    <div className="login-page inventory-management-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
+      <div className="login-container inventory-container" style={{width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
         <h2 className="login-title" style={{color: '#3498db'}}>Quản lý nguyên vật liệu</h2>
         <div className="login-underline" style={{ background: '#3498db' }}></div>
 
@@ -211,7 +211,7 @@ function InventoryManagement() {
             Đang tải dữ liệu...
           </div>
         ) : (
-          <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+          <div className="inventory-categories" style={{display: 'flex', flexDirection: 'column', gap: 24}}>
             {Object.keys(itemsByCategory).length === 0 ? (
               <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
                 Chưa có dữ liệu nguyên vật liệu
@@ -220,7 +220,7 @@ function InventoryManagement() {
               Object.keys(itemsByCategory).map(categoryKey => {
                 const category = itemsByCategory[categoryKey];
                 return (
-                  <div key={categoryKey} style={{
+                  <div key={categoryKey} className="inventory-category" style={{
                     background: '#fff',
                     border: '1px solid #e5e7eb',
                     borderRadius: 12,
@@ -236,7 +236,8 @@ function InventoryManagement() {
                     }}>
                       {category.name}
                     </h3>
-                    <div style={{overflowX: 'auto'}}>
+                    {/* Desktop Table View */}
+                    <div className="inventory-table-desktop" style={{overflowX: 'auto'}}>
                       <table style={{width: '100%', borderCollapse: 'collapse'}}>
                         <thead>
                           <tr style={{background: '#f9fafb', borderBottom: '2px solid #e5e7eb'}}>
@@ -254,6 +255,7 @@ function InventoryManagement() {
                             const currentQuantity = getItemQuantity(item.itemId);
                             const purchaseLink = getItemPurchaseLink(item.itemId);
                             const hasAlert = checkAlert(item.itemId);
+                            const alertThreshold = getItemAlertThreshold(item.itemId);
                             return (
                               <tr key={item.itemId} style={{
                                 borderBottom: '1px solid #f1f4f7',
@@ -265,10 +267,7 @@ function InventoryManagement() {
                                   {currentQuantity}
                                 </td>
                                  <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
-                                   {(() => {
-                                     const alertThreshold = getItemAlertThreshold(item.itemId);
-                                     return alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-';
-                                   })()}
+                                   {alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-'}
                                  </td>
                                 <td style={{padding: '12px', textAlign: 'center'}}>
                                   {hasAlert ? (
@@ -298,6 +297,7 @@ function InventoryManagement() {
                                  <td style={{padding: '12px', textAlign: 'center'}}>
                                   <button
                                     onClick={() => handleOpenInputModal(item)}
+                                    className="inventory-action-btn inventory-import-btn"
                                     style={{
                                       padding: '6px 12px',
                                       background: '#10b981',
@@ -320,6 +320,7 @@ function InventoryManagement() {
                                         alert('Chưa có link sản phẩm');
                                       }
                                     }}
+                                    className="inventory-action-btn inventory-buy-btn"
                                     style={{
                                       padding: '6px 12px',
                                       background: '#3498db',
@@ -339,6 +340,115 @@ function InventoryManagement() {
                         </tbody>
                       </table>
                     </div>
+                    {/* Mobile Card View */}
+                    <div className="inventory-cards-mobile" style={{display: 'none'}}>
+                      {category.items.map(item => {
+                        const currentQuantity = getItemQuantity(item.itemId);
+                        const purchaseLink = getItemPurchaseLink(item.itemId);
+                        const hasAlert = checkAlert(item.itemId);
+                        const alertThreshold = getItemAlertThreshold(item.itemId);
+                        return (
+                          <div key={item.itemId} className="inventory-card" style={{
+                            background: hasAlert ? '#fff5f5' : '#fff',
+                            border: `1px solid ${hasAlert ? '#fee2e2' : '#e5e7eb'}`,
+                            borderRadius: 12,
+                            padding: '16px',
+                            marginBottom: '12px'
+                          }}>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px'}}>
+                              <h4 style={{margin: 0, fontWeight: 600, color: '#2b4c66', fontSize: '16px', flex: 1}}>
+                                {item.name}
+                              </h4>
+                              {hasAlert ? (
+                                <span style={{
+                                  background: '#fee2e2',
+                                  color: '#dc2626',
+                                  padding: '4px 10px',
+                                  borderRadius: 12,
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                  marginLeft: '8px'
+                                }}>
+                                  ⚠️ Sắp hết
+                                </span>
+                              ) : (
+                                <span style={{
+                                  background: '#d1fae5',
+                                  color: '#059669',
+                                  padding: '4px 10px',
+                                  borderRadius: 12,
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  whiteSpace: 'nowrap',
+                                  marginLeft: '8px'
+                                }}>
+                                  ✓ Đủ hàng
+                                </span>
+                              )}
+                            </div>
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px'}}>
+                              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <span style={{color: '#6b7a86', fontSize: '14px'}}>Đơn vị:</span>
+                                <span style={{color: '#2b4c66', fontWeight: 600, fontSize: '14px'}}>{item.unit}</span>
+                              </div>
+                              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <span style={{color: '#6b7a86', fontSize: '14px'}}>Số lượng:</span>
+                                <span style={{color: '#2b4c66', fontWeight: 600, fontSize: '16px'}}>{currentQuantity}</span>
+                              </div>
+                              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                                <span style={{color: '#6b7a86', fontSize: '14px'}}>Alert:</span>
+                                <span style={{color: '#6b7a86', fontSize: '14px'}}>
+                                  {alertThreshold ? `< ${alertThreshold} ${item.unit}` : '-'}
+                                </span>
+                              </div>
+                            </div>
+                            <div style={{display: 'flex', gap: '8px', marginTop: '8px'}}>
+                              <button
+                                onClick={() => handleOpenInputModal(item)}
+                                className="inventory-action-btn inventory-import-btn"
+                                style={{
+                                  flex: 1,
+                                  padding: '10px 16px',
+                                  background: '#10b981',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: 8,
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Nhập
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (purchaseLink && purchaseLink.trim() !== '') {
+                                    window.open(purchaseLink, '_blank', 'noopener,noreferrer');
+                                  } else {
+                                    alert('Chưa có link sản phẩm');
+                                  }
+                                }}
+                                className="inventory-action-btn inventory-buy-btn"
+                                style={{
+                                  flex: 1,
+                                  padding: '10px 16px',
+                                  background: '#3498db',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: 8,
+                                  fontSize: '14px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                Mua
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 );
               })
@@ -346,7 +456,7 @@ function InventoryManagement() {
           </div>
         )}
 
-              <div style={{marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12}}>
+              <div className="inventory-actions" style={{marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12}}>
                 <button
                   onClick={() => navigate('/inventory-history')}
                   className="login-button"
@@ -370,7 +480,7 @@ function InventoryManagement() {
 
       {/* Modal nhập số lượng */}
       {showInputModal && selectedItemForInput && (
-        <div style={{
+        <div className="inventory-modal-overlay" style={{
           position: 'fixed',
           top: 0,
           left: 0,
@@ -380,24 +490,26 @@ function InventoryManagement() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          zIndex: 1000
+          zIndex: 1000,
+          padding: '20px'
         }} onClick={handleCloseInputModal}>
-          <div style={{
+          <div className="inventory-modal" style={{
             background: '#fff',
             borderRadius: 12,
             padding: 24,
             minWidth: 400,
             maxWidth: '90vw',
+            width: '100%',
             boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
           }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{marginTop: 0, marginBottom: 16, color: '#2b4c66'}}>
+            <h3 style={{marginTop: 0, marginBottom: 16, color: '#2b4c66', fontSize: '18px'}}>
               Nhập hàng: {selectedItemForInput.name}
             </h3>
             <div style={{marginBottom: 16}}>
-              <label style={{display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66'}}>
+              <label style={{display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66', fontSize: '14px'}}>
                 Số lượng hiện tại: <span style={{color: '#3498db', fontSize: '16px'}}>{getItemQuantity(selectedItemForInput.itemId)} {selectedItemForInput.unit}</span>
               </label>
-              <label style={{display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66'}}>
+              <label style={{display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66', fontSize: '14px'}}>
                 Số lượng nhập vào:
               </label>
               <input
@@ -409,10 +521,10 @@ function InventoryManagement() {
                 placeholder="Nhập số lượng cần thêm"
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
+                  padding: '12px',
                   border: '1px solid #e6eef5',
                   borderRadius: 8,
-                  fontSize: '14px',
+                  fontSize: '16px',
                   boxSizing: 'border-box'
                 }}
                 autoFocus
@@ -423,19 +535,20 @@ function InventoryManagement() {
                 }}
               />
             </div>
-            <div style={{display: 'flex', gap: 12, justifyContent: 'flex-end'}}>
+            <div className="inventory-modal-actions" style={{display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap'}}>
               <button
                 onClick={handleCloseInputModal}
                 disabled={isUpdating}
                 style={{
-                  padding: '10px 20px',
+                  padding: '12px 24px',
                   background: '#e5e7eb',
                   color: '#2b4c66',
                   border: 'none',
                   borderRadius: 8,
                   fontSize: '14px',
                   cursor: isUpdating ? 'not-allowed' : 'pointer',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  minWidth: '100px'
                 }}
               >
                 Hủy
@@ -444,14 +557,15 @@ function InventoryManagement() {
                 onClick={handleUpdateQuantity}
                 disabled={isUpdating}
                 style={{
-                  padding: '10px 20px',
+                  padding: '12px 24px',
                   background: isUpdating ? '#94a3b8' : '#10b981',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
                   fontSize: '14px',
                   cursor: isUpdating ? 'not-allowed' : 'pointer',
-                  fontWeight: 600
+                  fontWeight: 600,
+                  minWidth: '100px'
                 }}
               >
                 {isUpdating ? 'Đang lưu...' : 'Lưu'}

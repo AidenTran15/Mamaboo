@@ -399,3 +399,118 @@ body, html, #root, .login-page {
     width: auto !important;
   }
 }
+
+/* Inventory Management Responsive Styles */
+@media (max-width: 768px) {
+  /* Hide desktop table on mobile */
+  .inventory-table-desktop {
+    display: none !important;
+  }
+  
+  /* Show mobile cards on mobile */
+  .inventory-cards-mobile {
+    display: block !important;
+  }
+  
+  /* Container adjustments */
+  .inventory-container {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    padding: 20px 16px !important;
+    margin-top: 16px !important;
+    margin-bottom: 16px !important;
+  }
+  
+  /* Category container */
+  .inventory-category {
+    padding: 16px !important;
+  }
+  
+  /* Category title */
+  .inventory-category h3 {
+    font-size: 16px !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 6px !important;
+  }
+  
+  /* Action buttons stack vertically on mobile */
+  .inventory-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+  
+  .inventory-actions .login-button {
+    width: 100% !important;
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+  }
+  
+  /* Modal adjustments */
+  .inventory-modal {
+    min-width: auto !important;
+    max-width: calc(100vw - 40px) !important;
+    padding: 20px !important;
+  }
+  
+  .inventory-modal h3 {
+    font-size: 16px !important;
+  }
+  
+  .inventory-modal-actions {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  
+  .inventory-modal-actions button {
+    width: 100% !important;
+    min-width: auto !important;
+  }
+  
+  /* Title adjustments */
+  .inventory-management-page .login-title {
+    font-size: 1.6rem !important;
+  }
+}
+
+/* Desktop styles - show table, hide cards */
+@media (min-width: 769px) {
+  .inventory-table-desktop {
+    display: block !important;
+  }
+  
+  .inventory-cards-mobile {
+    display: none !important;
+  }
+}
+
+/* Extra small mobile screens */
+@media (max-width: 480px) {
+  .inventory-container {
+    padding: 16px 12px !important;
+  }
+  
+  .inventory-category {
+    padding: 12px !important;
+  }
+  
+  .inventory-card {
+    padding: 12px !important;
+  }
+  
+  .inventory-card h4 {
+    font-size: 14px !important;
+  }
+  
+  .inventory-action-btn {
+    padding: 10px 12px !important;
+    font-size: 13px !important;
+  }
+  
+  .inventory-modal {
+    padding: 16px !important;
+  }
+  
+  .inventory-management-page .login-title {
+    font-size: 1.4rem !important;
+  }
+}
