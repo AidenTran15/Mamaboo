@@ -232,11 +232,18 @@ function NhanVien() {
       const shiftsList = []; // Danh sách các ca
       const shiftNames = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
       
+      // Lấy ngày hiện tại để so sánh (chỉ tính đến ngày hiện tại)
+      const todayDateStr = `${currentYear}-${pad2(currentMonth+1)}-${pad2(currentDay)}`;
+      
       // Duyệt qua tất cả ngày trong chu kỳ lương
       for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
         const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
         const r = byDate.get(ds);
         if (!r) continue;
+        
+        // Chỉ tính các ca có ngày <= ngày hiện tại (bỏ qua các ca tương lai)
+        // So sánh chuỗi ngày để tránh vấn đề về timezone
+        if (ds > todayDateStr) continue;
         
         // Kiểm tra các ca
         const shiftTypes = ['sang', 'trua', 'toi'];
@@ -247,7 +254,7 @@ function NhanVien() {
           if (members.length === 0) continue;
           if (!members.includes(norm(userName))) continue;
           
-          // Đếm số ca (tất cả ca trong roster)
+          // Đếm số ca (tất cả các ca trong roster từ đầu chu kỳ đến ngày hiện tại)
           totalShifts++;
           
           // Lưu thông tin ca vào danh sách
@@ -258,7 +265,7 @@ function NhanVien() {
             shiftName: shiftNames[type]
           });
           
-          // Tính lương dựa trên số người trong ca
+          // Tính lương cho tất cả các ca trong roster (từ đầu chu kỳ đến ngày hiện tại)
           const hours = hoursByShift[type];
           const isSingle = members.length === 1;
           const rate = isSingle ? rateSingle : rateDouble;
