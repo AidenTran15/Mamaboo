@@ -162,7 +162,7 @@ function NhanVien() {
       const currentMonth = now.getMonth(); // 0-11
       const currentDay = now.getDate();
       
-      // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 14 tháng sau
+      // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
       let periodYear, periodMonth;
       if (currentDay < 15) {
         // Thuộc chu kỳ tháng trước
@@ -214,9 +214,9 @@ function NhanVien() {
       const monthKey = `${periodYear}-${periodMonth + 1}`;
       
       // Tính số ca và lương dựa trên roster trong chu kỳ lương
-      // Chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
+      // Chu kỳ lương: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
       const start = new Date(periodYear, periodMonth, 15);
-      const end = new Date(periodYear, periodMonth + 1, 15);
+      const end = new Date(periodYear, periodMonth + 1, 16); // exclusive, tức là bao gồm đến ngày 15
       
       const byDate = new Map();
       all.forEach(r => byDate.set(r.date, r));

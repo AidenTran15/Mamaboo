@@ -609,7 +609,7 @@ function NhanVien() {
       const currentMonth = now.getMonth(); // 0-11
       const currentDay = now.getDate();
       
-      // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 14 tháng sau
+      // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
       let periodYear, periodMonth;
       if (currentDay < 15) {
         // Thuộc chu kỳ tháng trước
@@ -661,9 +661,9 @@ function NhanVien() {
       const monthKey = `${periodYear}-${periodMonth + 1}`;
       
       // Tính số ca và lương dựa trên roster trong chu kỳ lương
-      // Chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
+      // Chu kỳ lương: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
       const start = new Date(periodYear, periodMonth, 15);
-      const end = new Date(periodYear, periodMonth + 1, 15);
+      const end = new Date(periodYear, periodMonth + 1, 16); // exclusive, tức là bao gồm đến ngày 15
       
       const byDate = new Map();
       all.forEach(r => byDate.set(r.date, r));
@@ -1314,7 +1314,7 @@ function Admin() {
   const [ckLoading, setCkLoading] = useState(false);
   const [ckItems, setCkItems] = useState([]);
   const today = new Date();
-  // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 14 tháng sau
+  // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
   // Nếu ngày hiện tại < 15: chu kỳ là tháng trước (ví dụ: 4/11 → chu kỳ 10-11)
   // Nếu ngày hiện tại >= 15: chu kỳ là tháng hiện tại (ví dụ: 20/11 → chu kỳ 11-12)
   const getCurrentPayPeriod = () => {
@@ -1351,7 +1351,7 @@ function Admin() {
       if (!records || records.length === 0) return data;
       
       records.forEach(record => {
-        // Tính chu kỳ lương: từ ngày 15 tháng này đến 14 tháng sau
+        // Tính chu kỳ lương: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
         const [y, m, d] = record.date.split('-').map(Number);
         let periodMonth = m;
         let periodYear = y;
@@ -1446,9 +1446,9 @@ function Admin() {
         let recordPeriodMonth = recordMonth;
         let recordPeriodYear = recordYear;
         
-        // Tính chu kỳ lương của record (từ ngày 15 tháng này đến 14 tháng sau)
-        // Ví dụ: ngày 5/11 thuộc chu kỳ 10-11 (từ 15/10 đến 14/11)
-        // Ngày 20/11 thuộc chu kỳ 11-12 (từ 15/11 đến 14/12)
+        // Tính chu kỳ lương của record (từ ngày 15 tháng này đến 15 tháng sau, bao gồm cả ngày 15)
+        // Ví dụ: ngày 5/11 thuộc chu kỳ 10-11 (từ 15/10 đến 15/11)
+        // Ngày 20/11 thuộc chu kỳ 11-12 (từ 15/11 đến 15/12)
         if (recordDay < 15) {
           if (recordMonth === 1) {
             recordPeriodMonth = 12;
@@ -1620,13 +1620,13 @@ function Admin() {
     }
   };
 
-  // Xây dựng dữ liệu cho chu kỳ lương: từ ngày 15 tháng hiện tại đến 15 tháng sau
+  // Xây dựng dữ liệu cho chu kỳ lương: từ ngày 15 tháng hiện tại đến 15 tháng sau (bao gồm cả ngày 15)
   const rebuildMonthData = React.useCallback(() => {
     const byDate = new Map();
     roster.forEach(r => { byDate.set(r.date, r); });
 
     const start = new Date(year, month, 15); // inclusive
-    const end = new Date(year, month + 1, 15); // exclusive
+    const end = new Date(year, month + 1, 16); // exclusive, tức là bao gồm đến ngày 15
 
     // Helper function để filter "kiett" ra khỏi mảng nhân viên
     const filterKiett = (arr) => {
@@ -1731,7 +1731,7 @@ function Admin() {
 
   const monthLabel = (() => {
     const start = new Date(year, month, 15);
-    const end = new Date(year, month + 1, 15);
+    const end = new Date(year, month + 1, 16); // exclusive, tức là bao gồm đến ngày 15
     const m1 = start.getMonth() + 1;
     const m2 = end.getMonth() + 1;
     const y1 = start.getFullYear();
