@@ -2283,6 +2283,7 @@ function Checkin() {
       { id: 'Chà lababo', label: 'Chà lababo' },
       { id: 'Cắm sạc loa', label: 'Cắm sạc loa' },
       { id: 'Giặt cây lau nhà', label: 'Giặt cây lau nhà' },
+      { id: 'Clean thùng đá', label: 'Clean thùng đá' },
       { id: 'Thay bao rác ', label: 'Thay bao rác ' }, 
       { id: 'Khoá cửa', label: 'Khoá cửa' },
       { id: 'Dắt xe', label: 'Dắt xe' },
@@ -3009,12 +3010,13 @@ function ChecklistReport() {
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [filterUser, setFilterUser] = useState('');
+  const [filterPeriod, setFilterPeriod] = useState(''); // Filter theo chu kỳ lương (format: "YYYY-MM")
   const [staffs, setStaffs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const fetchChecklist = async () => {
+  const fetchChecklist = React.useCallback(async () => {
     setLoading(true);
     try {
       const url = new URL(CHECKLIST_GET_API);
@@ -3090,7 +3092,7 @@ function ChecklistReport() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fromDate, toDate, filterUser]);
 
   React.useEffect(() => {
     // Fetch danh sách nhân viên
@@ -3137,7 +3139,7 @@ function ChecklistReport() {
       }
     })();
 
-    // Auto-fetch với current pay period
+    // Auto-set với current pay period
     const today = new Date();
     const y = today.getFullYear();
     const m = today.getMonth();
@@ -3152,28 +3154,149 @@ function ChecklistReport() {
       }
     }
     
+    const pad = (n) => n.toString().padStart(2, '0');
+    const currentPeriodKey = `${fromY}-${pad(fromM + 1)}`;
+    setFilterPeriod(currentPeriodKey);
+    
+    // Set dates based on period
     const toY = fromM === 11 ? fromY + 1 : fromY;
     const toM = (fromM + 1) % 12;
-    
-    const pad = (n) => n.toString().padStart(2, '0');
     setFromDate(`${fromY}-${pad(fromM + 1)}-16`);
     setToDate(`${toY}-${pad(toM + 1)}-15`);
   }, []);
 
-  React.useEffect(() => {
-    if (fromDate && toDate) {
-      fetchChecklist();
+  // Tạo danh sách các chu kỳ lương (từ 16 tháng này đến 15 tháng sau)
+  const generatePayPeriods = React.useMemo(() => {
+    const periods = [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
+    
+    // Tạo 13 chu kỳ gần nhất (6 tháng trước đến 6 tháng sau)
+    for (let i = -6; i <= 6; i++) {
+      let year = currentYear;
+      let month = currentMonth + i;
+      
+      // Xử lý overflow/underflow của tháng
+      if (month < 0) {
+        month += 12;
+        year -= 1;
+      } else if (month >= 12) {
+        month -= 12;
+        year += 1;
+      }
+      
+      // Tính tháng tiếp theo
+      let nextMonth = month + 1;
+      if (nextMonth >= 12) {
+        nextMonth = 0;
+      }
+      
+      // Format: "YYYY-MM" cho key, "Tháng MM/MM+1" cho display
+      const periodKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+      const periodLabel = `Tháng ${String(month + 1).padStart(2, '0')}/${String(nextMonth + 1).padStart(2, '0')}`;
+      
+      periods.push({
+        key: periodKey,
+        label: periodLabel,
+        year: year,
+        month: month
+      });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only on mount - fetch initial data
+    
+    return periods.sort((a, b) => {
+      // Sắp xếp theo năm và tháng (mới nhất trước)
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+  }, []);
 
-  // Auto-fetch khi filterUser thay đổi (nếu đã có date range)
-  React.useEffect(() => {
-    if (fromDate && toDate) {
-      fetchChecklist();
+  // Hàm fetch với dates cụ thể
+  const fetchChecklistWithDates = React.useCallback(async (from, to, user) => {
+    setLoading(true);
+    try {
+      const url = new URL(CHECKLIST_GET_API);
+      url.searchParams.set('from', from);
+      url.searchParams.set('to', to);
+      if (user) url.searchParams.set('user', user);
+      
+      console.log('=== FETCHING CHECKLIST ===');
+      console.log('From:', from, 'To:', to, 'User:', user);
+      console.log('URL:', url.toString());
+      
+      const res = await fetch(url.toString());
+      const text = await res.text();
+      
+      let data = {};
+      try { 
+        data = JSON.parse(text); 
+        if (typeof data.body === 'string') {
+          data = JSON.parse(data.body);
+        }
+      } catch (parseErr) {
+        console.error('Parse error:', parseErr);
+      }
+      
+      let fetched = Array.isArray(data.items) ? data.items : [];
+      
+      // Client-side filter theo user
+      if (user) {
+        fetched = fetched.filter(item => {
+          const itemUser = (item.user || '').toString().trim();
+          const filterUserTrim = user.trim();
+          return itemUser === filterUserTrim || itemUser.toLowerCase() === filterUserTrim.toLowerCase();
+        });
+      }
+      
+      // Client-side filter theo chu kỳ lương (đảm bảo chỉ lấy items trong date range)
+      fetched = fetched.filter(item => {
+        if (!item.date) return false;
+        const itemDate = item.date;
+        // Kiểm tra item có nằm trong khoảng fromDate đến toDate không
+        return itemDate >= from && itemDate <= to;
+      });
+      
+      console.log('Fetched items count (after filtering):', fetched.length);
+      console.log('Date range:', from, 'to', to);
+      setItems(fetched);
+    } catch (e) {
+      console.error('Fetch checklist error', e);
+      alert('Không thể tải checklist');
+    } finally {
+      setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterUser]); // Auto-fetch khi filter user thay đổi
+  }, []);
+
+  // Khi chọn chu kỳ, tự động set fromDate và toDate và fetch ngay
+  React.useEffect(() => {
+    if (filterPeriod && generatePayPeriods.length > 0) {
+      const period = generatePayPeriods.find(p => p.key === filterPeriod);
+      if (period) {
+        const pad = (n) => n.toString().padStart(2, '0');
+        const toY = period.month === 11 ? period.year + 1 : period.year;
+        const toM = (period.month + 1) % 12;
+        const newFromDate = `${period.year}-${pad(period.month + 1)}-16`;
+        const newToDate = `${toY}-${pad(toM + 1)}-15`;
+        console.log('Setting dates from period:', filterPeriod, '->', newFromDate, 'to', newToDate);
+        
+        // Set dates
+        setFromDate(newFromDate);
+        setToDate(newToDate);
+        
+        // Fetch ngay với dates mới
+        fetchChecklistWithDates(newFromDate, newToDate, filterUser);
+      }
+    }
+  }, [filterPeriod, generatePayPeriods, filterUser, fetchChecklistWithDates]);
+
+  // Auto-fetch khi filterUser thay đổi (nhưng không fetch khi filterPeriod thay đổi vì đã fetch ở trên)
+  React.useEffect(() => {
+    // Chỉ fetch khi filterUser thay đổi và đã có dates từ filterPeriod
+    if (fromDate && toDate && filterPeriod) {
+      console.log('Auto-fetching checklist (filterUser changed):', fromDate, 'to', toDate, 'user:', filterUser);
+      fetchChecklistWithDates(fromDate, toDate, filterUser);
+    }
+  }, [filterUser, fromDate, toDate, filterPeriod, fetchChecklistWithDates]);
 
   const getWeekdayVi = (dateStr) => {
     const [yy, mm, dd] = dateStr.split('-').map(Number);
@@ -3194,9 +3317,54 @@ function ChecklistReport() {
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
         <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'16px 0'}}>
-          <input type="date" value={fromDate} onChange={(e)=>setFromDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
-          <span>đến</span>
-          <input type="date" value={toDate} onChange={(e)=>setToDate(e.target.value)} style={{padding:'6px 8px', border:'1px solid #e6eef5', borderRadius:8}} />
+          <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo chu kỳ lương:</label>
+            <select
+              value={filterPeriod}
+              onChange={async (e) => {
+                const newPeriod = e.target.value;
+                console.log('Period changed to:', newPeriod);
+                setFilterPeriod(newPeriod);
+                
+                // Fetch ngay khi chọn chu kỳ
+                if (newPeriod && generatePayPeriods.length > 0) {
+                  const period = generatePayPeriods.find(p => p.key === newPeriod);
+                  if (period) {
+                    const pad = (n) => n.toString().padStart(2, '0');
+                    const toY = period.month === 11 ? period.year + 1 : period.year;
+                    const toM = (period.month + 1) % 12;
+                    const newFromDate = `${period.year}-${pad(period.month + 1)}-16`;
+                    const newToDate = `${toY}-${pad(toM + 1)}-15`;
+                    console.log('Fetching immediately for period:', newPeriod, 'dates:', newFromDate, 'to', newToDate);
+                    
+                    setFromDate(newFromDate);
+                    setToDate(newToDate);
+                    await fetchChecklistWithDates(newFromDate, newToDate, filterUser);
+                  }
+                }
+              }}
+              style={{
+                padding:'6px 8px',
+                border:'1px solid #e6eef5',
+                borderRadius:8,
+                fontSize:'14px',
+                minWidth:140,
+                background:'#fff',
+                color:'#1c222f',
+                cursor:'pointer',
+                fontWeight:400,
+                fontFamily:'inherit',
+                boxSizing:'border-box'
+              }}
+            >
+              <option value="">Chọn chu kỳ</option>
+              {generatePayPeriods.map(period => (
+                <option key={period.key} value={period.key}>
+                  {period.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <StaffFilterDropdown 
             options={staffs} 
             value={filterUser} 
@@ -3225,11 +3393,35 @@ function ChecklistReport() {
               </tr>
             </thead>
             <tbody>
-              {items.length === 0 ? (
-                <tr><td colSpan={7} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>
-                  {loading ? 'Đang tải...' : 'Chưa có dữ liệu'}
-                </td></tr>
-              ) : items.map((it, i) => {
+              {(() => {
+                // Filter items theo chu kỳ lương được chọn (client-side để đảm bảo)
+                let displayItems = items;
+                if (filterPeriod && generatePayPeriods.length > 0) {
+                  const period = generatePayPeriods.find(p => p.key === filterPeriod);
+                  if (period) {
+                    const pad = (n) => n.toString().padStart(2, '0');
+                    const toY = period.month === 11 ? period.year + 1 : period.year;
+                    const toM = (period.month + 1) % 12;
+                    const periodFromDate = `${period.year}-${pad(period.month + 1)}-16`;
+                    const periodToDate = `${toY}-${pad(toM + 1)}-15`;
+                    
+                    displayItems = items.filter(item => {
+                      if (!item.date) return false;
+                      return item.date >= periodFromDate && item.date <= periodToDate;
+                    });
+                    console.log('Display items filtered by period:', filterPeriod, 'from', periodFromDate, 'to', periodToDate, 'count:', displayItems.length, 'total items:', items.length);
+                  }
+                }
+                
+                if (displayItems.length === 0) {
+                  return (
+                    <tr><td colSpan={7} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>
+                      {loading ? 'Đang tải...' : 'Chưa có dữ liệu trong chu kỳ này'}
+                    </td></tr>
+                  );
+                }
+                
+                return displayItems.map((it, i) => {
                 const tasks = it.tasks || {};
                 const taskList = Object.entries(tasks);
                 const doneCount = taskList.filter(([_, t]) => t && (t.done === true || t.done === 'true')).length;
@@ -3376,7 +3568,8 @@ function ChecklistReport() {
                     </td>
                   </tr>
                 );
-              })}
+                });
+              })()}
             </tbody>
           </table>
         </div>
