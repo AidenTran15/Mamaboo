@@ -1419,7 +1419,55 @@ function Admin() {
       }
     })();
   }, []);
-  
+
+  // Tạo danh sách các chu kỳ lương (từ 16 tháng này đến 15 tháng sau)
+  const generatePayPeriods = () => {
+    const periods = [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
+    
+    // Tạo 13 chu kỳ gần nhất (6 tháng trước đến 6 tháng sau)
+    for (let i = -6; i <= 6; i++) {
+      let year = currentYear;
+      let month = currentMonth + i;
+      
+      // Xử lý overflow/underflow của tháng
+      if (month < 0) {
+        month += 12;
+        year -= 1;
+      } else if (month >= 12) {
+        month -= 12;
+        year += 1;
+      }
+      
+      // Tính tháng tiếp theo
+      let nextMonth = month + 1;
+      if (nextMonth >= 12) {
+        nextMonth = 0;
+      }
+      
+      // Format: "YYYY-MM" cho key, "Tháng MM/MM+1" cho display
+      const periodKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+      const periodLabel = `Tháng ${String(month + 1).padStart(2, '0')}/${String(nextMonth + 1).padStart(2, '0')}`;
+      
+      periods.push({
+        key: periodKey,
+        label: periodLabel,
+        year: year,
+        month: month
+      });
+    }
+    
+    return periods.sort((a, b) => {
+      // Sắp xếp theo năm và tháng (mới nhất trước)
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+  };
+
+  const payPeriods = generatePayPeriods();
+
   // Penalty rates: mức 0 = 0k (nhắc nhở), mức 1 = 40k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
   const PENALTY_RATES = {
     '0': 0,
@@ -3545,6 +3593,7 @@ function OvertimeManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [filterStaff, setFilterStaff] = useState(''); // Filter theo nhân viên
   const [filterType, setFilterType] = useState(''); // Filter theo loại: 'overtime', 'late', hoặc '' (tất cả)
+  const [filterPeriod, setFilterPeriod] = useState(''); // Filter theo chu kỳ lương (format: "YYYY-MM")
 
   // Fetch records từ API hoặc localStorage
   React.useEffect(() => {
@@ -3578,6 +3627,54 @@ function OvertimeManagement() {
       }
     })();
   }, []);
+
+  // Tạo danh sách các chu kỳ lương (từ 16 tháng này đến 15 tháng sau)
+  const generatePayPeriods = () => {
+    const periods = [];
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0-11
+    
+    // Tạo 13 chu kỳ gần nhất (6 tháng trước đến 6 tháng sau)
+    for (let i = -6; i <= 6; i++) {
+      let year = currentYear;
+      let month = currentMonth + i;
+      
+      // Xử lý overflow/underflow của tháng
+      if (month < 0) {
+        month += 12;
+        year -= 1;
+      } else if (month >= 12) {
+        month -= 12;
+        year += 1;
+      }
+      
+      // Tính tháng tiếp theo
+      let nextMonth = month + 1;
+      if (nextMonth >= 12) {
+        nextMonth = 0;
+      }
+      
+      // Format: "YYYY-MM" cho key, "Tháng MM/MM+1" cho display
+      const periodKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+      const periodLabel = `Tháng ${String(month + 1).padStart(2, '0')}/${String(nextMonth + 1).padStart(2, '0')}`;
+      
+      periods.push({
+        key: periodKey,
+        label: periodLabel,
+        year: year,
+        month: month
+      });
+    }
+    
+    return periods.sort((a, b) => {
+      // Sắp xếp theo năm và tháng (mới nhất trước)
+      if (a.year !== b.year) return b.year - a.year;
+      return b.month - a.month;
+    });
+  };
+
+  const payPeriods = generatePayPeriods();
 
   React.useEffect(() => {
     (async () => {
@@ -3991,6 +4088,33 @@ function OvertimeManagement() {
           <div style={{marginTop:24, marginBottom:16}}>
             <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
               <div style={{display:'flex', alignItems:'center', gap:8}}>
+                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo chu kỳ lương:</label>
+                <select
+                  value={filterPeriod}
+                  onChange={(e) => setFilterPeriod(e.target.value)}
+                  style={{
+                    padding:'6px 8px',
+                    border:'1px solid #e6eef5',
+                    borderRadius:8,
+                    fontSize:'14px',
+                    minWidth:140,
+                    background:'#fff',
+                    color:'#1c222f',
+                    cursor:'pointer',
+                    fontWeight:400,
+                    fontFamily:'inherit',
+                    boxSizing:'border-box'
+                  }}
+                >
+                  <option value="">Tất cả chu kỳ</option>
+                  {payPeriods.map(period => (
+                    <option key={period.key} value={period.key}>
+                      {period.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div style={{display:'flex', alignItems:'center', gap:8}}>
                 <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo nhân viên:</label>
                 <StaffFilterDropdown 
                   options={staffs} 
@@ -4005,13 +4129,17 @@ function OvertimeManagement() {
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   style={{
-                    padding:'8px 12px',
+                    padding:'6px 8px',
                     border:'1px solid #e6eef5',
                     borderRadius:8,
                     fontSize:'14px',
                     minWidth:140,
                     background:'#fff',
-                    cursor:'pointer'
+                    color:'#1c222f',
+                    cursor:'pointer',
+                    fontWeight:400,
+                    fontFamily:'inherit',
+                    boxSizing:'border-box'
                   }}
                 >
                   <option value="">Tất cả</option>
@@ -4042,8 +4170,33 @@ function OvertimeManagement() {
                   {(() => {
                     // Filter records
                     const filtered = records.filter(record => {
+                      // Filter theo nhân viên
                       if (filterStaff && record.staffName !== filterStaff) return false;
+                      
+                      // Filter theo loại
                       if (filterType && record.type !== filterType) return false;
+                      
+                      // Filter theo chu kỳ lương
+                      if (filterPeriod) {
+                        if (!record.date) return false;
+                        const [recordYear, recordMonth, recordDay] = record.date.split('-').map(Number);
+                        let periodMonth = recordMonth;
+                        let periodYear = recordYear;
+                        
+                        // Tính chu kỳ lương của record (từ ngày 16 tháng này đến 15 tháng sau)
+                        if (recordDay < 16) {
+                          if (recordMonth === 1) {
+                            periodMonth = 12;
+                            periodYear = recordYear - 1;
+                          } else {
+                            periodMonth = recordMonth - 1;
+                          }
+                        }
+                        
+                        const recordPeriodKey = `${periodYear}-${String(periodMonth).padStart(2, '0')}`;
+                        if (recordPeriodKey !== filterPeriod) return false;
+                      }
+                      
                       return true;
                     });
                     
