@@ -5776,30 +5776,30 @@ function PenaltyManagement() {
             <div style={{
               marginTop: 24,
               marginBottom: 20,
-              background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
-              border: '2px solid #ffcc80',
-              borderRadius: 16,
-              padding: '24px 28px',
-              boxShadow: '0 4px 20px rgba(230, 81, 0, 0.15)',
+              background: 'linear-gradient(135deg, #f5fbff 0%, #e6f2fa 100%)',
+              border: '2px solid #d6e9f5',
+              borderRadius: 12,
+              padding: '18px 22px',
+              boxShadow: '0 4px 20px rgba(67, 168, 239, 0.12)',
               textAlign: 'center'
             }}>
               <div style={{
-                fontSize: '15px',
-                color: '#6b7a86',
-                marginBottom: 8,
+                fontSize: '14px',
+                color: '#2b4c66',
+                marginBottom: 6,
                 fontWeight: 600,
-                letterSpacing: '0.5px'
+                letterSpacing: '0.3px'
               }}>
                 Quỹ phạt {filterPeriod ? `(${periodLabel})` : ''}
               </div>
               <div style={{
-                fontSize: '36px',
+                fontSize: '28px',
                 fontWeight: 800,
-                color: '#e65100',
-                textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                color: '#43a8ef',
+                textShadow: '0 2px 4px rgba(0,0,0,0.08)',
                 letterSpacing: '-0.5px'
               }}>
-                {Number(totalPenaltyFund).toLocaleString('vi-VN')} <span style={{fontSize: '24px', fontWeight: 600}}>VND</span>
+                {Number(totalPenaltyFund).toLocaleString('vi-VN')} <span style={{fontSize: '20px', fontWeight: 600}}>VND</span>
               </div>
             </div>
           );
