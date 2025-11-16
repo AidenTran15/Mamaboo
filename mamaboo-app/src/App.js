@@ -5230,12 +5230,16 @@ function PenaltyManagement() {
                     onChange={(e) => setFilterPeriod(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '10px 12px',
+                      padding: '6px 8px',
                       border: '1px solid #e6eef5',
                       borderRadius: 8,
-                      fontSize: '16px',
+                      fontSize: '14px',
                       background: '#fff',
-                      cursor: 'pointer'
+                      color: '#1c222f',
+                      cursor: 'pointer',
+                      fontWeight: 400,
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box'
                     }}
                   >
                     <option value="">Tất cả chu kỳ</option>
