@@ -24,7 +24,7 @@ REGION = os.getenv('AWS_REGION', 'ap-southeast-2')
 dynamodb = boto3.resource('dynamodb', region_name=REGION)
 table = dynamodb.Table(TABLE_NAME)
 
-ALLOWED_PENALTY_LEVELS = {'0', '1', '2', '3', '4', '5'}
+ALLOWED_PENALTY_LEVELS = {'0', '1', '2', '3', '4', '5', 'custom'}
 
 
 def _response(status, body):
@@ -59,6 +59,7 @@ def lambda_handler(event, context):
         date_str = body.get('date', '').strip()
         penalty_level = body.get('penaltyLevel', '').strip()
         reason = body.get('reason', '').strip()
+        custom_amount = body.get('customAmount')
 
         if not staff_name:
             return _response(400, {'error': 'staffName is required'})
@@ -68,6 +69,17 @@ def lambda_handler(event, context):
             return _response(400, {'error': f'penaltyLevel must be one of: {", ".join(sorted(ALLOWED_PENALTY_LEVELS))}'})
         if not reason:
             return _response(400, {'error': 'reason is required'})
+        
+        # Validate customAmount nếu là custom
+        if penalty_level == 'custom':
+            if custom_amount is None:
+                return _response(400, {'error': 'customAmount is required when penaltyLevel is custom'})
+            try:
+                custom_amount = float(custom_amount)
+                if custom_amount < 0:
+                    return _response(400, {'error': 'customAmount must be >= 0'})
+            except (ValueError, TypeError):
+                return _response(400, {'error': 'customAmount must be a valid number'})
 
         record_id = str(int(datetime.now(timezone.utc).timestamp() * 1000))
         createdAt = datetime.now(timezone.utc).isoformat() + 'Z'
@@ -80,6 +92,10 @@ def lambda_handler(event, context):
             'reason': reason,
             'createdAt': createdAt
         }
+        
+        # Thêm customAmount nếu là custom
+        if penalty_level == 'custom':
+            item['customAmount'] = Decimal(str(custom_amount))
 
         table.put_item(Item=item)
 

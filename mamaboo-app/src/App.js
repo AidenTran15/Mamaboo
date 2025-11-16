@@ -5180,6 +5180,7 @@ function PenaltyManagement() {
   const [formData, setFormData] = useState({
     staffName: '',
     penaltyLevel: '',
+    customAmount: '',
     date: '',
     reason: ''
   });
@@ -5379,15 +5380,30 @@ function PenaltyManagement() {
       alert('Vui lòng điền đầy đủ thông tin!');
       return;
     }
+    
+    // Validate custom amount nếu chọn tùy chỉnh
+    if (formData.penaltyLevel === 'custom') {
+      const customAmount = parseFloat(formData.customAmount);
+      if (!formData.customAmount || isNaN(customAmount) || customAmount < 0) {
+        alert('Vui lòng nhập giá phạt hợp lệ!');
+        return;
+      }
+    }
 
     setSubmitting(true);
 
+    // Tạo recordData cho cả custom và standard
     const recordData = {
       staffName: formData.staffName,
       penaltyLevel: formData.penaltyLevel,
       date: formData.date,
       reason: formData.reason.trim()
     };
+    
+    // Thêm customAmount nếu là custom
+    if (formData.penaltyLevel === 'custom') {
+      recordData.customAmount = parseFloat(formData.customAmount);
+    }
     
     // Thử POST lên API trước
     if (PENALTY_POST_API && !PENALTY_POST_API.includes('YOUR_API_GATEWAY_URL')) {
@@ -5409,6 +5425,7 @@ function PenaltyManagement() {
           setFormData({
             staffName: '',
             penaltyLevel: '',
+            customAmount: '',
             date: new Date().toISOString().split('T')[0],
             reason: ''
           });
@@ -5425,7 +5442,7 @@ function PenaltyManagement() {
       }
     }
 
-    // Fallback: dùng localStorage
+    // Fallback: dùng localStorage (chỉ cho non-custom records)
     try {
       const newRecord = {
         id: Date.now().toString(),
@@ -5437,12 +5454,24 @@ function PenaltyManagement() {
 
       const updatedRecords = [...records, newRecord];
       setRecords(updatedRecords);
-      localStorage.setItem('penaltyRecords', JSON.stringify(updatedRecords));
+      
+      // Thử lưu vào localStorage, nhưng không bắt buộc
+      try {
+        localStorage.setItem('penaltyRecords', JSON.stringify(updatedRecords));
+      } catch (storageError) {
+        if (storageError.name === 'QuotaExceededError') {
+          console.warn('LocalStorage quota exceeded, chỉ lưu vào memory');
+          // Vẫn tiếp tục, chỉ không lưu localStorage
+        } else {
+          throw storageError;
+        }
+      }
 
       // Reset form và đóng form
       setFormData({
         staffName: '',
         penaltyLevel: '',
+        customAmount: '',
         date: new Date().toISOString().split('T')[0],
         reason: ''
       });
@@ -5515,6 +5544,7 @@ function PenaltyManagement() {
                 setFormData({
                   staffName: '',
                   penaltyLevel: '',
+                  customAmount: '',
                   date: new Date().toISOString().split('T')[0],
                   reason: ''
                 });
@@ -5544,6 +5574,7 @@ function PenaltyManagement() {
                     setFormData({
                       staffName: '',
                       penaltyLevel: '',
+                      customAmount: '',
                       date: new Date().toISOString().split('T')[0],
                       reason: ''
                     });
@@ -5586,7 +5617,7 @@ function PenaltyManagement() {
                   <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Mức độ phạt *</label>
                   <select
                     value={formData.penaltyLevel}
-                    onChange={(e) => setFormData(prev => ({ ...prev, penaltyLevel: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, penaltyLevel: e.target.value, customAmount: e.target.value !== 'custom' ? '' : prev.customAmount }))}
                     required
                     style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
                   >
@@ -5601,8 +5632,25 @@ function PenaltyManagement() {
                           }
                         </option>
                       ))}
+                    <option value="custom">Tùy chỉnh</option>
                   </select>
                 </div>
+                
+                {formData.penaltyLevel === 'custom' && (
+                  <div>
+                    <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Giá phạt (VND) *</label>
+                    <input
+                      type="number"
+                      value={formData.customAmount}
+                      onChange={(e) => setFormData(prev => ({ ...prev, customAmount: e.target.value }))}
+                      required
+                      min="0"
+                      step="0.01"
+                      placeholder="Nhập giá phạt..."
+                      style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày phạt *</label>
@@ -5638,6 +5686,7 @@ function PenaltyManagement() {
                       setFormData({
                         staffName: '',
                         penaltyLevel: '',
+                        customAmount: '',
                         date: new Date().toISOString().split('T')[0],
                         reason: ''
                       });
@@ -5763,6 +5812,9 @@ function PenaltyManagement() {
           
           // Tính tổng tiền phạt
           const totalPenaltyFund = filteredForFund.reduce((sum, record) => {
+            if (record.penaltyLevel === 'custom') {
+              return sum + (record.customAmount || 0);
+            }
             const rate = PENALTY_RATES[record.penaltyLevel] || 0;
             return sum + rate;
           }, 0);
@@ -5889,10 +5941,19 @@ function PenaltyManagement() {
                     }
                     
                     return filtered.map((record) => {
-                      const penaltyRate = PENALTY_RATES[record.penaltyLevel] || 0;
-                      const penaltyLabel = record.penaltyLevel === '0' 
-                        ? 'Mức 0 (nhắc nhở)'
-                        : `Mức ${record.penaltyLevel} - ${formatPenaltyRate(penaltyRate)}`;
+                      let penaltyRate = 0;
+                      let penaltyLabel = '';
+                      
+                      if (record.penaltyLevel === 'custom') {
+                        penaltyRate = record.customAmount || 0;
+                        penaltyLabel = `Tùy chỉnh - ${Number(penaltyRate).toLocaleString('vi-VN')} VND`;
+                      } else {
+                        penaltyRate = PENALTY_RATES[record.penaltyLevel] || 0;
+                        penaltyLabel = record.penaltyLevel === '0' 
+                          ? 'Mức 0 (nhắc nhở)'
+                          : `Mức ${record.penaltyLevel} - ${formatPenaltyRate(penaltyRate)}`;
+                      }
+                      
                       return (
                         <tr key={record.id} style={{background:'#fff'}}>
                           <td style={{
