@@ -609,9 +609,9 @@ function NhanVien() {
       const currentMonth = now.getMonth(); // 0-11
       const currentDay = now.getDate();
       
-      // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
+      // Tính chu kỳ lương hiện tại: từ ngày 16 tháng này đến 15 tháng sau (bao gồm cả ngày 16 và 15)
       let periodYear, periodMonth;
-      if (currentDay < 15) {
+      if (currentDay < 16) {
         // Thuộc chu kỳ tháng trước
         if (currentMonth === 0) {
           periodYear = currentYear - 1;
@@ -661,8 +661,8 @@ function NhanVien() {
       const monthKey = `${periodYear}-${periodMonth + 1}`;
       
       // Tính số ca và lương dựa trên roster trong chu kỳ lương
-      // Chu kỳ lương: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
-      const start = new Date(periodYear, periodMonth, 15);
+      // Chu kỳ lương: từ ngày 16 tháng này đến 15 tháng sau (bao gồm cả ngày 16 và 15)
+      const start = new Date(periodYear, periodMonth, 16);
       const end = new Date(periodYear, periodMonth + 1, 16); // exclusive, tức là bao gồm đến ngày 15
       
       const byDate = new Map();
@@ -1314,15 +1314,15 @@ function Admin() {
   const [ckLoading, setCkLoading] = useState(false);
   const [ckItems, setCkItems] = useState([]);
   const today = new Date();
-  // Tính chu kỳ lương hiện tại: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
-  // Nếu ngày hiện tại < 15: chu kỳ là tháng trước (ví dụ: 4/11 → chu kỳ 10-11)
-  // Nếu ngày hiện tại >= 15: chu kỳ là tháng hiện tại (ví dụ: 20/11 → chu kỳ 11-12)
+  // Tính chu kỳ lương hiện tại: từ ngày 16 tháng này đến 15 tháng sau (bao gồm cả ngày 16 và 15)
+  // Nếu ngày hiện tại < 16: chu kỳ là tháng trước (ví dụ: 4/11 → chu kỳ 10-11)
+  // Nếu ngày hiện tại >= 16: chu kỳ là tháng hiện tại (ví dụ: 20/11 → chu kỳ 11-12)
   const getCurrentPayPeriod = () => {
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth(); // 0-11
     const currentDay = today.getDate();
     
-    if (currentDay < 15) {
+    if (currentDay < 16) {
       // Thuộc chu kỳ tháng trước
       if (currentMonth === 0) {
         // Tháng 1 → chu kỳ 12 năm trước
@@ -1351,11 +1351,11 @@ function Admin() {
       if (!records || records.length === 0) return data;
       
       records.forEach(record => {
-        // Tính chu kỳ lương: từ ngày 15 tháng này đến 15 tháng sau (bao gồm cả ngày 15)
+        // Tính chu kỳ lương: từ ngày 16 tháng này đến 15 tháng sau (bao gồm cả ngày 16 và 15)
         const [y, m, d] = record.date.split('-').map(Number);
         let periodMonth = m;
         let periodYear = y;
-        if (d < 15) {
+        if (d < 16) {
           // Thuộc chu kỳ tháng trước
           if (m === 1) {
             periodMonth = 12;
@@ -1446,10 +1446,10 @@ function Admin() {
         let recordPeriodMonth = recordMonth;
         let recordPeriodYear = recordYear;
         
-        // Tính chu kỳ lương của record (từ ngày 15 tháng này đến 15 tháng sau, bao gồm cả ngày 15)
-        // Ví dụ: ngày 5/11 thuộc chu kỳ 10-11 (từ 15/10 đến 15/11)
-        // Ngày 20/11 thuộc chu kỳ 11-12 (từ 15/11 đến 15/12)
-        if (recordDay < 15) {
+        // Tính chu kỳ lương của record (từ ngày 16 tháng này đến 15 tháng sau, bao gồm cả ngày 16 và 15)
+        // Ví dụ: ngày 5/11 thuộc chu kỳ 10-11 (từ 16/10 đến 15/11)
+        // Ngày 20/11 thuộc chu kỳ 11-12 (từ 16/11 đến 15/12)
+        if (recordDay < 16) {
           if (recordMonth === 1) {
             recordPeriodMonth = 12;
             recordPeriodYear = recordYear - 1;
@@ -1620,12 +1620,12 @@ function Admin() {
     }
   };
 
-  // Xây dựng dữ liệu cho chu kỳ lương: từ ngày 15 tháng hiện tại đến 15 tháng sau (bao gồm cả ngày 15)
+  // Xây dựng dữ liệu cho chu kỳ lương: từ ngày 16 tháng hiện tại đến 15 tháng sau (bao gồm cả ngày 16 và 15)
   const rebuildMonthData = React.useCallback(() => {
     const byDate = new Map();
     roster.forEach(r => { byDate.set(r.date, r); });
 
-    const start = new Date(year, month, 15); // inclusive
+    const start = new Date(year, month, 16); // inclusive
     const end = new Date(year, month + 1, 16); // exclusive, tức là bao gồm đến ngày 15
 
     // Helper function để filter "kiett" ra khỏi mảng nhân viên
@@ -3095,8 +3095,8 @@ function ChecklistReport() {
     const m = today.getMonth();
     const day = today.getDate();
     
-    let fromY = y, fromM = m; // fromD = 15; // Unused variable
-    if (day < 15) {
+    let fromY = y, fromM = m;
+    if (day < 16) {
       fromM = m - 1;
       if (fromM < 0) {
         fromM = 11;
@@ -3108,8 +3108,8 @@ function ChecklistReport() {
     const toM = (fromM + 1) % 12;
     
     const pad = (n) => n.toString().padStart(2, '0');
-    setFromDate(`${fromY}-${pad(fromM + 1)}-15`);
-    setToDate(`${toY}-${pad(toM + 1)}-14`);
+    setFromDate(`${fromY}-${pad(fromM + 1)}-16`);
+    setToDate(`${toY}-${pad(toM + 1)}-15`);
   }, []);
 
   React.useEffect(() => {

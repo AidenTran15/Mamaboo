@@ -11,7 +11,7 @@ Query parameters (all optional, but at least one of user or date range is recomm
 - from: inclusive start date YYYY-MM-DD
 - to  : inclusive end date YYYY-MM-DD
 
-If no range is provided, defaults to current pay period (15th this month → 15th next month, inclusive).
+If no range is provided, defaults to current pay period (16th this month → 15th next month, inclusive).
 Returns items sorted by date, then shift.
 """
 
@@ -39,14 +39,14 @@ def _response(status, body):
 def _current_pay_period_today():
     now = datetime.now(timezone.utc)
     y, m = now.year, now.month
-    start = datetime(y, m, 15, tzinfo=timezone.utc)
-    if now.day < 15:
-        # period is 15 of previous month to 15 of this month (inclusive)
+    start = datetime(y, m, 16, tzinfo=timezone.utc)
+    if now.day < 16:
+        # period is 16 of previous month to 15 of this month (inclusive)
         if m == 1:
             y2, m2 = y - 1, 12
         else:
             y2, m2 = y, m - 1
-        start = datetime(y2, m2, 15, tzinfo=timezone.utc)
+        start = datetime(y2, m2, 16, tzinfo=timezone.utc)
     # end 15th next month (inclusive, DynamoDB between is inclusive on both ends)
     if start.month == 12:
         end = datetime(start.year + 1, 1, 15, tzinfo=timezone.utc)
