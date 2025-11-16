@@ -5730,6 +5730,81 @@ function PenaltyManagement() {
           </div>
         )}
 
+        {/* Quỹ phạt - Tổng tiền phạt trong tháng */}
+        {records.length > 0 && (() => {
+          // Tính tổng tiền phạt từ các records đã filter
+          const filteredForFund = records.filter(record => {
+            // Filter theo nhân viên nếu có
+            if (filterStaff && record.staffName !== filterStaff) return false;
+            
+            // Filter theo chu kỳ lương nếu có
+            if (filterPeriod) {
+              if (!record.date) return false;
+              const [recordYear, recordMonth, recordDay] = record.date.split('-').map(Number);
+              let periodMonth = recordMonth;
+              let periodYear = recordYear;
+              
+              // Tính chu kỳ lương của record (từ ngày 16 tháng này đến 15 tháng sau)
+              if (recordDay < 16) {
+                if (recordMonth === 1) {
+                  periodMonth = 12;
+                  periodYear = recordYear - 1;
+                } else {
+                  periodMonth = recordMonth - 1;
+                }
+              }
+              
+              const recordPeriodKey = `${periodYear}-${String(periodMonth).padStart(2, '0')}`;
+              if (recordPeriodKey !== filterPeriod) return false;
+            }
+            
+            return true;
+          });
+          
+          // Tính tổng tiền phạt
+          const totalPenaltyFund = filteredForFund.reduce((sum, record) => {
+            const rate = PENALTY_RATES[record.penaltyLevel] || 0;
+            return sum + rate;
+          }, 0);
+          
+          // Lấy tên chu kỳ để hiển thị
+          const periodLabel = filterPeriod 
+            ? payPeriods.find(p => p.key === filterPeriod)?.label || filterPeriod
+            : 'Tất cả chu kỳ';
+          
+          return (
+            <div style={{
+              marginTop: 24,
+              marginBottom: 20,
+              background: 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)',
+              border: '2px solid #ffcc80',
+              borderRadius: 16,
+              padding: '24px 28px',
+              boxShadow: '0 4px 20px rgba(230, 81, 0, 0.15)',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                fontSize: '15px',
+                color: '#6b7a86',
+                marginBottom: 8,
+                fontWeight: 600,
+                letterSpacing: '0.5px'
+              }}>
+                Quỹ phạt {filterPeriod ? `(${periodLabel})` : ''}
+              </div>
+              <div style={{
+                fontSize: '36px',
+                fontWeight: 800,
+                color: '#e65100',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                letterSpacing: '-0.5px'
+              }}>
+                {Number(totalPenaltyFund).toLocaleString('vi-VN')} <span style={{fontSize: '24px', fontWeight: 600}}>VND</span>
+              </div>
+            </div>
+          );
+        })()}
+
         {records.length > 0 && (
           <div style={{marginTop:records.length > 0 ? 0 : 24, width:'100%', overflowX:'auto'}}>
             <h3 style={{marginBottom:16, color:'#1c222f', fontSize: isMobile ? '18px' : '20px'}}>Danh sách đã thêm</h3>
