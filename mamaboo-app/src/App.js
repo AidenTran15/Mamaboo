@@ -198,6 +198,7 @@ function MultiSelectDropdown({ options, value, onChange, placeholder = 'Chọn n
     const set = new Set(value || []);
     if (set.has(name)) set.delete(name); else set.add(name);
     onChange(Array.from(set));
+    setOpen(false); // Đóng dropdown sau khi chọn
   };
 
   // close when clicking outside (basic)
@@ -244,7 +245,16 @@ function MultiSelectDropdown({ options, value, onChange, placeholder = 'Chọn n
             )}
             {filtered.length === 0 && <div style={{padding:'6px 2px', color:'#8a97a8'}}>Không có kết quả</div>}
             {filtered.map(name => (
-              <label key={name} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px', cursor:'pointer' }}>
+              <label 
+                key={name} 
+                style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px', cursor:'pointer' }}
+                onClick={(e) => {
+                  // Đóng dropdown khi click vào label (tên nhân viên)
+                  if (e.target.tagName !== 'INPUT') {
+                    handleCheck(name);
+                  }
+                }}
+              >
                 <input type="checkbox" checked={isChecked(name)} onChange={()=>handleCheck(name)} />
                 <span>{name}</span>
               </label>
