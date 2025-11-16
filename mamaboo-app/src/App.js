@@ -3164,6 +3164,58 @@ function ChecklistReport() {
     setFromDate(`${fromY}-${pad(fromM + 1)}-16`);
     setToDate(`${toY}-${pad(toM + 1)}-15`);
   }, []);
+  
+  // Fetch tất cả items khi component mount hoặc filterUser thay đổi
+  React.useEffect(() => {
+    const fetchAllChecklist = async () => {
+      setLoading(true);
+      try {
+        // Fetch tất cả items (không gửi from/to để Lambda trả về tất cả)
+        const url = new URL(CHECKLIST_GET_API);
+        url.searchParams.set('all', 'true'); // Flag để Lambda biết trả về tất cả
+        if (filterUser) url.searchParams.set('user', filterUser);
+        
+        console.log('=== FETCHING ALL CHECKLIST ITEMS ===');
+        console.log('User filter:', filterUser || 'none');
+        console.log('URL:', url.toString());
+        
+        const res = await fetch(url.toString());
+        const text = await res.text();
+        
+        let data = {};
+        try { 
+          data = JSON.parse(text); 
+          if (typeof data.body === 'string') {
+            data = JSON.parse(data.body);
+          }
+        } catch (parseErr) {
+          console.error('Parse error:', parseErr);
+        }
+        
+        let fetched = Array.isArray(data.items) ? data.items : [];
+        console.log('Total items fetched from DynamoDB:', fetched.length);
+        
+        // Client-side filter theo user nếu có
+        if (filterUser) {
+          fetched = fetched.filter(item => {
+            const itemUser = (item.user || '').toString().trim();
+            const filterUserTrim = filterUser.trim();
+            return itemUser === filterUserTrim || itemUser.toLowerCase() === filterUserTrim.toLowerCase();
+          });
+        }
+        
+        console.log('Items after user filter:', fetched.length);
+        setItems(fetched);
+      } catch (e) {
+        console.error('Fetch checklist error', e);
+        alert('Không thể tải checklist');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAllChecklist();
+  }, [filterUser]);
 
   // Tạo danh sách các chu kỳ lương (từ 16 tháng này đến 15 tháng sau)
   const generatePayPeriods = React.useMemo(() => {
@@ -3211,17 +3263,16 @@ function ChecklistReport() {
     });
   }, []);
 
-  // Hàm fetch với dates cụ thể
-  const fetchChecklistWithDates = React.useCallback(async (from, to, user) => {
+  // Hàm fetch tất cả items (không filter theo date)
+  const fetchAllChecklist = React.useCallback(async (user) => {
     setLoading(true);
     try {
       const url = new URL(CHECKLIST_GET_API);
-      url.searchParams.set('from', from);
-      url.searchParams.set('to', to);
+      // Không set from/to để lấy tất cả items
       if (user) url.searchParams.set('user', user);
       
-      console.log('=== FETCHING CHECKLIST ===');
-      console.log('From:', from, 'To:', to, 'User:', user);
+      console.log('=== FETCHING ALL CHECKLIST ITEMS ===');
+      console.log('User filter:', user || 'none');
       console.log('URL:', url.toString());
       
       const res = await fetch(url.toString());
@@ -3238,8 +3289,9 @@ function ChecklistReport() {
       }
       
       let fetched = Array.isArray(data.items) ? data.items : [];
+      console.log('Total items fetched from DynamoDB:', fetched.length);
       
-      // Client-side filter theo user
+      // Client-side filter theo user nếu có
       if (user) {
         fetched = fetched.filter(item => {
           const itemUser = (item.user || '').toString().trim();
@@ -3248,16 +3300,7 @@ function ChecklistReport() {
         });
       }
       
-      // Client-side filter theo chu kỳ lương (đảm bảo chỉ lấy items trong date range)
-      fetched = fetched.filter(item => {
-        if (!item.date) return false;
-        const itemDate = item.date;
-        // Kiểm tra item có nằm trong khoảng fromDate đến toDate không
-        return itemDate >= from && itemDate <= to;
-      });
-      
-      console.log('Fetched items count (after filtering):', fetched.length);
-      console.log('Date range:', from, 'to', to);
+      console.log('Items after user filter:', fetched.length);
       setItems(fetched);
     } catch (e) {
       console.error('Fetch checklist error', e);
@@ -3267,7 +3310,7 @@ function ChecklistReport() {
     }
   }, []);
 
-  // Khi chọn chu kỳ, tự động set fromDate và toDate và fetch ngay
+  // Khi chọn chu kỳ, chỉ cần set dates (không cần fetch vì đã có tất cả items)
   React.useEffect(() => {
     if (filterPeriod && generatePayPeriods.length > 0) {
       const period = generatePayPeriods.find(p => p.key === filterPeriod);
@@ -3279,24 +3322,13 @@ function ChecklistReport() {
         const newToDate = `${toY}-${pad(toM + 1)}-15`;
         console.log('Setting dates from period:', filterPeriod, '->', newFromDate, 'to', newToDate);
         
-        // Set dates
+        // Set dates (để dùng cho filter client-side)
         setFromDate(newFromDate);
         setToDate(newToDate);
-        
-        // Fetch ngay với dates mới
-        fetchChecklistWithDates(newFromDate, newToDate, filterUser);
       }
     }
-  }, [filterPeriod, generatePayPeriods, filterUser, fetchChecklistWithDates]);
+  }, [filterPeriod, generatePayPeriods]);
 
-  // Auto-fetch khi filterUser thay đổi (nhưng không fetch khi filterPeriod thay đổi vì đã fetch ở trên)
-  React.useEffect(() => {
-    // Chỉ fetch khi filterUser thay đổi và đã có dates từ filterPeriod
-    if (fromDate && toDate && filterPeriod) {
-      console.log('Auto-fetching checklist (filterUser changed):', fromDate, 'to', toDate, 'user:', filterUser);
-      fetchChecklistWithDates(fromDate, toDate, filterUser);
-    }
-  }, [filterUser, fromDate, toDate, filterPeriod, fetchChecklistWithDates]);
 
   const getWeekdayVi = (dateStr) => {
     const [yy, mm, dd] = dateStr.split('-').map(Number);
@@ -3321,27 +3353,11 @@ function ChecklistReport() {
             <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo chu kỳ lương:</label>
             <select
               value={filterPeriod}
-              onChange={async (e) => {
+              onChange={(e) => {
                 const newPeriod = e.target.value;
                 console.log('Period changed to:', newPeriod);
                 setFilterPeriod(newPeriod);
-                
-                // Fetch ngay khi chọn chu kỳ
-                if (newPeriod && generatePayPeriods.length > 0) {
-                  const period = generatePayPeriods.find(p => p.key === newPeriod);
-                  if (period) {
-                    const pad = (n) => n.toString().padStart(2, '0');
-                    const toY = period.month === 11 ? period.year + 1 : period.year;
-                    const toM = (period.month + 1) % 12;
-                    const newFromDate = `${period.year}-${pad(period.month + 1)}-16`;
-                    const newToDate = `${toY}-${pad(toM + 1)}-15`;
-                    console.log('Fetching immediately for period:', newPeriod, 'dates:', newFromDate, 'to', newToDate);
-                    
-                    setFromDate(newFromDate);
-                    setToDate(newToDate);
-                    await fetchChecklistWithDates(newFromDate, newToDate, filterUser);
-                  }
-                }
+                // Không cần fetch, chỉ cần set period - filter sẽ được thực hiện khi render
               }}
               style={{
                 padding:'6px 8px',
@@ -3371,7 +3387,51 @@ function ChecklistReport() {
             onChange={setFilterUser}
             placeholder="Lọc theo nhân viên"
           />
-          <button className="login-button" onClick={fetchChecklist} disabled={loading}>
+          <button className="login-button" onClick={() => {
+            const fetchAll = async () => {
+              setLoading(true);
+              try {
+                // Fetch tất cả items (không gửi from/to để Lambda trả về tất cả)
+                const url = new URL(CHECKLIST_GET_API);
+                url.searchParams.set('all', 'true'); // Flag để Lambda biết trả về tất cả
+                if (filterUser) url.searchParams.set('user', filterUser);
+                console.log('=== FETCHING ALL CHECKLIST ITEMS (manual) ===');
+                console.log('URL:', url.toString());
+                
+                const res = await fetch(url.toString());
+                const text = await res.text();
+                
+                let data = {};
+                try { 
+                  data = JSON.parse(text); 
+                  if (typeof data.body === 'string') {
+                    data = JSON.parse(data.body);
+                  }
+                } catch (parseErr) {
+                  console.error('Parse error:', parseErr);
+                }
+                
+                let fetched = Array.isArray(data.items) ? data.items : [];
+                console.log('Total items fetched from DynamoDB:', fetched.length);
+                
+                if (filterUser) {
+                  fetched = fetched.filter(item => {
+                    const itemUser = (item.user || '').toString().trim();
+                    const filterUserTrim = filterUser.trim();
+                    return itemUser === filterUserTrim || itemUser.toLowerCase() === filterUserTrim.toLowerCase();
+                  });
+                }
+                
+                setItems(fetched);
+              } catch (e) {
+                console.error('Fetch checklist error', e);
+                alert('Không thể tải checklist');
+              } finally {
+                setLoading(false);
+              }
+            };
+            fetchAll();
+          }} disabled={loading}>
             {loading ? 'Đang tải...' : 'Tải dữ liệu'}
           </button>
           <button className="login-button" onClick={() => navigate('/admin')} style={{background:'#6b7a86'}}>

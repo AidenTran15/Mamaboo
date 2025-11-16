@@ -63,38 +63,57 @@ def lambda_handler(event, context):
     user = (params.get('user') or '').strip()
     from_date = (params.get('from') or '').strip()
     to_date = (params.get('to') or '').strip()
+    
+    # Nếu có 'all' parameter hoặc không có from/to, trả về tất cả items (không filter date range)
+    fetch_all = params.get('all') == 'true' or (not from_date and not to_date)
+    
+    # Validate date range nếu có
+    if not fetch_all:
+        try:
+            y, m, d = map(int, from_date.split('-'))
+            _ = datetime(y, m, d)
+            y, m, d = map(int, to_date.split('-'))
+            _ = datetime(y, m, d)
+        except Exception:
+            return _response(400, {'success': False, 'message': 'from/to must be YYYY-MM-DD'})
 
-    # default range = current pay period
-    if not from_date or not to_date:
-        d1, d2 = _current_pay_period_today()
-        from_date = from_date or d1
-        to_date = to_date or d2
-
-    # basic validation
+    # Strategy: Scan all items first (with pagination), then filter client-side
+    # This ensures we get ALL items, not just those in the first page of filtered results
     try:
-        y, m, d = map(int, from_date.split('-'))
-        _ = datetime(y, m, d)
-        y, m, d = map(int, to_date.split('-'))
-        _ = datetime(y, m, d)
-    except Exception:
-        return _response(400, {'success': False, 'message': 'from/to must be YYYY-MM-DD'})
-
-    # Strategy: use Scan with FilterExpression (simple, acceptable for small data)
-    # Data key: date_shift = YYYY-MM-DD#shift or YYYY-MM-DD#shift#ket_ca
-    # We'll filter by begins_with(date_shift, yyyy-mm-dd) across the range
-    from boto3.dynamodb.conditions import Attr
-
-    try:
-        filt = Attr('date').between(from_date, to_date)
-        if user:
-            filt = filt & Attr('user').eq(user)
-
+        # Scan với pagination để lấy tất cả items
         items = []
-        resp = table.scan(FilterExpression=filt)
+        resp = table.scan()
         items.extend(resp.get('Items', []))
+        
+        # Tiếp tục scan nếu còn dữ liệu
         while 'LastEvaluatedKey' in resp:
-            resp = table.scan(FilterExpression=filt, ExclusiveStartKey=resp['LastEvaluatedKey'])
+            resp = table.scan(ExclusiveStartKey=resp['LastEvaluatedKey'])
             items.extend(resp.get('Items', []))
+        
+        print(f'=== CHECKLIST GET DEBUG ===')
+        print(f'Total items scanned from DynamoDB: {len(items)}')
+        print(f'Fetch all mode: {fetch_all}')
+        print(f'Filter params: from={from_date}, to={to_date}, user={user}')
+        
+        # Filter client-side theo date range và user
+        filtered = []
+        for item in items:
+            # Chỉ filter date range nếu không phải fetch_all
+            if not fetch_all:
+                item_date = item.get('date', '')
+                if from_date and item_date < from_date:
+                    continue
+                if to_date and item_date > to_date:
+                    continue
+            # Filter theo user nếu có
+            if user:
+                item_user = (item.get('user') or '').strip()
+                if item_user.lower() != user.lower():
+                    continue
+            filtered.append(item)
+        
+        print(f'Items after filtering: {len(filtered)}')
+        items = filtered
     except Exception as e:
         return _response(500, {'success': False, 'message': f'DynamoDB error: {e}'})
 
