@@ -4746,40 +4746,81 @@ function PenaltyManagement() {
   }, []);
 
   // Fetch penalty records từ API hoặc localStorage
-  React.useEffect(() => {
-    (async () => {
-      try {
-        // Thử fetch từ API trước
-        if (PENALTY_GET_API && !PENALTY_GET_API.includes('YOUR_API_GATEWAY_URL')) {
-          const res = await fetch(PENALTY_GET_API);
-          const text = await res.text();
-          let parsed = {};
-          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
-          const items = Array.isArray(parsed.items) ? parsed.items : [];
-          // Luôn dùng dữ liệu từ API, kể cả khi empty array
-          setRecords(items);
-          // Xóa localStorage để đồng bộ với API
+  const fetchPenaltyRecords = React.useCallback(async () => {
+    let apiSuccess = false;
+    
+    try {
+      // Thử fetch từ API trước
+      if (PENALTY_GET_API && !PENALTY_GET_API.includes('YOUR_API_GATEWAY_URL')) {
+        // Thêm timestamp để tránh cache
+        const apiUrl = `${PENALTY_GET_API}?t=${Date.now()}`;
+        const res = await fetch(apiUrl);
+        const text = await res.text();
+        console.log('Penalty API response text:', text.substring(0, 500)); // Debug log
+        let parsed = {};
+        try { 
+          parsed = JSON.parse(text); 
+          if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); 
+        } catch (parseError) {
+          console.error('Error parsing penalty API response:', parseError);
+          throw parseError; // Throw để rơi vào catch block
+        }
+        const items = Array.isArray(parsed.items) ? parsed.items : [];
+        console.log('Penalty records fetched from API:', items.length, 'items'); // Debug log
+        
+        // QUAN TRỌNG: Set vào state ngay lập tức, không phụ thuộc vào localStorage
+        setRecords(items);
+        apiSuccess = true; // Đánh dấu API thành công
+        
+        // Cố gắng lưu vào localStorage (nhưng không bắt buộc - nếu lỗi thì bỏ qua)
+        try {
           if (items.length === 0) {
             localStorage.removeItem('penaltyRecords');
           } else {
             localStorage.setItem('penaltyRecords', JSON.stringify(items));
           }
-          return;
+        } catch (storageError) {
+          // Nếu localStorage đầy hoặc lỗi, chỉ log warning, không ảnh hưởng đến việc hiển thị
+          console.warn('Could not save to localStorage (quota exceeded or other error):', storageError);
+          // Cố gắng xóa một số key cũ để giải phóng space (optional)
+          try {
+            // Xóa các key không cần thiết nếu có
+            const keysToRemove = ['old_penaltyRecords', 'temp_penaltyRecords'];
+            keysToRemove.forEach(key => {
+              try { localStorage.removeItem(key); } catch {}
+            });
+          } catch {}
         }
-      } catch (e) {
-        console.log('Failed to fetch from API, using localStorage:', e);
+        return; // Quan trọng: return ngay sau khi set state từ API
       }
-      
-      // Fallback: dùng localStorage chỉ khi API không available
+    } catch (e) {
+      console.log('Failed to fetch from API, using localStorage:', e);
+      apiSuccess = false;
+    }
+    
+    // Fallback: dùng localStorage CHỈ KHI API không available hoặc lỗi
+    // Và CHỈ khi API chưa thành công (tránh override dữ liệu từ API)
+    if (!apiSuccess) {
       try {
         const saved = localStorage.getItem('penaltyRecords');
         const records = saved ? JSON.parse(saved) : [];
+        console.log('Penalty records loaded from localStorage:', records.length, 'items'); // Debug log
         setRecords(records);
       } catch (e) {
         console.error('Error loading penalty records:', e);
+        setRecords([]); // Set empty array nếu cả localStorage cũng lỗi
       }
-    })();
+    }
   }, []);
+
+  React.useEffect(() => {
+    fetchPenaltyRecords();
+  }, [fetchPenaltyRecords]);
+
+  // Debug: Log khi records thay đổi
+  React.useEffect(() => {
+    console.log('Penalty records state updated:', records.length, 'items');
+  }, [records]);
 
   // Fetch staff list
   React.useEffect(() => {
@@ -4861,28 +4902,19 @@ function PenaltyManagement() {
         
         if (res.ok && parsed.ok) {
           // Thành công, reload records từ API
-          try {
-            const resGet = await fetch(PENALTY_GET_API);
-            const textGet = await resGet.text();
-            let parsedGet = {};
-            try { parsedGet = JSON.parse(textGet); if (typeof parsedGet.body === 'string') parsedGet = JSON.parse(parsedGet.body); } catch {}
-            const items = Array.isArray(parsedGet.items) ? parsedGet.items : [];
-            setRecords(items);
-            
-            // Reset form và đóng form
-            setFormData({
-              staffName: '',
-              penaltyLevel: '',
-              date: new Date().toISOString().split('T')[0],
-              reason: ''
-            });
-            setShowForm(false);
-            alert('Đã thêm thành công!');
-            setSubmitting(false);
-            return;
-          } catch (e) {
-            console.error('Error reloading records:', e);
-          }
+          await fetchPenaltyRecords();
+          
+          // Reset form và đóng form
+          setFormData({
+            staffName: '',
+            penaltyLevel: '',
+            date: new Date().toISOString().split('T')[0],
+            reason: ''
+          });
+          setShowForm(false);
+          alert('Đã thêm thành công!');
+          setSubmitting(false);
+          return;
         } else {
           throw new Error(parsed.error || 'API returned error');
         }
@@ -4950,7 +4982,7 @@ function PenaltyManagement() {
         <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý hình phạt</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
-        <div style={{marginTop:24, display:'flex', justifyContent:'flex-start', gap:12}}>
+        <div style={{marginTop:24, display:'flex', justifyContent:'flex-start', gap:12, flexWrap:'wrap'}}>
           <button 
             type="button"
             className="login-button" 
@@ -4958,6 +4990,23 @@ function PenaltyManagement() {
             style={{padding:'12px 36px'}}
           >
             Tạo
+          </button>
+          <button 
+            type="button"
+            onClick={fetchPenaltyRecords}
+            style={{
+              padding:'12px 36px',
+              background:'#4a90e2',
+              color:'#fff',
+              border:'none',
+              borderRadius:8,
+              cursor:'pointer',
+              fontWeight:600,
+              fontSize:'16px'
+            }}
+            title="Làm mới dữ liệu từ API"
+          >
+            🔄 Làm mới
           </button>
         </div>
 

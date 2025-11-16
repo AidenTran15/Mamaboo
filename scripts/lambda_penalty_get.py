@@ -64,8 +64,15 @@ def lambda_handler(event, context):
         if penalty_level and penalty_level not in ALLOWED_PENALTY_LEVELS:
             return _response(400, {'error': f'Invalid penaltyLevel. Must be one of: {", ".join(sorted(ALLOWED_PENALTY_LEVELS))}'})
 
+        # Scan với pagination để lấy tất cả items
+        items = []
         response = table.scan()
-        items = response.get('Items', [])
+        items.extend(response.get('Items', []))
+        
+        # Tiếp tục scan nếu còn dữ liệu
+        while 'LastEvaluatedKey' in response:
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            items.extend(response.get('Items', []))
 
         filtered = []
         for item in items:
