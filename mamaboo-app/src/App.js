@@ -1829,8 +1829,11 @@ function Admin() {
     const singleHours = new Map(); // name -> single shift hours
     const doubleHours = new Map(); // name -> double shift hours
     const moneyMap = new Map(); // name -> money
+    const allowanceCountMap = new Map(); // name -> số lần phụ cấp
 
     rows.forEach(r => {
+      const shiftsByPerson = new Map(); // name -> Set of shifts worked on this day
+      
       ['sang','trua','toi'].forEach(ca => {
         const members = Array.isArray(r[ca]) ? r[ca].filter(Boolean) : (r[ca] ? [r[ca]] : []);
         if (members.length === 0) return;
@@ -1842,6 +1845,13 @@ function Admin() {
           if (!name) return;
           // Loại bỏ "kiett" khỏi tính toán lương
           if (name.toLowerCase() === 'kiett') return;
+          
+          // Track shifts worked by this person on this day
+          if (!shiftsByPerson.has(name)) {
+            shiftsByPerson.set(name, new Set());
+          }
+          shiftsByPerson.get(name).add(ca);
+          
           totalHours.set(name, (totalHours.get(name) || 0) + hours);
           if (isSingle) {
             singleHours.set(name, (singleHours.get(name) || 0) + hours);
@@ -1852,6 +1862,18 @@ function Admin() {
           moneyMap.set(name, (moneyMap.get(name) || 0) + hours * rate);
         });
       });
+      
+      // Tính phụ cấp: nếu nhân viên làm 2 ca liên tiếp trong cùng ngày
+      shiftsByPerson.forEach((shifts, name) => {
+        const shiftArray = Array.from(shifts);
+        // Kiểm tra các cặp ca liên tiếp: sáng+trưa, trưa+tối
+        if (shiftArray.includes('sang') && shiftArray.includes('trua')) {
+          allowanceCountMap.set(name, (allowanceCountMap.get(name) || 0) + 1);
+        }
+        if (shiftArray.includes('trua') && shiftArray.includes('toi')) {
+          allowanceCountMap.set(name, (allowanceCountMap.get(name) || 0) + 1);
+        }
+      });
     });
 
     const arr = Array.from(totalHours.entries()).map(([name, hours]) => {
@@ -1859,7 +1881,8 @@ function Admin() {
       const dh = doubleHours.get(name) || 0;
       // Mamaboo là chủ nên không tính lương (luôn = 0)
       const money = (name.toLowerCase() === 'mamaboo') ? 0 : (moneyMap.get(name) || 0);
-      return [name, hours, sh, dh, money];
+      const allowanceCount = allowanceCountMap.get(name) || 0;
+      return [name, hours, sh, dh, money, allowanceCount];
     });
     return arr.sort((a,b)=> b[4]-a[4]);
   };
@@ -2118,6 +2141,7 @@ function Admin() {
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tăng ca (giờ)</th>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Đi trễ (giờ)</th>
                     <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Phạt (VND)</th>
+                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Phụ cấp</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2130,18 +2154,26 @@ function Admin() {
                     
                     return (
                       <>
-                        {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money]) => {
+                        {computeTotals(editMode ? monthEdit : monthData).map(([name, total, singleH, doubleH, money, allowanceCount]) => {
                           const staffData = currentOvertimeData[monthKey]?.[name] || { overtime: 0, lateCount: 0 };
                           // Tính tiền phạt
                           const penaltyAmount = calculatePenaltyAmount(name, monthKey);
                           
+                          // Tính phụ cấp
+                          const allowanceAmount = allowanceCount * 45000; // 45k mỗi lần
+                          const formatAllowance = (count, amount) => {
+                            if (count === 0) return '0';
+                            const amountInK = Math.round(amount / 1000);
+                            return `${amountInK}k (${count})`;
+                          };
+                          
                           // Mamaboo là chủ nên không tính lương (luôn = 0)
                           const isMamaboo = name.toLowerCase() === 'mamaboo';
                           const totalSalary = isMamaboo ? 0 : (() => {
-                            // Tính tổng lương: lương ca làm + tăng ca - đi trễ - phạt
+                            // Tính tổng lương: lương ca làm + tăng ca - đi trễ - phạt + phụ cấp
                             const overtimePay = (staffData.overtime || 0) * ratePerHour;
                             const latePay = (staffData.lateCount || 0) * ratePerHour;
-                            return money + overtimePay - latePay - penaltyAmount;
+                            return money + overtimePay - latePay - penaltyAmount + allowanceAmount;
                           })();
                           
                           // Cộng vào tổng (trừ Mamaboo)
@@ -2165,6 +2197,9 @@ function Admin() {
                               <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:600, color: penaltyAmount > 0 ? '#e67e22' : '#6b7a86'}}>
                                 {penaltyAmount > 0 ? Number(penaltyAmount).toLocaleString('vi-VN') : '0'}
                               </td>
+                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:600, color: allowanceCount > 0 ? '#2e7d32' : '#6b7a86'}}>
+                                {formatAllowance(allowanceCount, allowanceAmount)}
+                              </td>
                             </tr>
                           );
                         })}
@@ -2176,6 +2211,7 @@ function Admin() {
                             {Number(totalAllSalary).toLocaleString('vi-VN')}
                           </td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}} colSpan="2"></td>
+                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}}></td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}}></td>
                         </tr>
                       </>
