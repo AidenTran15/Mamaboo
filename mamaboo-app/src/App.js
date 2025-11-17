@@ -1430,54 +1430,6 @@ function Admin() {
     })();
   }, []);
 
-  // Tạo danh sách các chu kỳ lương (từ 16 tháng này đến 15 tháng sau)
-  const generatePayPeriods = () => {
-    const periods = [];
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0-11
-    
-    // Tạo 13 chu kỳ gần nhất (6 tháng trước đến 6 tháng sau)
-    for (let i = -6; i <= 6; i++) {
-      let year = currentYear;
-      let month = currentMonth + i;
-      
-      // Xử lý overflow/underflow của tháng
-      if (month < 0) {
-        month += 12;
-        year -= 1;
-      } else if (month >= 12) {
-        month -= 12;
-        year += 1;
-      }
-      
-      // Tính tháng tiếp theo
-      let nextMonth = month + 1;
-      if (nextMonth >= 12) {
-        nextMonth = 0;
-      }
-      
-      // Format: "YYYY-MM" cho key, "Tháng MM/MM+1" cho display
-      const periodKey = `${year}-${String(month + 1).padStart(2, '0')}`;
-      const periodLabel = `Tháng ${String(month + 1).padStart(2, '0')}/${String(nextMonth + 1).padStart(2, '0')}`;
-      
-      periods.push({
-        key: periodKey,
-        label: periodLabel,
-        year: year,
-        month: month
-      });
-    }
-    
-    return periods.sort((a, b) => {
-      // Sắp xếp theo năm và tháng (mới nhất trước)
-      if (a.year !== b.year) return b.year - a.year;
-      return b.month - a.month;
-    });
-  };
-
-  const payPeriods = generatePayPeriods();
-
   // Penalty rates: mức 0 = 0k (nhắc nhở), mức 1 = 40k, mức 2 = 80k, mức 3 = 100k, mức 4 = 150k, mức 5 = 200k
   const PENALTY_RATES = {
     '0': 0,
@@ -3053,7 +3005,9 @@ function Checkin() {
 // Trang báo cáo checklist cho Admin
 function ChecklistReport() {
   const navigate = useNavigate();
+  // eslint-disable-next-line no-unused-vars
   const [fromDate, setFromDate] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [toDate, setToDate] = useState('');
   const [filterUser, setFilterUser] = useState('');
   const [filterPeriod, setFilterPeriod] = useState(''); // Filter theo chu kỳ lương (format: "YYYY-MM")
@@ -3061,84 +3015,6 @@ function ChecklistReport() {
   const [loading, setLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
-
-  const fetchChecklist = React.useCallback(async () => {
-    setLoading(true);
-    try {
-      const url = new URL(CHECKLIST_GET_API);
-      if (fromDate) url.searchParams.set('from', fromDate);
-      if (toDate) url.searchParams.set('to', toDate);
-      if (filterUser) url.searchParams.set('user', filterUser);
-      
-      console.log('=== FETCHING CHECKLIST ===');
-      console.log('Filter user:', filterUser);
-      console.log('URL:', url.toString());
-      
-      const res = await fetch(url.toString());
-      const text = await res.text();
-      console.log('=== FETCH CHECKLIST RESPONSE ===');
-      console.log('Raw response length:', text.length);
-      console.log('Raw response (first 500 chars):', text.substring(0, 500));
-      
-      let data = {};
-      try { 
-        data = JSON.parse(text); 
-        if (typeof data.body === 'string') {
-          console.log('Body is string, parsing again...');
-          data = JSON.parse(data.body);
-        }
-        console.log('Parsed data keys:', Object.keys(data));
-        console.log('Items count:', Array.isArray(data.items) ? data.items.length : 'N/A');
-      } catch (parseErr) {
-        console.error('Parse error:', parseErr);
-      }
-      
-      let fetched = Array.isArray(data.items) ? data.items : [];
-      
-      // Client-side filter để đảm bảo filter hoạt động (nếu API không filter đúng)
-      if (filterUser) {
-        const beforeFilter = fetched.length;
-        fetched = fetched.filter(item => {
-          const itemUser = (item.user || '').toString().trim();
-          const filterUserTrim = filterUser.trim();
-          const matches = itemUser === filterUserTrim || itemUser.toLowerCase() === filterUserTrim.toLowerCase();
-          if (!matches && beforeFilter > 0) {
-            console.log(`Filtering out item: user="${itemUser}" (doesn't match "${filterUserTrim}")`);
-          }
-          return matches;
-        });
-        console.log(`Client-side filter: ${beforeFilter} items before, ${fetched.length} items after filtering by "${filterUser}"`);
-      }
-      
-      // Log first item to check tasks structure
-      if (fetched.length > 0) {
-        const firstItem = fetched[0];
-        const inventoryTask = firstItem.tasks?.['Kiểm tra nguyên vật liệu'];
-        console.log('First item sample:', {
-          user: firstItem.user,
-          date: firstItem.date,
-          shift: firstItem.shift,
-          tasksKeys: firstItem.tasks ? Object.keys(firstItem.tasks) : [],
-          inventoryTaskExists: !!inventoryTask,
-          inventoryFormDataExists: !!(inventoryTask?.inventoryFormData),
-          inventoryFormDataKeys: inventoryTask?.inventoryFormData ? Object.keys(inventoryTask.inventoryFormData) : [],
-          inventoryFormDataSample: inventoryTask?.inventoryFormData ? Object.keys(inventoryTask.inventoryFormData).slice(0, 3).reduce((acc, key) => {
-            acc[key] = inventoryTask.inventoryFormData[key];
-            return acc;
-          }, {}) : null
-        });
-      } else {
-        console.log('No items found after filtering');
-      }
-      
-      setItems(fetched);
-    } catch (e) {
-      console.error('Fetch checklist error', e);
-      alert('Không thể tải checklist');
-    } finally {
-      setLoading(false);
-    }
-  }, [fromDate, toDate, filterUser]);
 
   React.useEffect(() => {
     // Fetch danh sách nhân viên
@@ -3307,53 +3183,6 @@ function ChecklistReport() {
       if (a.year !== b.year) return b.year - a.year;
       return b.month - a.month;
     });
-  }, []);
-
-  // Hàm fetch tất cả items (không filter theo date)
-  const fetchAllChecklist = React.useCallback(async (user) => {
-    setLoading(true);
-    try {
-      const url = new URL(CHECKLIST_GET_API);
-      // Không set from/to để lấy tất cả items
-      if (user) url.searchParams.set('user', user);
-      
-      console.log('=== FETCHING ALL CHECKLIST ITEMS ===');
-      console.log('User filter:', user || 'none');
-      console.log('URL:', url.toString());
-      
-      const res = await fetch(url.toString());
-      const text = await res.text();
-      
-      let data = {};
-      try { 
-        data = JSON.parse(text); 
-        if (typeof data.body === 'string') {
-          data = JSON.parse(data.body);
-        }
-      } catch (parseErr) {
-        console.error('Parse error:', parseErr);
-      }
-      
-      let fetched = Array.isArray(data.items) ? data.items : [];
-      console.log('Total items fetched from DynamoDB:', fetched.length);
-      
-      // Client-side filter theo user nếu có
-      if (user) {
-        fetched = fetched.filter(item => {
-          const itemUser = (item.user || '').toString().trim();
-          const filterUserTrim = user.trim();
-          return itemUser === filterUserTrim || itemUser.toLowerCase() === filterUserTrim.toLowerCase();
-        });
-      }
-      
-      console.log('Items after user filter:', fetched.length);
-      setItems(fetched);
-    } catch (e) {
-      console.error('Fetch checklist error', e);
-      alert('Không thể tải checklist');
-    } finally {
-      setLoading(false);
-    }
   }, []);
 
   // Khi chọn chu kỳ, chỉ cần set dates (không cần fetch vì đã có tất cả items)
