@@ -1398,6 +1398,8 @@ function Admin() {
   
   // Penalty records - fetch từ API hoặc localStorage
   const [penaltyRecords, setPenaltyRecords] = useState([]);
+  // Toggle để hiển thị tổng lương có/không có phụ cấp
+  const [includeAllowance, setIncludeAllowance] = useState(true);
   
   // Fetch penalty records từ API hoặc localStorage
   React.useEffect(() => {
@@ -2103,6 +2105,7 @@ function Admin() {
                     const monthKey = `${year}-${month + 1}`;
                     const ratePerHour = 20000;
                     let totalAllSalary = 0;
+                    let totalAllSalaryWithoutAllowance = 0;
                     
                     return (
                       <>
@@ -2128,9 +2131,17 @@ function Admin() {
                             return money + overtimePay - latePay - penaltyAmount + allowanceAmount;
                           })();
                           
+                          // Tính lương không có phụ cấp
+                          const totalSalaryWithoutAllowance = isMamaboo ? 0 : (() => {
+                            const overtimePay = (staffData.overtime || 0) * ratePerHour;
+                            const latePay = (staffData.lateCount || 0) * ratePerHour;
+                            return money + overtimePay - latePay - penaltyAmount;
+                          })();
+                          
                           // Cộng vào tổng (trừ Mamaboo)
                           if (!isMamaboo) {
                             totalAllSalary += totalSalary;
+                            totalAllSalaryWithoutAllowance += totalSalaryWithoutAllowance;
                           }
                           
                           return (
@@ -2160,7 +2171,40 @@ function Admin() {
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef', fontWeight:700}}>TỔNG</td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef', textAlign:'center', fontWeight:700}} colSpan="3"></td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef', textAlign:'right', fontWeight:700, color:'#e67e22', fontSize:'1.1em'}}>
-                            {Number(totalAllSalary).toLocaleString('vi-VN')}
+                            <div style={{display:'flex', alignItems:'center', justifyContent:'flex-end', gap:12, flexWrap:'nowrap', whiteSpace:'nowrap'}}>
+                              <span>{Number(includeAllowance ? totalAllSalary : totalAllSalaryWithoutAllowance).toLocaleString('vi-VN')}</span>
+                              <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:'0.9em', fontWeight:500, color:'#2b4c66', userSelect:'none', whiteSpace:'nowrap'}}>
+                                <div style={{
+                                  position:'relative',
+                                  width:44,
+                                  height:24,
+                                  backgroundColor: includeAllowance ? '#43a8ef' : '#ccc',
+                                  borderRadius:12,
+                                  transition:'background-color 0.3s',
+                                  cursor:'pointer',
+                                  flexShrink:0
+                                }}>
+                                  <div style={{
+                                    position:'absolute',
+                                    top:2,
+                                    left: includeAllowance ? 22 : 2,
+                                    width:20,
+                                    height:20,
+                                    backgroundColor:'white',
+                                    borderRadius:'50%',
+                                    transition:'left 0.3s',
+                                    boxShadow:'0 2px 4px rgba(0,0,0,0.2)'
+                                  }}></div>
+                                </div>
+                                <input 
+                                  type="checkbox" 
+                                  checked={includeAllowance}
+                                  onChange={(e) => setIncludeAllowance(e.target.checked)}
+                                  style={{position:'absolute', opacity:0, pointerEvents:'none'}}
+                                />
+                                <span style={{whiteSpace:'nowrap'}}>{includeAllowance ? 'Có phụ cấp' : 'Chưa phụ cấp'}</span>
+                              </label>
+                            </div>
                           </td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}} colSpan="2"></td>
                           <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}}></td>
