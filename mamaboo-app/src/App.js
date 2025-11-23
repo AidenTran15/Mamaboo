@@ -680,7 +680,7 @@ function NhanVien() {
       
       const norm = (s) => (s || '').toString().trim();
       const hoursByShift = { sang: 4, trua: 5, toi: 4 };
-      const rateSingle = 20000;
+      const rateSingle = 25000;
       const rateDouble = 20000;
       const ratePerHour = 20000;
       
@@ -1774,7 +1774,7 @@ function Admin() {
 
   const computeTotals = (rows) => {
     const hoursByShift = { sang: 4, trua: 5, toi: 4 };
-    const rateSingle = 20000; // VND per hour per person when only 1 person in shift
+    const rateSingle = 25000; // VND per hour per person when only 1 person in shift
     const rateDouble = 20000; // VND per hour per person when >=2 people in shift
 
     const totalHours = new Map(); // name -> hours
