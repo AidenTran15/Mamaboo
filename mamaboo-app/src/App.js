@@ -5,6 +5,7 @@ import InventoryManagement from './components/InventoryManagement';
 import InventoryHistory from './components/InventoryHistory';
 import InventoryCheck from './components/InventoryCheck';
 import EveningInventoryCheck from './components/EveningInventoryCheck';
+import KeToan from './components/KeToan';
 import { IMAGE_UPLOAD_API } from './constants/api';
 
 const API_URL = 'https://ke8i236i4i.execute-api.ap-southeast-2.amazonaws.com/prod';
@@ -1963,6 +1964,35 @@ function Admin() {
             }}
           >
             Quản lý nguyên vật liệu
+          </button>
+          
+          <button 
+            onClick={() => navigate('/ke-toan')} 
+            className="admin-nav-button"
+            style={{ 
+              background: '#2e7d32',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '16px 24px',
+              fontSize: '15px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              minWidth: 180,
+              textAlign: 'center',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.background = '#1b5e20';
+              e.target.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.background = '#2e7d32';
+              e.target.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            }}
+          >
+            Kế Toán
           </button>
         </div>
 
@@ -5039,6 +5069,7 @@ function App() {
         <Route path="/inventory-check" element={<ProtectedRoute><InventoryCheck /></ProtectedRoute>} />
         <Route path="/inventory-management" element={<ProtectedRoute><InventoryManagement /></ProtectedRoute>} />
         <Route path="/inventory-history" element={<ProtectedRoute><InventoryHistory /></ProtectedRoute>} />
+        <Route path="/ke-toan" element={<ProtectedRoute><KeToan /></ProtectedRoute>} />
       </Routes>
     </Router>
   );
