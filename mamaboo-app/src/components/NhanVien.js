@@ -223,8 +223,8 @@ function NhanVien() {
       
       const norm = (s) => (s || '').toString().trim();
       const hoursByShift = { sang: 4, trua: 5, toi: 4 };
-      const rateSingle = 20000;
-      const rateDouble = 20000;
+      const rateSingle = 25000;
+      const rateDouble = 25000;
       const ratePerHour = 20000;
       
       let totalShifts = 0;
