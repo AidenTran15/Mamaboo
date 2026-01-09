@@ -217,38 +217,40 @@ function MultiSelectDropdown({ options, value, onChange, placeholder = 'Chọn n
   return (
     <div className="msd-root" style={{ position: 'relative' }}>
       <button type="button" className="login-button" style={{
-        width: '100%', background:'#fff', color:'#1c222f', border:'1px solid #d6e9f5',
-        borderRadius:8, padding:'8px 10px', textAlign:'left', fontWeight:500
-      }} onClick={(e)=>{e.stopPropagation(); toggle();}}>
+        width: '100%', background: '#fff', color: '#1c222f', border: '1px solid #d6e9f5',
+        borderRadius: 8, padding: '8px 10px', textAlign: 'left', fontWeight: 500
+      }} onClick={(e) => { e.stopPropagation(); toggle(); }}>
         {label}
-        <span style={{float:'right', opacity:0.6}}>▾</span>
+        <span style={{ float: 'right', opacity: 0.6 }}>▾</span>
       </button>
       {open && (
-        <div style={{ position:'absolute', zIndex:1000, left:0, right:0, marginTop:6,
-          background:'#fff', border:'1px solid #d6e9f5', borderRadius:10,
-          boxShadow:'0 8px 26px rgba(0,0,0,0.08)', padding:8 }}
-          onClick={(e)=>e.stopPropagation()}
+        <div style={{
+          position: 'absolute', zIndex: 1000, left: 0, right: 0, marginTop: 6,
+          background: '#fff', border: '1px solid #d6e9f5', borderRadius: 10,
+          boxShadow: '0 8px 26px rgba(0,0,0,0.08)', padding: 8
+        }}
+          onClick={(e) => e.stopPropagation()}
         >
           <input
             placeholder="Tìm nhân viên..."
             value={query}
-            onChange={(e)=>setQuery(e.target.value)}
-            style={{ width:'100%', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, marginBottom:8 }}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ width: '100%', padding: '8px 10px', border: '1px solid #e6eef5', borderRadius: 8, marginBottom: 8 }}
           />
-          <div style={{ maxHeight:180, overflow:'auto', paddingRight:4 }}>
+          <div style={{ maxHeight: 180, overflow: 'auto', paddingRight: 4 }}>
             {value && value.length > 0 && (
               <div 
-                style={{ padding:'8px 4px', cursor:'pointer', color:'#e67e22', fontWeight:600, borderBottom:'1px solid #eef5fa', marginBottom:4 }}
+                style={{ padding: '8px 4px', cursor: 'pointer', color: '#e67e22', fontWeight: 600, borderBottom: '1px solid #eef5fa', marginBottom: 4 }}
                 onClick={() => { onChange([]); setOpen(false); }}
               >
                 ✕ Xóa tất cả
               </div>
             )}
-            {filtered.length === 0 && <div style={{padding:'6px 2px', color:'#8a97a8'}}>Không có kết quả</div>}
+            {filtered.length === 0 && <div style={{ padding: '6px 2px', color: '#8a97a8' }}>Không có kết quả</div>}
             {filtered.map(name => (
               <label 
                 key={name} 
-                style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px', cursor:'pointer' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 4px', cursor: 'pointer' }}
                 onClick={(e) => {
                   // Đóng dropdown khi click vào label (tên nhân viên)
                   if (e.target.tagName !== 'INPUT') {
@@ -256,7 +258,7 @@ function MultiSelectDropdown({ options, value, onChange, placeholder = 'Chọn n
                   }
                 }}
               >
-                <input type="checkbox" checked={isChecked(name)} onChange={()=>handleCheck(name)} />
+                <input type="checkbox" checked={isChecked(name)} onChange={() => handleCheck(name)} />
                 <span>{name}</span>
               </label>
             ))}
@@ -302,55 +304,57 @@ function StaffFilterDropdown({ options, value, onChange, placeholder = 'Lọc th
   return (
     <div className="staff-filter-root" style={{ position: 'relative', width: 'auto', minWidth: '140px' }}>
       <button type="button" style={{
-        width: '100%', background:'#fff', color:'#1c222f', border:'1px solid #e6eef5',
-        borderRadius:8, padding:'6px 8px', textAlign:'left', fontWeight:400,
-        fontSize:'14px', cursor:'pointer', fontFamily:'inherit', boxSizing:'border-box'
-      }} onClick={(e)=>{e.stopPropagation(); toggle();}}>
-        <span style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%'}}>
-          <span style={{overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1}}>{label}</span>
-          <span style={{opacity:0.6, marginLeft:8, flexShrink:0}}>▾</span>
+        width: '100%', background: '#fff', color: '#1c222f', border: '1px solid #e6eef5',
+        borderRadius: 8, padding: '6px 8px', textAlign: 'left', fontWeight: 400,
+        fontSize: '14px', cursor: 'pointer', fontFamily: 'inherit', boxSizing: 'border-box'
+      }} onClick={(e) => { e.stopPropagation(); toggle(); }}>
+        <span style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{label}</span>
+          <span style={{ opacity: 0.6, marginLeft: 8, flexShrink: 0 }}>▾</span>
         </span>
       </button>
       {open && (
-        <div style={{ position:'absolute', zIndex:1000, left:0, right:0, marginTop:6,
-          background:'#fff', border:'1px solid #d6e9f5', borderRadius:10,
-          boxShadow:'0 8px 26px rgba(0,0,0,0.08)', padding:8 }}
-          onClick={(e)=>e.stopPropagation()}
+        <div style={{
+          position: 'absolute', zIndex: 1000, left: 0, right: 0, marginTop: 6,
+          background: '#fff', border: '1px solid #d6e9f5', borderRadius: 10,
+          boxShadow: '0 8px 26px rgba(0,0,0,0.08)', padding: 8
+        }}
+          onClick={(e) => e.stopPropagation()}
         >
           <input
             placeholder="Tìm nhân viên..."
             value={query}
-            onChange={(e)=>setQuery(e.target.value)}
-            style={{ width:'100%', padding:'8px 10px', border:'1px solid #e6eef5', borderRadius:8, marginBottom:8 }}
-            onClick={(e)=>e.stopPropagation()}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ width: '100%', padding: '8px 10px', border: '1px solid #e6eef5', borderRadius: 8, marginBottom: 8 }}
+            onClick={(e) => e.stopPropagation()}
           />
-          <div style={{ maxHeight:180, overflow:'auto', paddingRight:4 }}>
+          <div style={{ maxHeight: 180, overflow: 'auto', paddingRight: 4 }}>
             {value && (
               <div 
-                style={{ padding:'8px 4px', cursor:'pointer', color:'#e67e22', fontWeight:600, borderBottom:'1px solid #eef5fa', marginBottom:4 }}
+                style={{ padding: '8px 4px', cursor: 'pointer', color: '#e67e22', fontWeight: 600, borderBottom: '1px solid #eef5fa', marginBottom: 4 }}
                 onClick={handleClear}
               >
                 ✕ Xóa lọc
               </div>
             )}
             {options.length === 0 ? (
-              <div style={{padding:'6px 2px', color:'#8a97a8'}}>Đang tải danh sách nhân viên...</div>
+              <div style={{ padding: '6px 2px', color: '#8a97a8' }}>Đang tải danh sách nhân viên...</div>
             ) : filtered.length === 0 ? (
-              <div style={{padding:'6px 2px', color:'#8a97a8'}}>Không có kết quả</div>
+              <div style={{ padding: '6px 2px', color: '#8a97a8' }}>Không có kết quả</div>
             ) : null}
             {filtered.map(name => (
               <div 
                 key={name} 
                 style={{ 
-                  padding:'8px 4px', 
-                  cursor:'pointer',
+                  padding: '8px 4px',
+                  cursor: 'pointer',
                   background: value === name ? '#e9f8ef' : 'transparent',
-                  borderRadius:4,
+                  borderRadius: 4,
                   fontWeight: value === name ? 600 : 400
                 }}
-                onClick={()=>handleSelect(name)}
-                onMouseEnter={(e)=>e.target.style.background = value === name ? '#e9f8ef' : '#f5f9fc'}
-                onMouseLeave={(e)=>e.target.style.background = value === name ? '#e9f8ef' : 'transparent'}
+                onClick={() => handleSelect(name)}
+                onMouseEnter={(e) => e.target.style.background = value === name ? '#e9f8ef' : '#f5f9fc'}
+                onMouseLeave={(e) => e.target.style.background = value === name ? '#e9f8ef' : 'transparent'}
               >
                 {name}
               </div>
@@ -454,12 +458,12 @@ function NhanVien() {
   // Kiểm tra xem có thể bắt đầu ca không (cho phép bắt đầu từ 1 giờ trước giờ bắt đầu ca)
   const canCheckInNow = (dateStr, type) => {
     // Shift start times: sang 09:30, trua 13:30, toi 18:30 (24h)
-    const startMap = { sang: { h:9, m:30 }, trua: { h:13, m:30 }, toi: { h:18, m:30 } };
+    const startMap = { sang: { h: 9, m: 30 }, trua: { h: 13, m: 30 }, toi: { h: 18, m: 30 } };
     const tzNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
     const [y, mo, da] = dateStr.split('-').map(Number);
     
     // Tính giờ bắt đầu ca
-    const shiftStart = new Date(y, mo - 1, da, (startMap[type]||{h:0}).h, (startMap[type]||{m:0}).m, 0);
+    const shiftStart = new Date(y, mo - 1, da, (startMap[type] || { h: 0 }).h, (startMap[type] || { m: 0 }).m, 0);
     
     // Tính thời điểm cho phép bắt đầu (1 giờ trước giờ bắt đầu ca)
     const allowedStart = new Date(shiftStart.getTime() - 60 * 60 * 1000); // Trừ 1 giờ (60 phút * 60 giây * 1000ms)
@@ -486,7 +490,7 @@ function NhanVien() {
   React.useEffect(() => {
     try {
       localStorage.removeItem('checkinStatus');
-    } catch {}
+    } catch { }
   }, []);
 
   const handleCheckIn = (dateStr, type) => {
@@ -518,7 +522,7 @@ function NhanVien() {
         all.forEach(r => byDate.set(r.date, r));
 
         const pad2 = (n) => n.toString().padStart(2, '0');
-        const todayStr = `${curY}-${pad2(curM+1)}-${pad2(curD)}`;
+        const todayStr = `${curY}-${pad2(curM + 1)}-${pad2(curD)}`;
 
         const result = [];
         const norm = (s) => (s || '').toString().trim();
@@ -538,7 +542,7 @@ function NhanVien() {
           try {
             const saved = localStorage.getItem('checkinDone');
             if (saved) doneSet = new Set(JSON.parse(saved));
-          } catch {}
+          } catch { }
           const hasCheckedOut = doneSet.has(key);
           // Debug: log để kiểm tra
           if (hasCheckedOut) {
@@ -548,7 +552,7 @@ function NhanVien() {
         };
 
         for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-          const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+          const ds = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
           const r = byDate.get(ds);
           if (!r) continue;
           const isToday = ds === todayStr;
@@ -557,7 +561,7 @@ function NhanVien() {
           const noon = build(r.trua, 'Ca trưa', 'trua', ds, isToday); if (noon) shifts.push(noon);
           const night = build(r.toi, 'Ca tối', 'toi', ds, isToday); if (night) shifts.push(night);
           if (shifts.length) {
-            const weekday = ['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'][d.getDay()];
+            const weekday = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'][d.getDay()];
             result.push({ date: ds, weekday, shifts, isToday });
           }
         }
@@ -650,7 +654,7 @@ function NhanVien() {
         const otRes = await fetch(OVERTIME_GET_API);
         const otText = await otRes.text();
         let otData = {};
-        try { otData = JSON.parse(otText); if (typeof otData.body === 'string') otData = JSON.parse(otData.body); } catch {}
+        try { otData = JSON.parse(otText); if (typeof otData.body === 'string') otData = JSON.parse(otData.body); } catch { }
         overtimeRecords = Array.isArray(otData.items) ? otData.items : (Array.isArray(otData) ? otData : []);
       } catch (e) {
         console.error('Error fetching overtime:', e);
@@ -662,7 +666,7 @@ function NhanVien() {
         const pRes = await fetch(PENALTY_GET_API);
         const pText = await pRes.text();
         let pData = {};
-        try { pData = JSON.parse(pText); if (typeof pData.body === 'string') pData = JSON.parse(pData.body); } catch {}
+        try { pData = JSON.parse(pText); if (typeof pData.body === 'string') pData = JSON.parse(pData.body); } catch { }
         penaltyRecords = Array.isArray(pData.items) ? pData.items : (Array.isArray(pData) ? pData : []);
       } catch (e) {
         console.error('Error fetching penalty:', e);
@@ -691,11 +695,11 @@ function NhanVien() {
       const shiftNames = { sang: 'Ca sáng', trua: 'Ca trưa', toi: 'Ca tối' };
       
       // Lấy ngày hiện tại để so sánh (chỉ tính đến ngày hiện tại)
-      const todayDateStr = `${currentYear}-${pad2(currentMonth+1)}-${pad2(currentDay)}`;
+      const todayDateStr = `${currentYear}-${pad2(currentMonth + 1)}-${pad2(currentDay)}`;
       
       // Duyệt qua tất cả ngày trong chu kỳ lương
       for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-        const ds = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+        const ds = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         const r = byDate.get(ds);
         if (!r) continue;
         
@@ -744,7 +748,7 @@ function NhanVien() {
           let recordDateStr = record.date;
           if (typeof record.date !== 'string') {
             const d = new Date(record.date);
-            recordDateStr = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+            recordDateStr = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
           }
           const [y, m, d] = recordDateStr.split('-').map(Number);
           let recordPeriodMonth = m - 1; // Convert to 0-based month
@@ -785,7 +789,7 @@ function NhanVien() {
           let recordDateStr = record.date;
           if (typeof record.date !== 'string') {
             const d = new Date(record.date);
-            recordDateStr = `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;
+            recordDateStr = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
           }
           const [y, m, d] = recordDateStr.split('-').map(Number);
           let recordPeriodMonth = m - 1; // Convert to 0-based month
@@ -842,15 +846,15 @@ function NhanVien() {
   };
 
   return (
-    <div className="login-page nhan-vien-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container nhan-vien-container" style={{width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems:'stretch'}}>
-        <h2 className="login-title" style={{color: '#2ecc71', alignSelf:'center'}}>Nhân Viên</h2>
-        <div className="login-underline" style={{ background: '#2ecc71', alignSelf:'center' }}></div>
-        <div style={{textAlign: 'center', fontSize: 18, marginTop: 10, marginBottom: 20, color: '#2b4c66'}}>
+    <div className="login-page nhan-vien-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container nhan-vien-container" style={{ width: 750, maxWidth: '95vw', marginTop: 40, marginBottom: 32, alignItems: 'stretch' }}>
+        <h2 className="login-title" style={{ color: '#2ecc71', alignSelf: 'center' }}>Nhân Viên</h2>
+        <div className="login-underline" style={{ background: '#2ecc71', alignSelf: 'center' }}></div>
+        <div style={{ textAlign: 'center', fontSize: 18, marginTop: 10, marginBottom: 20, color: '#2b4c66' }}>
           Xin chào {userName ? userName : 'bạn'}!
         </div>
 
-        <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24, flexWrap: 'wrap'}}>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
           <button 
             onClick={calculateMonthlyStats}
             style={{
@@ -898,31 +902,31 @@ function NhanVien() {
           </button>
         </div>
 
-        <h3 style={{alignSelf:'center', margin:'12px 0 16px', fontSize: '18px', color: '#2b4c66'}}>Ca làm trong chu kỳ lương hiện tại</h3>
+        <h3 style={{ alignSelf: 'center', margin: '12px 0 16px', fontSize: '18px', color: '#2b4c66' }}>Ca làm trong chu kỳ lương hiện tại</h3>
         {loading ? (
           <div style={{
-            textAlign:'center',
-            width:'100%',
+            textAlign: 'center',
+            width: '100%',
             padding: '40px 20px',
-            color:'#6b7a86',
+            color: '#6b7a86',
             fontSize: '16px'
           }}>
-            <div style={{fontSize: '32px', marginBottom: 12}}>⏳</div>
+            <div style={{ fontSize: '32px', marginBottom: 12 }}>⏳</div>
             Đang tải...
           </div>
         ) : (
-          <div style={{display:'flex', flexDirection:'column', gap:16, width:'100%', maxWidth: 720, margin:'0 auto 12px'}}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, width: '100%', maxWidth: 720, margin: '0 auto 12px' }}>
             {rows.length === 0 ? (
               <div style={{
-                textAlign:'center',
-                color:'#6b7a86',
+                textAlign: 'center',
+                color: '#6b7a86',
                 padding: '40px 20px',
                 background: '#f9fafb',
                 borderRadius: 12,
                 border: '1px dashed #e5e7eb'
               }}>
-                <div style={{fontSize: '48px', marginBottom: 12}}>📋</div>
-                <div style={{fontSize: '16px'}}>Không có ca trong chu kỳ này</div>
+                <div style={{ fontSize: '48px', marginBottom: 12 }}>📋</div>
+                <div style={{ fontSize: '16px' }}>Không có ca trong chu kỳ này</div>
               </div>
             ) : rows.map((r) => (
               <div 
@@ -940,14 +944,14 @@ function NhanVien() {
                 }}
               >
                 <div style={{
-                  display:'flex',
-                  justifyContent:'space-between',
+                  display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
                   marginBottom: 12
                 }}>
-                  <div style={{fontWeight:700, color:'#2b4c66', fontSize: '16px'}}>{r.weekday}</div>
+                  <div style={{ fontWeight: 700, color: '#2b4c66', fontSize: '16px' }}>{r.weekday}</div>
                   <div style={{
-                    opacity:0.8,
+                    opacity: 0.8,
                     color: '#6b7a86',
                     fontSize: '14px'
                   }}>{formatDate(r.date)}</div>
@@ -1074,7 +1078,7 @@ function NhanVien() {
         <button 
           style={{
             marginTop: 24,
-            alignSelf:'center',
+            alignSelf: 'center',
             padding: '10px 24px',
             background: '#e74c3c',
             color: '#fff',
@@ -1160,16 +1164,16 @@ function NhanVien() {
               ×
             </button>
             
-            <h2 style={{color: '#2ecc71', marginBottom: 24, textAlign: 'center', fontSize: '24px'}}>
+            <h2 style={{ color: '#2ecc71', marginBottom: 24, textAlign: 'center', fontSize: '24px' }}>
               Thống kê tháng này
             </h2>
             
             {monthlyStats.loading ? (
-              <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
+              <div style={{ textAlign: 'center', padding: '40px 0', color: '#6b7a86' }}>
                 Đang tính toán...
               </div>
             ) : (
-              <div style={{display: 'flex', flexDirection: 'column', gap: 20}}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 {/* Tổng số ca */}
                 <div style={{
                   background: '#f0fbff',
@@ -1177,8 +1181,8 @@ function NhanVien() {
                   borderRadius: 12,
                   border: '1px solid #e9f2f8'
                 }}>
-                  <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 8}}>Tổng số ca đã làm</div>
-                  <div style={{fontSize: '32px', fontWeight: 700, color: '#2ecc71'}}>
+                  <div style={{ fontSize: '14px', color: '#6b7a86', marginBottom: 8 }}>Tổng số ca đã làm</div>
+                  <div style={{ fontSize: '32px', fontWeight: 700, color: '#2ecc71' }}>
                     {monthlyStats.totalShifts} ca
                   </div>
                 </div>
@@ -1193,10 +1197,10 @@ function NhanVien() {
                     maxHeight: '300px',
                     overflowY: 'auto'
                   }}>
-                    <div style={{fontSize: '14px', fontWeight: 600, color: '#2b4c66', marginBottom: 12}}>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: '#2b4c66', marginBottom: 12 }}>
                       Danh sách các ca:
                     </div>
-                    <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {monthlyStats.shifts.map((shift, idx) => (
                         <div key={idx} style={{
                           background: '#fff',
@@ -1208,10 +1212,10 @@ function NhanVien() {
                           alignItems: 'center'
                         }}>
                           <div>
-                            <div style={{fontSize: '13px', fontWeight: 600, color: '#2b4c66'}}>
+                            <div style={{ fontSize: '13px', fontWeight: 600, color: '#2b4c66' }}>
                               {shift.shiftName}
                             </div>
-                            <div style={{fontSize: '12px', color: '#6b7a86', marginTop: 2}}>
+                            <div style={{ fontSize: '12px', color: '#6b7a86', marginTop: 2 }}>
                               {shift.dateFormatted}
                             </div>
                           </div>
@@ -1228,8 +1232,8 @@ function NhanVien() {
                   borderRadius: 12,
                   border: '1px solid #c8e6c9'
                 }}>
-                  <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 4}}>Tổng số giờ tăng ca</div>
-                  <div style={{fontSize: '24px', fontWeight: 700, color: '#2e7d32'}}>
+                  <div style={{ fontSize: '14px', color: '#6b7a86', marginBottom: 4 }}>Tổng số giờ tăng ca</div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#2e7d32' }}>
                     {Number(monthlyStats.overtimeHours || 0).toFixed(2)} giờ
                   </div>
                 </div>
@@ -1241,8 +1245,8 @@ function NhanVien() {
                   borderRadius: 12,
                   border: '1px solid #ffcc80'
                 }}>
-                  <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 4}}>Tổng số giờ đi trễ</div>
-                  <div style={{fontSize: '24px', fontWeight: 700, color: '#e65100'}}>
+                  <div style={{ fontSize: '14px', color: '#6b7a86', marginBottom: 4 }}>Tổng số giờ đi trễ</div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#e65100' }}>
                     {Number(monthlyStats.lateHours || 0).toFixed(2)} giờ
                   </div>
                 </div>
@@ -1254,8 +1258,8 @@ function NhanVien() {
                   borderRadius: 12,
                   border: '1px solid #ffcdd2'
                 }}>
-                  <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 4}}>Tổng số tiền bị phạt</div>
-                  <div style={{fontSize: '24px', fontWeight: 700, color: '#c62828'}}>
+                  <div style={{ fontSize: '14px', color: '#6b7a86', marginBottom: 4 }}>Tổng số tiền bị phạt</div>
+                  <div style={{ fontSize: '24px', fontWeight: 700, color: '#c62828' }}>
                     {Number(monthlyStats.penaltyAmount || 0).toLocaleString('vi-VN')} VND
                   </div>
                 </div>
@@ -1267,8 +1271,8 @@ function NhanVien() {
                   borderRadius: 12,
                   border: '1px solid #ffe8cc'
                 }}>
-                  <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 8}}>Tổng lương tháng này</div>
-                  <div style={{fontSize: '32px', fontWeight: 700, color: '#e67e22'}}>
+                  <div style={{ fontSize: '14px', color: '#6b7a86', marginBottom: 8 }}>Tổng lương tháng này</div>
+                  <div style={{ fontSize: '32px', fontWeight: 700, color: '#e67e22' }}>
                     {Number(monthlyStats.totalSalary).toLocaleString('vi-VN')} VND
                   </div>
                 </div>
@@ -1399,8 +1403,6 @@ function Admin() {
   
   // Penalty records - fetch từ API hoặc localStorage
   const [penaltyRecords, setPenaltyRecords] = useState([]);
-  // Toggle để hiển thị tổng lương có/không có phụ cấp
-  const [includeAllowance, setIncludeAllowance] = useState(true);
   
   // Fetch penalty records từ API hoặc localStorage
   React.useEffect(() => {
@@ -1411,7 +1413,7 @@ function Admin() {
           const res = await fetch(PENALTY_GET_API);
           const text = await res.text();
           let parsed = {};
-          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
           const items = Array.isArray(parsed.items) ? parsed.items : [];
           if (items.length >= 0) { // Luôn dùng API nếu có data (kể cả empty array)
             setPenaltyRecords(items);
@@ -1497,7 +1499,7 @@ function Admin() {
             const res = await fetch(PENALTY_GET_API);
             const text = await res.text();
             let parsed = {};
-            try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+            try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
             const items = Array.isArray(parsed.items) ? parsed.items : [];
             setPenaltyRecords(items);
             return;
@@ -1536,7 +1538,7 @@ function Admin() {
           const res = await fetch(OVERTIME_GET_API);
           const text = await res.text();
           let parsed = {};
-          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
           const items = Array.isArray(parsed.items) ? parsed.items : [];
           if (items.length > 0) {
             setOvertimeRecords(items);
@@ -1601,8 +1603,8 @@ function Admin() {
             const sal = Number(s.Salary || s.salary || 0);
             salaryMap[name] = isNaN(sal) ? 0 : sal;
           });
-        } catch {}
-        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+        } catch { }
+        setStaffs(list.sort((a, b) => a.localeCompare(b, 'vi')));
         setStaffSalary(salaryMap);
       } catch (e) {
         if (isMounted) setError('Không tải được roster.');
@@ -1623,7 +1625,7 @@ function Admin() {
       const res = await fetch(url.toString());
       const text = await res.text();
       let data = {};
-      try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch {}
+      try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { }
       const items = Array.isArray(data.items) ? data.items : [];
       setCkItems(items);
     } catch (e) {
@@ -1654,7 +1656,7 @@ function Admin() {
 
     const arr = [];
     for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-      const dateStr = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+      const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       const base = byDate.get(dateStr) || { date: dateStr, sang: [], trua: [], toi: [] };
       arr.push({
         date: dateStr,
@@ -1686,14 +1688,14 @@ function Admin() {
   }, [overtimeRecords]);
 
   const handleLogout = () => { localStorage.removeItem('userName'); navigate('/login'); };
-  const prevMonth = () => { const m = month - 1; if (m < 0) { setMonth(11); setYear(y => y-1); } else setMonth(m); };
-  const nextMonth = () => { const m = month + 1; if (m > 11) { setMonth(0); setYear(y => y+1); } else setMonth(m); };
+  const prevMonth = () => { const m = month - 1; if (m < 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m); };
+  const nextMonth = () => { const m = month + 1; if (m > 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m); };
 
   const handleEdit = () => { setEditMode(true); setInfo(''); };
   const handleCancel = () => { setMonthEdit(JSON.parse(JSON.stringify(monthData))); setEditMode(false); setInfo(''); };
   const handleChange = (rowIdx, ca, e) => {
     const values = Array.from(e.target.selectedOptions).map(o => o.value);
-    setMonthEdit(prev => prev.map((r,i)=> i===rowIdx ? { ...r, [ca]: values } : r));
+    setMonthEdit(prev => prev.map((r, i) => i === rowIdx ? { ...r, [ca]: values } : r));
   };
 
   const handleSave = async () => {
@@ -1707,14 +1709,14 @@ function Admin() {
         return n !== 'kiett';
       });
     };
-    for (let i=0;i<monthEdit.length;i++) {
+    for (let i = 0; i < monthEdit.length; i++) {
       const before = monthData[i];
       const after = monthEdit[i];
       if (!before || !after) continue;
-      for (const ca of ['sang','trua','toi']) {
+      for (const ca of ['sang', 'trua', 'toi']) {
         // Filter "kiett" ra trước khi so sánh và lưu
         const filteredAfter = filterKiett(after[ca] || []);
-        const a = JSON.stringify(filterKiett(before[ca]||[]));
+        const a = JSON.stringify(filterKiett(before[ca] || []));
         const b = JSON.stringify(filteredAfter);
         if (a !== b) {
           try {
@@ -1739,7 +1741,7 @@ function Admin() {
       try { data = JSON.parse(text); if (typeof data.body === 'string') data = JSON.parse(data.body); } catch { data = {}; }
       const items = Array.isArray(data.items) ? data.items : [];
       setRoster(items);
-    } catch {}
+    } catch { }
   };
 
   const monthLabel = (() => {
@@ -1789,7 +1791,7 @@ function Admin() {
     rows.forEach(r => {
       const shiftsByPerson = new Map(); // name -> Set of shifts worked on this day
       
-      ['sang','trua','toi'].forEach(ca => {
+      ['sang', 'trua', 'toi'].forEach(ca => {
         const members = Array.isArray(r[ca]) ? r[ca].filter(Boolean) : (r[ca] ? [r[ca]] : []);
         if (members.length === 0) return;
         const hours = hoursByShift[ca];
@@ -1839,17 +1841,17 @@ function Admin() {
       const allowanceCount = allowanceCountMap.get(name) || 0;
       return [name, hours, sh, dh, money, allowanceCount];
     });
-    return arr.sort((a,b)=> b[4]-a[4]);
+    return arr.sort((a, b) => b[4] - a[4]);
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container" style={{width: 750, maxWidth: '95vw', marginTop: 24}}>
-        <h2 className="login-title" style={{color: '#e67e22'}}>Quản trị viên</h2>
+    <div className="login-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container" style={{ width: 750, maxWidth: '95vw', marginTop: 24 }}>
+        <h2 className="login-title" style={{ color: '#e67e22' }}>Quản trị viên</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
-        <div style={{textAlign:'center', fontSize:20, margin:'12px 0'}}>Xin chào {userName || 'Admin'}!</div>
+        <div style={{ textAlign: 'center', fontSize: 20, margin: '12px 0' }}>Xin chào {userName || 'Admin'}!</div>
 
-        <div className="admin-buttons-container" style={{display:'flex', justifyContent:'center', gap:16, marginBottom:24, flexWrap:'wrap'}}>
+        <div className="admin-buttons-container" style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/checklist-report')} 
             className="admin-nav-button"
@@ -1996,7 +1998,7 @@ function Admin() {
           </button>
         </div>
 
-        <div className="admin-date-nav" style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%', margin:'4px 0 12px'}}>
+        <div className="admin-date-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', margin: '4px 0 12px' }}>
           <button 
             onClick={prevMonth}
             className="admin-date-button"
@@ -2024,7 +2026,7 @@ function Admin() {
           >
             ← Tháng trước
           </button>
-          <div className="admin-month-label" style={{fontWeight:700, color:'#1c222f', fontSize:'16px'}}>{monthLabel}</div>
+          <div className="admin-month-label" style={{ fontWeight: 700, color: '#1c222f', fontSize: '16px' }}>{monthLabel}</div>
           <button 
             onClick={nextMonth}
             className="admin-date-button"
@@ -2054,22 +2056,22 @@ function Admin() {
           </button>
         </div>
 
-        <h3 style={{alignSelf:'flex-start', margin:'8px 0 6px'}}>Lịch phân ca theo tháng</h3>
+        <h3 style={{ alignSelf: 'flex-start', margin: '8px 0 6px' }}>Lịch phân ca theo tháng</h3>
         {loading ? (
           <div>Đang tải...</div>
         ) : error ? (
-          <div style={{color:'red'}}>{error}</div>
+          <div style={{ color: 'red' }}>{error}</div>
         ) : (
-          <form onSubmit={(e)=>{e.preventDefault(); handleSave();}} style={{margin:0, width:'100%'}}>
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} style={{ margin: 0, width: '100%' }}>
             <div className="roster-scroll">
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:12, boxShadow:'0 4px 20px rgba(0,0,0,0.08)', margin:'0 auto' }}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing: 0, borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.08)', margin: '0 auto' }}>
                 <thead>
-                  <tr style={{background:'#f5fbff'}}>
-                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Ngày</th>
-                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px', textAlign:'left'}}>Thứ</th>
-                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Sáng</th>
-                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Trưa</th>
-                    <th style={{borderBottom:'1px solid #e6f2f8', padding:'10px 8px'}}>Ca Tối</th>
+                  <tr style={{ background: '#f5fbff' }}>
+                    <th style={{ borderBottom: '1px solid #e6f2f8', padding: '10px 8px', textAlign: 'left' }}>Ngày</th>
+                    <th style={{ borderBottom: '1px solid #e6f2f8', padding: '10px 8px', textAlign: 'left' }}>Thứ</th>
+                    <th style={{ borderBottom: '1px solid #e6f2f8', padding: '10px 8px' }}>Ca Sáng</th>
+                    <th style={{ borderBottom: '1px solid #e6f2f8', padding: '10px 8px' }}>Ca Trưa</th>
+                    <th style={{ borderBottom: '1px solid #e6f2f8', padding: '10px 8px' }}>Ca Tối</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2077,22 +2079,22 @@ function Admin() {
                     const todayHighlight = isToday(row.date);
                     return (
                     <tr key={idx} style={{
-                      background: todayHighlight ? '#fff9e6' : (idx%2===0 ? '#ffffff' : '#fbfdff'),
+                        background: todayHighlight ? '#fff9e6' : (idx % 2 === 0 ? '#ffffff' : '#fbfdff'),
                       borderLeft: todayHighlight ? '4px solid #ff9800' : 'none',
                       fontWeight: todayHighlight ? 600 : 'normal'
                     }}>
-                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', fontWeight:600, color: todayHighlight ? '#ff9800' : '#2b4c66'}}>{formatDate(row.date)}</td>
-                      <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', color: todayHighlight ? '#ff9800' : '#6b7a86', fontWeight: todayHighlight ? 600 : 'normal'}}>{getWeekdayVi(row.date)}</td>
-                      {['sang','trua','toi'].map(ca => (
-                        <td style={{borderBottom:'1px solid #eef5fa', padding:'8px 8px', position:'relative'}} key={ca}>
+                        <td style={{ borderBottom: '1px solid #eef5fa', padding: '8px 8px', fontWeight: 600, color: todayHighlight ? '#ff9800' : '#2b4c66' }}>{formatDate(row.date)}</td>
+                        <td style={{ borderBottom: '1px solid #eef5fa', padding: '8px 8px', color: todayHighlight ? '#ff9800' : '#6b7a86', fontWeight: todayHighlight ? 600 : 'normal' }}>{getWeekdayVi(row.date)}</td>
+                        {['sang', 'trua', 'toi'].map(ca => (
+                          <td style={{ borderBottom: '1px solid #eef5fa', padding: '8px 8px', position: 'relative' }} key={ca}>
                           {editMode ? (
                             <MultiSelectDropdown
                               options={staffs}
                               value={row[ca] || []}
-                              onChange={(vals)=>handleChange(idx, ca, { target: { selectedOptions: vals.map(v=>({ value: v })) } })}
+                                onChange={(vals) => handleChange(idx, ca, { target: { selectedOptions: vals.map(v => ({ value: v })) } })}
                             />
                           ) : (
-                            <div style={{minHeight:24, color:'#1c222f'}}>{Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]}</div>
+                              <div style={{ minHeight: 24, color: '#1c222f' }}>{Array.isArray(row[ca]) ? row[ca].join(', ') : row[ca]}</div>
                           )}
                         </td>
                       ))}
@@ -2103,29 +2105,28 @@ function Admin() {
               </table>
             </div>
 
-            {!editMode && <button type="button" className="login-button" style={{marginTop:16}} onClick={handleEdit}>Chỉnh sửa</button>}
+            {!editMode && <button type="button" className="login-button" style={{ marginTop: 16 }} onClick={handleEdit}>Chỉnh sửa</button>}
             {editMode && (
               <>
-                <button type="submit" className="login-button" style={{marginTop:16}} disabled={saving}>{saving ? 'Đang cập nhật...' : 'Cập nhật'}</button>
-                <button type="button" className="login-button" style={{marginTop:12}} onClick={handleCancel}>Hủy</button>
+                <button type="submit" className="login-button" style={{ marginTop: 16 }} disabled={saving}>{saving ? 'Đang cập nhật...' : 'Cập nhật'}</button>
+                <button type="button" className="login-button" style={{ marginTop: 12 }} onClick={handleCancel}>Hủy</button>
               </>
             )}
-            {info && <div style={{marginTop:12, color:'#2ecc71', fontWeight:600}}>{info}</div>}
+            {info && <div style={{ marginTop: 12, color: '#2ecc71', fontWeight: 600 }}>{info}</div>}
 
-            <h3 style={{textAlign:'left', margin:'18px 0 8px'}}>Tổng số giờ trong tháng</h3>
+            <h3 style={{ textAlign: 'left', margin: '18px 0 8px' }}>Tổng số giờ trong tháng</h3>
             <div className="roster-scroll">
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto' }}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing: 0, borderRadius: 10, boxShadow: '0 3px 14px rgba(0,0,0,0.06)', margin: '0 auto' }}>
                 <thead>
-                  <tr style={{background:'#f7fafc'}}>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tổng giờ</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đơn</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Giờ ca đôi</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Tổng tiền (VND)</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Tăng ca (giờ)</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:120}}>Đi trễ (giờ)</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Phạt (VND)</th>
-                    <th style={{padding:'10px 8px', borderBottom:'1px solid #eaeef2', width:160}}>Phụ cấp</th>
+                  <tr style={{ background: '#f7fafc' }}>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', textAlign: 'left' }}>Nhân viên</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 120 }}>Tổng giờ</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 120 }}>Giờ ca đơn</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 120 }}>Giờ ca đôi</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 160 }}>Tổng tiền (VND)</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 120 }}>Tăng ca (giờ)</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 120 }}>Đi trễ (giờ)</th>
+                    <th style={{ padding: '10px 8px', borderBottom: '1px solid #eaeef2', width: 160 }}>Phạt (VND)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2135,7 +2136,6 @@ function Admin() {
                     const monthKey = `${year}-${month + 1}`;
                     const ratePerHour = 20000;
                     let totalAllSalary = 0;
-                    let totalAllSalaryWithoutAllowance = 0;
                     
                     return (
                       <>
@@ -2144,25 +2144,10 @@ function Admin() {
                           // Tính tiền phạt
                           const penaltyAmount = calculatePenaltyAmount(name, monthKey);
                           
-                          // Tính phụ cấp
-                          const allowanceAmount = allowanceCount * 45000; // 45k mỗi lần
-                          const formatAllowance = (count, amount) => {
-                            if (count === 0) return '0';
-                            const amountInK = Math.round(amount / 1000);
-                            return `${amountInK}k (${count})`;
-                          };
-                          
                           // Mamaboo là chủ nên không tính lương (luôn = 0)
                           const isMamaboo = name.toLowerCase() === 'mamaboo';
                           const totalSalary = isMamaboo ? 0 : (() => {
-                            // Tính tổng lương: lương ca làm + tăng ca - đi trễ - phạt + phụ cấp
-                            const overtimePay = (staffData.overtime || 0) * ratePerHour;
-                            const latePay = (staffData.lateCount || 0) * ratePerHour;
-                            return money + overtimePay - latePay - penaltyAmount + allowanceAmount;
-                          })();
-                          
-                          // Tính lương không có phụ cấp
-                          const totalSalaryWithoutAllowance = isMamaboo ? 0 : (() => {
+                            // Tính tổng lương: lương ca làm + tăng ca - đi trễ - phạt
                             const overtimePay = (staffData.overtime || 0) * ratePerHour;
                             const latePay = (staffData.lateCount || 0) * ratePerHour;
                             return money + overtimePay - latePay - penaltyAmount;
@@ -2171,74 +2156,35 @@ function Admin() {
                           // Cộng vào tổng (trừ Mamaboo)
                           if (!isMamaboo) {
                             totalAllSalary += totalSalary;
-                            totalAllSalaryWithoutAllowance += totalSalaryWithoutAllowance;
                           }
                           
                           return (
-                            <tr key={name} style={{background:'#fff'}}>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7'}}>{name}</td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>{total}</td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{singleH}</td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>{doubleH}</td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:700}}>{Number(totalSalary).toLocaleString('vi-VN')}</td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
+                            <tr key={name} style={{ background: '#fff' }}>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7' }}>{name}</td>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'center', fontWeight: 600 }}>{total}</td>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'center' }}>{singleH}</td>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'center' }}>{doubleH}</td>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'right', fontWeight: 700 }}>{Number(totalSalary).toLocaleString('vi-VN')}</td>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'center' }}>
                                 <span>{Number(staffData.overtime) || 0}</span>
                               </td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center'}}>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'center' }}>
                                 <span>{Number(staffData.lateCount) || 0}</span>
                               </td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:600, color: penaltyAmount > 0 ? '#e67e22' : '#6b7a86'}}>
+                              <td style={{ padding: '8px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'right', fontWeight: 600, color: penaltyAmount > 0 ? '#e67e22' : '#6b7a86' }}>
                                 {penaltyAmount > 0 ? Number(penaltyAmount).toLocaleString('vi-VN') : '0'}
-                              </td>
-                              <td style={{padding:'8px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'right', fontWeight:600, color: allowanceCount > 0 ? '#2e7d32' : '#6b7a86'}}>
-                                {formatAllowance(allowanceCount, allowanceAmount)}
                               </td>
                             </tr>
                           );
                         })}
                         {/* Dòng tổng lương */}
-                        <tr style={{background:'#f0f8ff', fontWeight:700}}>
-                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef', fontWeight:700}}>TỔNG</td>
-                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef', textAlign:'center', fontWeight:700}} colSpan="3"></td>
-                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef', textAlign:'right', fontWeight:700, color:'#e67e22', fontSize:'1.1em'}}>
-                            <div style={{display:'flex', alignItems:'center', justifyContent:'flex-end', gap:12, flexWrap:'nowrap', whiteSpace:'nowrap'}}>
-                              <span>{Number(includeAllowance ? totalAllSalary : totalAllSalaryWithoutAllowance).toLocaleString('vi-VN')}</span>
-                              <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer', fontSize:'0.9em', fontWeight:500, color:'#2b4c66', userSelect:'none', whiteSpace:'nowrap'}}>
-                                <div style={{
-                                  position:'relative',
-                                  width:44,
-                                  height:24,
-                                  backgroundColor: includeAllowance ? '#43a8ef' : '#ccc',
-                                  borderRadius:12,
-                                  transition:'background-color 0.3s',
-                                  cursor:'pointer',
-                                  flexShrink:0
-                                }}>
-                                  <div style={{
-                                    position:'absolute',
-                                    top:2,
-                                    left: includeAllowance ? 22 : 2,
-                                    width:20,
-                                    height:20,
-                                    backgroundColor:'white',
-                                    borderRadius:'50%',
-                                    transition:'left 0.3s',
-                                    boxShadow:'0 2px 4px rgba(0,0,0,0.2)'
-                                  }}></div>
-                                </div>
-                                <input 
-                                  type="checkbox" 
-                                  checked={includeAllowance}
-                                  onChange={(e) => setIncludeAllowance(e.target.checked)}
-                                  style={{position:'absolute', opacity:0, pointerEvents:'none'}}
-                                />
-                                <span style={{whiteSpace:'nowrap'}}>{includeAllowance ? 'Có phụ cấp' : 'Chưa phụ cấp'}</span>
-                              </label>
-                            </div>
+                        <tr style={{ background: '#f0f8ff', fontWeight: 700 }}>
+                          <td style={{ padding: '10px 8px', borderTop: '2px solid #43a8ef', fontWeight: 700 }}>TỔNG</td>
+                          <td style={{ padding: '10px 8px', borderTop: '2px solid #43a8ef', textAlign: 'center', fontWeight: 700 }} colSpan="3"></td>
+                          <td style={{ padding: '10px 8px', borderTop: '2px solid #43a8ef', textAlign: 'right', fontWeight: 700, color: '#e67e22', fontSize: '1.1em' }}>
+                            {Number(totalAllSalary).toLocaleString('vi-VN')}
                           </td>
-                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}} colSpan="2"></td>
-                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}}></td>
-                          <td style={{padding:'10px 8px', borderTop:'2px solid #43a8ef'}}></td>
+                          <td style={{ padding: '10px 8px', borderTop: '2px solid #43a8ef' }} colSpan="3"></td>
                         </tr>
                       </>
                     );
@@ -2250,11 +2196,11 @@ function Admin() {
             {/* Checklist viewer */}
             {false && (
             <>
-            <h3 style={{textAlign:'left', margin:'22px 0 8px'}}>Checklist đã lưu</h3>
-            <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center'}}>
-              <input type="date" value={ckFrom} onChange={(e)=>setCkFrom(e.target.value)} />
+                <h3 style={{ textAlign: 'left', margin: '22px 0 8px' }}>Checklist đã lưu</h3>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input type="date" value={ckFrom} onChange={(e) => setCkFrom(e.target.value)} />
               <span>đến</span>
-              <input type="date" value={ckTo} onChange={(e)=>setCkTo(e.target.value)} />
+                  <input type="date" value={ckTo} onChange={(e) => setCkTo(e.target.value)} />
               <StaffFilterDropdown 
                 options={staffs} 
                 value={ckUser} 
@@ -2265,10 +2211,10 @@ function Admin() {
                 {ckLoading ? 'Đang tải...' : 'Tải checklist'}
               </button>
             </div>
-            <div className="roster-scroll" style={{marginTop:10}}>
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, margin:'0 auto' }}>
+                <div className="roster-scroll" style={{ marginTop: 10 }}>
+                  <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing: 0, borderRadius: 10, margin: '0 auto' }}>
                 <thead>
-                  <tr style={{background:'#f5fbff'}}>
+                      <tr style={{ background: '#f5fbff' }}>
                     <th>Ngày</th>
                     <th>Ca</th>
                     <th>Nhân viên</th>
@@ -2277,10 +2223,10 @@ function Admin() {
                 </thead>
                 <tbody>
                   {ckItems.length === 0 ? (
-                    <tr><td colSpan={4} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>Chưa có dữ liệu</td></tr>
+                        <tr><td colSpan={4} style={{ padding: 10, textAlign: 'center', color: '#6b7a86' }}>Chưa có dữ liệu</td></tr>
                   ) : ckItems.map((it, i) => {
                     const tasks = it.tasks || {};
-                    const doneCount = Object.values(tasks).filter((t)=>t && (t.done === true || t.done === 'true')).length;
+                        const doneCount = Object.values(tasks).filter((t) => t && (t.done === true || t.done === 'true')).length;
                     return (
                       <tr key={i}>
                         <td>{it.date}</td>
@@ -2297,7 +2243,7 @@ function Admin() {
             )}
           </form>
         )}
-        <button style={{marginTop: 20}} className="login-button" onClick={handleLogout}>Đăng xuất</button>
+        <button style={{ marginTop: 20 }} className="login-button" onClick={handleLogout}>Đăng xuất</button>
       </div>
     </div>
   );
@@ -2769,7 +2715,7 @@ function Checkin() {
             if (typeof verifyData.body === 'string') {
               verifyData = JSON.parse(verifyData.body);
             }
-          } catch {}
+          } catch { }
           
           const verifyItems = Array.isArray(verifyData.items) ? verifyData.items : [];
           console.log(`🔍 Verify: Found ${verifyItems.length} items from DynamoDB`);
@@ -2885,14 +2831,14 @@ function Checkin() {
         // Xóa checkinStatus cũ để giải phóng dung lượng
         try {
           localStorage.removeItem('checkinStatus');
-        } catch {}
+        } catch { }
         
         // Đọc từ localStorage
         let doneSet = new Set();
         try {
           const saved = localStorage.getItem('checkinDone');
           if (saved) doneSet = new Set(JSON.parse(saved));
-        } catch {}
+        } catch { }
         
         // Xóa các ca cũ hơn 30 ngày để giải phóng dung lượng
         const now = new Date();
@@ -2926,7 +2872,7 @@ function Checkin() {
           try {
             localStorage.removeItem('checkinDone');
             localStorage.removeItem('checkinStatus');
-          } catch {}
+          } catch { }
           const minimalSet = new Set([checkKey]);
           localStorage.setItem('checkinDone', JSON.stringify(Array.from(minimalSet)));
           console.log('Đã lưu checkinDone (minimal, đã xóa dữ liệu cũ):', checkKey);
@@ -2945,45 +2891,45 @@ function Checkin() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
-      <div className="login-container" style={{width: 800, maxWidth: '96vw', marginTop: 28, marginBottom: 28, alignItems:'stretch'}}>
-        <h2 className="login-title" style={{color:'#43a8ef', alignSelf:'center'}}>Checklist ca làm việc</h2>
-        <div className="login-underline" style={{ background: '#43a8ef', alignSelf:'center' }}></div>
-        <div style={{textAlign:'center', marginBottom:16}}>Ngày {dateStr} · {shift === 'sang' ? 'Ca sáng' : shift === 'trua' ? 'Ca trưa' : 'Ca tối'}</div>
+    <div className="login-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container" style={{ width: 800, maxWidth: '96vw', marginTop: 28, marginBottom: 28, alignItems: 'stretch' }}>
+        <h2 className="login-title" style={{ color: '#43a8ef', alignSelf: 'center' }}>Checklist ca làm việc</h2>
+        <div className="login-underline" style={{ background: '#43a8ef', alignSelf: 'center' }}></div>
+        <div style={{ textAlign: 'center', marginBottom: 16 }}>Ngày {dateStr} · {shift === 'sang' ? 'Ca sáng' : shift === 'trua' ? 'Ca trưa' : 'Ca tối'}</div>
         {/* Không hiển thị giờ bắt đầu ca nữa vì không lưu vào localStorage */}
-        <div style={{marginBottom:12, padding:12, background:'#e9f8ef', borderRadius:8, color:'#1e7e34'}}>
+        <div style={{ marginBottom: 12, padding: 12, background: '#e9f8ef', borderRadius: 8, color: '#1e7e34' }}>
           <strong>📋 Checklist các công việc cần làm trong ca:</strong>
         </div>
-        <div style={{display:'flex', flexDirection:'column', gap:12}}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {tasks.map(t => (
-            <div key={t.id} style={{background:'#fff', border:'1px solid #e6eef5', borderRadius:12, padding:'12px 14px', boxShadow:'0 6px 16px rgba(0,0,0,0.06)'}}>
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12}}>
-                <label style={{display:'flex', alignItems:'center', gap:10, flex:1}}>
-                  <input type="checkbox" checked={t.done} onChange={()=>toggleTask(t.id)} />
-                  <span style={{fontWeight:600}}>{t.label}</span>
+            <div key={t.id} style={{ background: '#fff', border: '1px solid #e6eef5', borderRadius: 12, padding: '12px 14px', boxShadow: '0 6px 16px rgba(0,0,0,0.06)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                  <input type="checkbox" checked={t.done} onChange={() => toggleTask(t.id)} />
+                  <span style={{ fontWeight: 600 }}>{t.label}</span>
                 </label>
                 {t.useForm ? (
-                  <div style={{display:'flex', alignItems:'center', gap:10}}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <button
                       type="button"
                       onClick={() => setShowInventoryForm(true)}
-                      style={{cursor:'pointer', padding:'6px 12px', background:'#3498db', color:'#fff', border:'none', borderRadius:6, fontSize:'0.9em', fontWeight:600}}
+                      style={{ cursor: 'pointer', padding: '6px 12px', background: '#3498db', color: '#fff', border: 'none', borderRadius: 6, fontSize: '0.9em', fontWeight: 600 }}
                     >
                       Điền form
                     </button>
                   </div>
                 ) : t.requiresImage !== false && (
-                  <div style={{display:'flex', alignItems:'center', gap:10}}>
-                    <label style={{cursor:'pointer', padding:'6px 12px', background:'#43a8ef', color:'#fff', borderRadius:6, fontSize:'0.9em'}}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <label style={{ cursor: 'pointer', padding: '6px 12px', background: '#43a8ef', color: '#fff', borderRadius: 6, fontSize: '0.9em' }}>
                       Upload ảnh
-                      <input type="file" accept="image/*" onChange={(e)=>onUpload(t.id, e.target.files?.[0])} style={{display:'none'}} />
+                      <input type="file" accept="image/*" onChange={(e) => onUpload(t.id, e.target.files?.[0])} style={{ display: 'none' }} />
                     </label>
                   </div>
                 )}
               </div>
               {/* Text input cho task "Kiểm két" */}
               {t.useTextInput && (
-                <div style={{marginTop:12}}>
+                <div style={{ marginTop: 12 }}>
                   <textarea
                     value={t.text || ''}
                     onChange={(e) => handleTextChange(t.id, e.target.value)}
@@ -3002,27 +2948,27 @@ function Checkin() {
                 </div>
               )}
               {t.image && (
-                <div style={{marginTop:10}}>
-                  <img src={t.image} alt={t.label} style={{maxWidth:'100%', maxHeight:200, borderRadius:8, border:'1px solid #eef5fa'}} />
+                <div style={{ marginTop: 10 }}>
+                  <img src={t.image} alt={t.label} style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, border: '1px solid #eef5fa' }} />
                 </div>
               )}
             </div>
           ))}
         </div>
-        <div style={{marginTop:18, display:'flex', gap:12, alignItems:'stretch'}}>
+        <div style={{ marginTop: 18, display: 'flex', gap: 12, alignItems: 'stretch' }}>
           <button 
             onClick={handleEndShift} 
             style={{
-              background:'#e67e22',
-              color:'#fff',
-              border:'none',
-              borderRadius:12,
-              padding:'12px 24px',
-              fontSize:'1em',
-              fontWeight:600,
-              cursor:'pointer',
-              boxShadow:'0 4px 12px rgba(0,0,0,0.1)',
-              transition:'background 0.2s'
+              background: '#e67e22',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 24px',
+              fontSize: '1em',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              transition: 'background 0.2s'
             }}
             onMouseEnter={(e) => e.target.style.background = '#d35400'}
             onMouseLeave={(e) => e.target.style.background = '#e67e22'}
@@ -3032,17 +2978,17 @@ function Checkin() {
           <button 
             onClick={() => navigate('/nhan-vien')} 
             style={{
-              background:'#4A5568',
-              color:'#fff',
-              border:'none',
-              borderRadius:12,
-              padding:'12px 24px',
-              fontSize:'1em',
-              fontWeight:600,
-              cursor:'pointer',
-              flex:1,
-              boxShadow:'0 4px 12px rgba(0,0,0,0.1)',
-              transition:'background 0.2s'
+              background: '#4A5568',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 24px',
+              fontSize: '1em',
+              fontWeight: 600,
+              cursor: 'pointer',
+              flex: 1,
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              transition: 'background 0.2s'
             }}
             onMouseEnter={(e) => e.target.style.background = '#2D3748'}
             onMouseLeave={(e) => e.target.style.background = '#4A5568'}
@@ -3128,7 +3074,7 @@ function ChecklistReport() {
         });
         
         console.log('Staff list after processing:', list);
-        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+        setStaffs(list.sort((a, b) => a.localeCompare(b, 'vi')));
       } catch (e) {
         console.error('Error fetching staff list:', e);
         alert('Không thể tải danh sách nhân viên. Vui lòng kiểm tra console để xem chi tiết.');
@@ -3292,14 +3238,14 @@ function ChecklistReport() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
-      <div className="login-container" style={{width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32}}>
-        <h2 className="login-title" style={{color: '#e67e22'}}>Báo cáo Checklist</h2>
+    <div className="login-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container" style={{ width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32 }}>
+        <h2 className="login-title" style={{ color: '#e67e22' }}>Báo cáo Checklist</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
-        <div style={{display:'flex', gap:8, flexWrap:'wrap', alignItems:'center', margin:'16px 0'}}>
-          <div style={{display:'flex', alignItems:'center', gap:8}}>
-            <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo chu kỳ lương:</label>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', margin: '16px 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <label style={{ fontWeight: 600, color: '#2b4c66', fontSize: '14px' }}>Lọc theo chu kỳ lương:</label>
             <select
               value={filterPeriod}
               onChange={(e) => {
@@ -3309,17 +3255,17 @@ function ChecklistReport() {
                 // Không cần fetch, chỉ cần set period - filter sẽ được thực hiện khi render
               }}
               style={{
-                padding:'6px 8px',
-                border:'1px solid #e6eef5',
-                borderRadius:8,
-                fontSize:'14px',
-                minWidth:140,
-                background:'#fff',
-                color:'#1c222f',
-                cursor:'pointer',
-                fontWeight:400,
-                fontFamily:'inherit',
-                boxSizing:'border-box'
+                padding: '6px 8px',
+                border: '1px solid #e6eef5',
+                borderRadius: 8,
+                fontSize: '14px',
+                minWidth: 140,
+                background: '#fff',
+                color: '#1c222f',
+                cursor: 'pointer',
+                fontWeight: 400,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
               }}
             >
               <option value="">Chọn chu kỳ</option>
@@ -3383,15 +3329,15 @@ function ChecklistReport() {
           }} disabled={loading}>
             {loading ? 'Đang tải...' : 'Tải dữ liệu'}
           </button>
-          <button className="login-button" onClick={() => navigate('/admin')} style={{background:'#6b7a86'}}>
+          <button className="login-button" onClick={() => navigate('/admin')} style={{ background: '#6b7a86' }}>
             Quay lại
           </button>
         </div>
 
-        <div className="roster-scroll" style={{marginTop:10}}>
-          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, margin:'0 auto', minWidth:700 }}>
+        <div className="roster-scroll" style={{ marginTop: 10 }}>
+          <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing: 0, borderRadius: 10, margin: '0 auto', minWidth: 700 }}>
             <thead>
-              <tr style={{background:'#f5fbff'}}>
+              <tr style={{ background: '#f5fbff' }}>
                 <th>Ngày</th>
                 <th>Thứ</th>
                 <th>Ca</th>
@@ -3424,7 +3370,7 @@ function ChecklistReport() {
                 
                 if (displayItems.length === 0) {
                   return (
-                    <tr><td colSpan={7} style={{padding:10, textAlign:'center', color:'#6b7a86'}}>
+                    <tr><td colSpan={7} style={{ padding: 10, textAlign: 'center', color: '#6b7a86' }}>
                       {loading ? 'Đang tải...' : 'Chưa có dữ liệu trong chu kỳ này'}
                     </td></tr>
                   );
@@ -3505,28 +3451,28 @@ function ChecklistReport() {
                 }
                 
                 return (
-                  <tr key={i} style={{background: i%2===0 ? '#ffffff' : '#fbfdff'}}>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.date}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', color:'#6b7a86'}}>{getWeekdayVi(it.date)}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{getShiftName(it.shift)}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>{it.user}</td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', textAlign:'center'}}>
-                      <span style={{fontWeight:600, color: doneCount === totalCount && totalCount > 0 ? '#2ecc71' : '#e67e22'}}>
+                    <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#fbfdff' }}>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa' }}>{it.date}</td>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa', color: '#6b7a86' }}>{getWeekdayVi(it.date)}</td>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa' }}>{getShiftName(it.shift)}</td>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa' }}>{it.user}</td>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa', textAlign: 'center' }}>
+                        <span style={{ fontWeight: 600, color: doneCount === totalCount && totalCount > 0 ? '#2ecc71' : '#e67e22' }}>
                         {doneCount}/{totalCount}
                       </span>
                     </td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa', textAlign:'center'}}>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa', textAlign: 'center' }}>
                       {images.length === 0 ? (
-                        <span style={{color:'#6b7a86', fontSize:'0.85em'}}>Không có ảnh</span>
+                          <span style={{ color: '#6b7a86', fontSize: '0.85em' }}>Không có ảnh</span>
                       ) : images.length === 1 ? (
-                        <div style={{display:'flex', justifyContent:'center'}}>
+                          <div style={{ display: 'flex', justifyContent: 'center' }}>
                           <img 
                             src={images[0].url} 
                             alt={images[0].taskId}
                             style={{
-                              width:60, height:60, objectFit:'cover', borderRadius:8,
-                              border:'2px solid #43a8ef', cursor:'pointer',
-                              boxShadow:'0 2px 8px rgba(0,0,0,0.1)'
+                                width: 60, height: 60, objectFit: 'cover', borderRadius: 8,
+                                border: '2px solid #43a8ef', cursor: 'pointer',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                             }}
                             onClick={() => setSelectedItem(it)}
                             title="Click để xem chi tiết"
@@ -3538,14 +3484,14 @@ function ChecklistReport() {
                           />
                         </div>
                       ) : (
-                        <div style={{display:'flex', gap:4, alignItems:'center', justifyContent:'center'}}>
+                          <div style={{ display: 'flex', gap: 4, alignItems: 'center', justifyContent: 'center' }}>
                           <img 
                             src={images[0].url} 
                             alt={images[0].taskId}
                             style={{
-                              width:50, height:50, objectFit:'cover', borderRadius:6,
-                              border:'2px solid #43a8ef', cursor:'pointer',
-                              boxShadow:'0 2px 6px rgba(0,0,0,0.1)'
+                                width: 50, height: 50, objectFit: 'cover', borderRadius: 6,
+                                border: '2px solid #43a8ef', cursor: 'pointer',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                             }}
                             onClick={() => setSelectedItem(it)}
                             title="Click để xem tất cả ảnh"
@@ -3556,9 +3502,9 @@ function ChecklistReport() {
                           />
                           {images.length > 1 && (
                             <span style={{
-                              fontSize:'0.75em', color:'#fff', fontWeight:700,
-                              background:'#43a8ef', padding:'3px 8px', borderRadius:12,
-                              minWidth:24, textAlign:'center'
+                                fontSize: '0.75em', color: '#fff', fontWeight: 700,
+                                background: '#43a8ef', padding: '3px 8px', borderRadius: 12,
+                                minWidth: 24, textAlign: 'center'
                             }}>
                               +{images.length - 1}
                             </span>
@@ -3566,10 +3512,10 @@ function ChecklistReport() {
                         </div>
                       )}
                     </td>
-                    <td style={{padding:'8px 8px', borderBottom:'1px solid #eef5fa'}}>
+                      <td style={{ padding: '8px 8px', borderBottom: '1px solid #eef5fa' }}>
                       <button 
                         className="login-button" 
-                        style={{padding:'6px 12px', fontSize:'0.9em', width:'110px'}}
+                          style={{ padding: '6px 12px', fontSize: '0.9em', width: '110px' }}
                         onClick={() => setSelectedItem(it)}
                       >
                         Chi tiết
@@ -3586,23 +3532,23 @@ function ChecklistReport() {
         {/* Modal chi tiết */}
         {selectedItem && (
           <div style={{
-            position:'fixed', top:0, left:0, right:0, bottom:0,
-            background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center',
-            zIndex:1000
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000
           }} onClick={() => setSelectedItem(null)}>
             <div style={{
-              background:'#fff', borderRadius:12, padding:20, maxWidth:600, width:'90vw',
-              maxHeight:'80vh', overflow:'auto'
-            }} onClick={(e)=>e.stopPropagation()}>
-              <h3 style={{marginTop:0, color:'#e67e22'}}>Chi tiết Checklist</h3>
-              <div style={{marginBottom:12}}>
-                <strong>Nhân viên:</strong> {selectedItem.user}<br/>
-                <strong>Ngày:</strong> {selectedItem.date} ({getWeekdayVi(selectedItem.date)})<br/>
-                <strong>Ca:</strong> {getShiftName(selectedItem.shift)}<br/>
-                <strong>Thời gian tạo:</strong> {new Date(selectedItem.createdAt).toLocaleString('vi-VN')}<br/>
+              background: '#fff', borderRadius: 12, padding: 20, maxWidth: 600, width: '90vw',
+              maxHeight: '80vh', overflow: 'auto'
+            }} onClick={(e) => e.stopPropagation()}>
+              <h3 style={{ marginTop: 0, color: '#e67e22' }}>Chi tiết Checklist</h3>
+              <div style={{ marginBottom: 12 }}>
+                <strong>Nhân viên:</strong> {selectedItem.user}<br />
+                <strong>Ngày:</strong> {selectedItem.date} ({getWeekdayVi(selectedItem.date)})<br />
+                <strong>Ca:</strong> {getShiftName(selectedItem.shift)}<br />
+                <strong>Thời gian tạo:</strong> {new Date(selectedItem.createdAt).toLocaleString('vi-VN')}<br />
                 <strong>Cập nhật:</strong> {new Date(selectedItem.updatedAt).toLocaleString('vi-VN')}
               </div>
-              <h4 style={{marginTop:16, marginBottom:8}}>Tasks:</h4>
+              <h4 style={{ marginTop: 16, marginBottom: 8 }}>Tasks:</h4>
               {(() => {
                 // Debug: Log selectedItem khi mở modal
                 console.log('[ChecklistDetail Modal] selectedItem:', {
@@ -3617,20 +3563,20 @@ function ChecklistReport() {
                 return null;
               })()}
               {Object.keys(selectedItem.tasks || {}).length === 0 ? (
-                <div style={{color:'#6b7a86'}}>Không có task</div>
+                <div style={{ color: '#6b7a86' }}>Không có task</div>
               ) : (
-                <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {Object.entries(selectedItem.tasks || {}).map(([taskId, task]) => (
                     <div key={taskId} style={{
-                      border:'1px solid #e6eef5', borderRadius:8, padding:12,
+                      border: '1px solid #e6eef5', borderRadius: 8, padding: 12,
                       background: task.done ? '#e9f8ef' : '#fff5e5'
                     }}>
-                      <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
-                        <span style={{fontWeight:600}}>{taskId}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontWeight: 600 }}>{taskId}</span>
                         <span style={{
-                          padding:'2px 8px', borderRadius:4, fontSize:'0.85em',
+                          padding: '2px 8px', borderRadius: 4, fontSize: '0.85em',
                           background: task.done ? '#2ecc71' : '#e67e22',
-                          color:'#fff'
+                          color: '#fff'
                         }}>
                           {task.done ? '✓ Hoàn thành' : '✗ Chưa xong'}
                         </span>
@@ -3651,8 +3597,8 @@ function ChecklistReport() {
                         }
                         return taskId === 'Kiểm tra nguyên vật liệu' && task.inventoryFormData && Object.keys(task.inventoryFormData).length > 0;
                       })() && (
-                        <div style={{marginTop:12, padding:12, background:'#f8f9fa', borderRadius:8, border:'1px solid #e0e0e0'}}>
-                          <h5 style={{marginTop:0, marginBottom:12, color:'#e67e22', fontSize:'0.95em'}}>Kết quả kiểm tra nguyên vật liệu:</h5>
+                          <div style={{ marginTop: 12, padding: 12, background: '#f8f9fa', borderRadius: 8, border: '1px solid #e0e0e0' }}>
+                            <h5 style={{ marginTop: 0, marginBottom: 12, color: '#e67e22', fontSize: '0.95em' }}>Kết quả kiểm tra nguyên vật liệu:</h5>
                           {(() => {
                             // Group items by category (same structure as EveningInventoryCheck)
                             const REQUIRED_ITEMS = {
@@ -3694,13 +3640,13 @@ function ChecklistReport() {
                               if (itemsWithData.length === 0) return null;
                               
                               return (
-                                <div key={categoryKey} style={{marginBottom:12}}>
-                                  <div style={{fontWeight:600, marginBottom:6, color:'#2c3e50', fontSize:'0.9em'}}>{category.name}</div>
-                                  <div style={{display:'flex', flexDirection:'column', gap:4, paddingLeft:8}}>
+                                  <div key={categoryKey} style={{ marginBottom: 12 }}>
+                                    <div style={{ fontWeight: 600, marginBottom: 6, color: '#2c3e50', fontSize: '0.9em' }}>{category.name}</div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingLeft: 8 }}>
                                     {itemsWithData.map(itemId => (
-                                      <div key={itemId} style={{display:'flex', justifyContent:'space-between', fontSize:'0.85em'}}>
+                                        <div key={itemId} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85em' }}>
                                         <span>{itemNames[itemId] || itemId}</span>
-                                        <span style={{fontWeight:600, color:'#e67e22'}}>
+                                          <span style={{ fontWeight: 600, color: '#e67e22' }}>
                                           {task.inventoryFormData[itemId]} {itemUnits[itemId] || ''}
                                         </span>
                                       </div>
@@ -3714,8 +3660,8 @@ function ChecklistReport() {
                       )}
                       {/* Hiển thị text cho task "Kiểm két" */}
                       {taskId === 'Kiểm két' && task.text && task.text.trim().length > 0 && (
-                        <div style={{marginTop:12, padding:12, background:'#f0f7ff', borderRadius:8, border:'1px solid #b3d9ff'}}>
-                          <h5 style={{marginTop:0, marginBottom:8, color:'#2c3e50', fontSize:'0.95em', fontWeight:600}}>Thông tin kiểm két:</h5>
+                        <div style={{ marginTop: 12, padding: 12, background: '#f0f7ff', borderRadius: 8, border: '1px solid #b3d9ff' }}>
+                          <h5 style={{ marginTop: 0, marginBottom: 8, color: '#2c3e50', fontSize: '0.95em', fontWeight: 600 }}>Thông tin kiểm két:</h5>
                           <div style={{
                             whiteSpace: 'pre-wrap',
                             wordWrap: 'break-word',
@@ -3742,14 +3688,14 @@ function ChecklistReport() {
                           
                           if (isValid) {
                             return (
-                              <div style={{marginTop:8}}>
+                              <div style={{ marginTop: 8 }}>
                                 <img 
                                   src={imgUrl} 
                                   alt={taskId} 
                                   style={{
-                                    maxWidth:'100%', maxHeight:300, borderRadius:8, 
-                                    border:'2px solid #43a8ef', objectFit:'contain',
-                                    background:'#f5f7fa'
+                                    maxWidth: '100%', maxHeight: 300, borderRadius: 8,
+                                    border: '2px solid #43a8ef', objectFit: 'contain',
+                                    background: '#f5f7fa'
                                   }}
                                   onError={(e) => {
                                     console.error('Image load error in modal for', taskId);
@@ -3767,7 +3713,7 @@ function ChecklistReport() {
                   ))}
                 </div>
               )}
-              <button className="login-button" style={{marginTop:16}} onClick={() => setSelectedItem(null)}>
+              <button className="login-button" style={{ marginTop: 16 }} onClick={() => setSelectedItem(null)}>
                 Đóng
               </button>
             </div>
@@ -3806,7 +3752,7 @@ function OvertimeManagement() {
           const res = await fetch(OVERTIME_GET_API);
           const text = await res.text();
           let parsed = {};
-          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
           const items = Array.isArray(parsed.items) ? parsed.items : [];
           if (items.length > 0) {
             setRecords(items);
@@ -3894,7 +3840,7 @@ function OvertimeManagement() {
           if (name.toLowerCase() === 'kiett' || name.toLowerCase() === 'mamaboo') return;
           list.push(name);
         });
-        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+        setStaffs(list.sort((a, b) => a.localeCompare(b, 'vi')));
       } catch (e) {
         console.error('Error fetching staff list:', e);
       } finally {
@@ -3948,7 +3894,7 @@ function OvertimeManagement() {
           });
           const text = await res.text();
           let parsed = {};
-          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
           
           if (parsed.item && parsed.item.id) {
             newRecord = parsed.item;
@@ -4020,7 +3966,7 @@ function OvertimeManagement() {
           console.log('DELETE response:', text);
           
           let parsed = {};
-          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+          try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
           
           console.log('DELETE parsed:', parsed);
           
@@ -4033,7 +3979,7 @@ function OvertimeManagement() {
             const res = await fetch(OVERTIME_GET_API);
             const resText = await res.text();
             let resParsed = {};
-            try { resParsed = JSON.parse(resText); if (typeof resParsed.body === 'string') resParsed = JSON.parse(resParsed.body); } catch {}
+            try { resParsed = JSON.parse(resText); if (typeof resParsed.body === 'string') resParsed = JSON.parse(resParsed.body); } catch { }
             const items = Array.isArray(resParsed.items) ? resParsed.items : [];
             setRecords(items);
             localStorage.setItem('overtimeRecords', JSON.stringify(items));
@@ -4078,24 +4024,24 @@ function OvertimeManagement() {
 
   if (loading) {
     return (
-      <div className="login-page" style={{justifyContent:'center', alignItems:'center'}}>
+      <div className="login-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
         <div>Đang tải...</div>
       </div>
     );
   }
 
   return (
-    <div className="login-page" style={{justifyContent:'center', alignItems:'flex-start'}}>
-      <div className="login-container" style={{width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32}}>
-        <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý tăng ca/đi trễ</h2>
+    <div className="login-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container" style={{ width: 900, maxWidth: '96vw', marginTop: 24, marginBottom: 32 }}>
+        <h2 className="login-title" style={{ color: '#e67e22' }}>Quản lý tăng ca/đi trễ</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
-        <div style={{marginTop:24, display:'flex', justifyContent:'flex-start', gap:12}}>
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-start', gap: 12 }}>
           <button 
             type="button"
             className="login-button" 
             onClick={() => setShowForm(true)}
-            style={{padding:'12px 36px'}}
+            style={{ padding: '12px 36px' }}
           >
             Tạo
           </button>
@@ -4105,16 +4051,16 @@ function OvertimeManagement() {
         {showForm && (
           <div 
             style={{
-              position:'fixed',
-              top:0,
-              left:0,
-              right:0,
-              bottom:0,
-              background:'rgba(0,0,0,0.5)',
-              display:'flex',
-              alignItems:'center',
-              justifyContent:'center',
-              zIndex:1000
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
             }}
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -4133,18 +4079,18 @@ function OvertimeManagement() {
               onSubmit={handleSubmit} 
               onClick={(e) => e.stopPropagation()}
               style={{
-                background:'#fff',
-                borderRadius:12,
-                padding:24,
-                boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
-                width:'90%',
-                maxWidth:500,
-                maxHeight:'90vh',
-                overflow:'auto'
+                background: '#fff',
+                borderRadius: 12,
+                padding: 24,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                width: '90%',
+                maxWidth: 500,
+                maxHeight: '90vh',
+                overflow: 'auto'
               }}
             >
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
-                <h3 style={{margin:0, color:'#1c222f', fontSize:'20px', fontWeight:700}}>Thêm mới</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h3 style={{ margin: 0, color: '#1c222f', fontSize: '20px', fontWeight: 700 }}>Thêm mới</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -4158,31 +4104,31 @@ function OvertimeManagement() {
                     });
                   }}
                   style={{
-                    background:'transparent',
-                    border:'none',
-                    fontSize:'24px',
-                    cursor:'pointer',
-                    color:'#6b7a86',
-                    padding:0,
-                    width:30,
-                    height:30,
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center'
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#6b7a86',
+                    padding: 0,
+                    width: 30,
+                    height: 30,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   ×
                 </button>
               </div>
               
-              <div style={{display:'flex', flexDirection:'column', gap:16}}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Nhân viên *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Nhân viên *</label>
                   <select
                     value={formData.staffName}
                     onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
                     required
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   >
                     <option value="">-- Chọn nhân viên --</option>
                     {staffs.map(name => (
@@ -4192,23 +4138,23 @@ function OvertimeManagement() {
                 </div>
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Ngày *</label>
                   <input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                     required
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ca *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Ca *</label>
                   <select
                     value={formData.shift}
                     onChange={(e) => setFormData(prev => ({ ...prev, shift: e.target.value }))}
                     required
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   >
                     <option value="">-- Chọn ca --</option>
                     <option value="sang">Ca sáng</option>
@@ -4218,9 +4164,9 @@ function OvertimeManagement() {
                 </div>
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Loại *</label>
-                  <div style={{display:'flex', gap:16}}>
-                    <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Loại *</label>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                       <input
                         type="radio"
                         name="type"
@@ -4230,7 +4176,7 @@ function OvertimeManagement() {
                       />
                       <span>Tăng ca</span>
                     </label>
-                    <label style={{display:'flex', alignItems:'center', gap:8, cursor:'pointer'}}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
                       <input
                         type="radio"
                         name="type"
@@ -4244,7 +4190,7 @@ function OvertimeManagement() {
                 </div>
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>
                     {formData.type === 'overtime' ? 'Số giờ tăng ca *' : 'Số lần đi trễ *'}
                   </label>
                   <input
@@ -4255,12 +4201,12 @@ function OvertimeManagement() {
                     onChange={(e) => setFormData(prev => ({ ...prev, hours: e.target.value }))}
                     required
                     placeholder={formData.type === 'overtime' ? 'Ví dụ: 1.5' : 'Ví dụ: 0.5, 1.5'}
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   />
                 </div>
 
-                <div style={{display:'flex', gap:12, marginTop:8}}>
-                  <button type="submit" className="login-button" style={{flex:1, padding:'12px', minWidth:0, width:'auto'}} disabled={submitting}>
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                  <button type="submit" className="login-button" style={{ flex: 1, padding: '12px', minWidth: 0, width: 'auto' }} disabled={submitting}>
                     {submitting ? 'Đang lưu...' : 'Thêm'}
                   </button>
                   <button 
@@ -4275,7 +4221,7 @@ function OvertimeManagement() {
                         hours: 0
                       });
                     }}
-                    style={{flex:1, padding:'12px', background:'#6b7a86', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, minWidth:0, width:'auto'}}
+                    style={{ flex: 1, padding: '12px', background: '#6b7a86', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, minWidth: 0, width: 'auto' }}
                   >
                     Hủy
                   </button>
@@ -4287,25 +4233,25 @@ function OvertimeManagement() {
 
         {/* Filter section */}
         {records.length > 0 && (
-          <div style={{marginTop:24, marginBottom:16}}>
-            <div style={{display:'flex', gap:12, alignItems:'center', flexWrap:'wrap'}}>
-              <div style={{display:'flex', alignItems:'center', gap:8}}>
-                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo chu kỳ lương:</label>
+          <div style={{ marginTop: 24, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontWeight: 600, color: '#2b4c66', fontSize: '14px' }}>Lọc theo chu kỳ lương:</label>
                 <select
                   value={filterPeriod}
                   onChange={(e) => setFilterPeriod(e.target.value)}
                   style={{
-                    padding:'6px 8px',
-                    border:'1px solid #e6eef5',
-                    borderRadius:8,
-                    fontSize:'14px',
-                    minWidth:140,
-                    background:'#fff',
-                    color:'#1c222f',
-                    cursor:'pointer',
-                    fontWeight:400,
-                    fontFamily:'inherit',
-                    boxSizing:'border-box'
+                    padding: '6px 8px',
+                    border: '1px solid #e6eef5',
+                    borderRadius: 8,
+                    fontSize: '14px',
+                    minWidth: 140,
+                    background: '#fff',
+                    color: '#1c222f',
+                    cursor: 'pointer',
+                    fontWeight: 400,
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <option value="">Tất cả chu kỳ</option>
@@ -4316,8 +4262,8 @@ function OvertimeManagement() {
                   ))}
                 </select>
               </div>
-              <div style={{display:'flex', alignItems:'center', gap:8}}>
-                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo nhân viên:</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontWeight: 600, color: '#2b4c66', fontSize: '14px' }}>Lọc theo nhân viên:</label>
                 <StaffFilterDropdown 
                   options={staffs} 
                   value={filterStaff} 
@@ -4325,23 +4271,23 @@ function OvertimeManagement() {
                   placeholder="Tất cả nhân viên"
                 />
               </div>
-              <div style={{display:'flex', alignItems:'center', gap:8}}>
-                <label style={{fontWeight:600, color:'#2b4c66', fontSize:'14px'}}>Lọc theo loại:</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ fontWeight: 600, color: '#2b4c66', fontSize: '14px' }}>Lọc theo loại:</label>
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   style={{
-                    padding:'6px 8px',
-                    border:'1px solid #e6eef5',
-                    borderRadius:8,
-                    fontSize:'14px',
-                    minWidth:140,
-                    background:'#fff',
-                    color:'#1c222f',
-                    cursor:'pointer',
-                    fontWeight:400,
-                    fontFamily:'inherit',
-                    boxSizing:'border-box'
+                    padding: '6px 8px',
+                    border: '1px solid #e6eef5',
+                    borderRadius: 8,
+                    fontSize: '14px',
+                    minWidth: 140,
+                    background: '#fff',
+                    color: '#1c222f',
+                    cursor: 'pointer',
+                    fontWeight: 400,
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <option value="">Tất cả</option>
@@ -4354,18 +4300,18 @@ function OvertimeManagement() {
         )}
 
         {records.length > 0 && (
-          <div style={{marginTop:records.length > 0 ? 0 : 24, width:'100%', overflow:'visible'}}>
-            <h3 style={{marginBottom:16, color:'#1c222f'}}>Danh sách đã thêm</h3>
-            <div className="roster-scroll" style={{width:'100%', overflowX:'auto', overflowY:'visible', WebkitOverflowScrolling:'touch'}}>
-              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing:0, borderRadius:10, boxShadow:'0 3px 14px rgba(0,0,0,0.06)', margin:'0 auto', minWidth:800, width:'auto' }}>
+          <div style={{ marginTop: records.length > 0 ? 0 : 24, width: '100%', overflow: 'visible' }}>
+            <h3 style={{ marginBottom: 16, color: '#1c222f' }}>Danh sách đã thêm</h3>
+            <div className="roster-scroll" style={{ width: '100%', overflowX: 'auto', overflowY: 'visible', WebkitOverflowScrolling: 'touch' }}>
+              <table className="roster-table" style={{ borderCollapse: 'separate', borderSpacing: 0, borderRadius: 10, boxShadow: '0 3px 14px rgba(0,0,0,0.06)', margin: '0 auto', minWidth: 800, width: 'auto' }}>
                 <thead>
-                  <tr style={{background:'#f7fafc'}}>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2', textAlign:'left'}}>Nhân viên</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ngày</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Ca</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Loại</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Số giờ/lần</th>
-                    <th style={{padding:'12px 8px', borderBottom:'1px solid #eaeef2'}}>Thao tác</th>
+                  <tr style={{ background: '#f7fafc' }}>
+                    <th style={{ padding: '12px 8px', borderBottom: '1px solid #eaeef2', textAlign: 'left' }}>Nhân viên</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '1px solid #eaeef2' }}>Ngày</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '1px solid #eaeef2' }}>Ca</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '1px solid #eaeef2' }}>Loại</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '1px solid #eaeef2' }}>Số giờ/lần</th>
+                    <th style={{ padding: '12px 8px', borderBottom: '1px solid #eaeef2' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -4405,7 +4351,7 @@ function OvertimeManagement() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={6} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
+                          <td colSpan={6} style={{ padding: 20, textAlign: 'center', color: '#6b7a86' }}>
                             Không có dữ liệu phù hợp với bộ lọc
                           </td>
                         </tr>
@@ -4413,21 +4359,21 @@ function OvertimeManagement() {
                     }
                     
                     return filtered.map((record) => (
-                      <tr key={record.id} style={{background:'#fff'}}>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', fontWeight:600}}>{record.staffName}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{record.date}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>{getShiftName(record.shift)}</td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                      <tr key={record.id} style={{ background: '#fff' }}>
+                        <td style={{ padding: '10px 8px', borderBottom: '1px solid #f1f4f7', fontWeight: 600 }}>{record.staffName}</td>
+                        <td style={{ padding: '10px 8px', borderBottom: '1px solid #f1f4f7' }}>{record.date}</td>
+                        <td style={{ padding: '10px 8px', borderBottom: '1px solid #f1f4f7' }}>{getShiftName(record.shift)}</td>
+                        <td style={{ padding: '10px 8px', borderBottom: '1px solid #f1f4f7' }}>
                           {record.type === 'overtime' ? 'Tăng ca' : 'Đi trễ'}
                         </td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7', textAlign:'center', fontWeight:600}}>
+                        <td style={{ padding: '10px 8px', borderBottom: '1px solid #f1f4f7', textAlign: 'center', fontWeight: 600 }}>
                           {record.hours}
                         </td>
-                        <td style={{padding:'10px 8px', borderBottom:'1px solid #f1f4f7'}}>
+                        <td style={{ padding: '10px 8px', borderBottom: '1px solid #f1f4f7' }}>
                           <button
                             type="button"
                             onClick={() => handleDelete(record.id)}
-                            style={{padding:'6px 12px', background:'#e67e22', color:'#fff', border:'none', borderRadius:6, cursor:'pointer', fontSize:'14px'}}
+                            style={{ padding: '6px 12px', background: '#e67e22', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: '14px' }}
                           >
                             Xóa
                           </button>
@@ -4441,8 +4387,8 @@ function OvertimeManagement() {
           </div>
         )}
 
-        <div style={{marginTop:24, display:'flex', justifyContent:'center', gap:12}}>
-          <button className="login-button" onClick={() => navigate('/admin')} style={{padding:'12px 36px'}}>
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12 }}>
+          <button className="login-button" onClick={() => navigate('/admin')} style={{ padding: '12px 36px' }}>
             Quay lại
           </button>
         </div>
@@ -4578,18 +4524,18 @@ function InventoryCheck_OLD() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container" style={{width: 900, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
-        <h2 className="login-title" style={{color: '#3498db', alignSelf:'center'}}>Kiểm tra nguyên vật liệu</h2>
-        <div className="login-underline" style={{ background: '#3498db', alignSelf:'center' }}></div>
+    <div className="login-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container" style={{ width: 900, maxWidth: '95vw', marginTop: 24, marginBottom: 32 }}>
+        <h2 className="login-title" style={{ color: '#3498db', alignSelf: 'center' }}>Kiểm tra nguyên vật liệu</h2>
+        <div className="login-underline" style={{ background: '#3498db', alignSelf: 'center' }}></div>
         
         {lastCheckDate && (
-          <div style={{textAlign: 'center', marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
+          <div style={{ textAlign: 'center', marginBottom: 16, color: '#6b7a86', fontSize: '14px' }}>
             Lần kiểm tra gần nhất: {lastCheckDate}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column', gap: 24}}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {Object.keys(INVENTORY_CATEGORIES).map(categoryKey => {
             const category = INVENTORY_CATEGORIES[categoryKey];
             return (
@@ -4609,10 +4555,10 @@ function InventoryCheck_OLD() {
                 }}>
                   {category.name}
                 </h3>
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16}}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
                   {category.items.map(item => (
-                    <div key={item.id} style={{display: 'flex', flexDirection: 'column', gap: 6}}>
-                      <label style={{fontSize: '14px', fontWeight: 600, color: '#2b4c66'}}>
+                    <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: '14px', fontWeight: 600, color: '#2b4c66' }}>
                         {item.name} ({item.unit})
                       </label>
                       <input
@@ -4634,7 +4580,7 @@ function InventoryCheck_OLD() {
             );
           })}
 
-          <div style={{display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16}}>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginTop: 16 }}>
             <button
               type="button"
               onClick={() => navigate('/nhan-vien')}
@@ -4791,20 +4737,20 @@ function InventoryManagement_OLD() {
   };
 
   return (
-    <div className="login-page" style={{justifyContent: 'center', alignItems: 'flex-start'}}>
-      <div className="login-container" style={{width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32}}>
-        <h2 className="login-title" style={{color: '#3498db'}}>Quản lý nguyên vật liệu</h2>
+    <div className="login-page" style={{ justifyContent: 'center', alignItems: 'flex-start' }}>
+      <div className="login-container" style={{ width: 1200, maxWidth: '95vw', marginTop: 24, marginBottom: 32 }}>
+        <h2 className="login-title" style={{ color: '#3498db' }}>Quản lý nguyên vật liệu</h2>
         <div className="login-underline" style={{ background: '#3498db' }}></div>
 
         {inventoryRecords.length === 0 ? (
-          <div style={{textAlign: 'center', padding: '40px 0', color: '#6b7a86'}}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#6b7a86' }}>
             Chưa có dữ liệu kiểm tra nguyên vật liệu
           </div>
         ) : (
-          <div style={{display: 'flex', flexDirection: 'column', gap: 24}}>
-            <div style={{background: '#f0f8ff', padding: '16px', borderRadius: 12, border: '1px solid #3498db'}}>
-              <div style={{fontSize: '14px', color: '#6b7a86', marginBottom: 4}}>Lần kiểm tra gần nhất</div>
-              <div style={{fontSize: '18px', fontWeight: 700, color: '#2b4c66'}}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            <div style={{ background: '#f0f8ff', padding: '16px', borderRadius: 12, border: '1px solid #3498db' }}>
+              <div style={{ fontSize: '14px', color: '#6b7a86', marginBottom: 4 }}>Lần kiểm tra gần nhất</div>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: '#2b4c66' }}>
                 {inventoryRecords[0].date} - Kiểm tra bởi: {inventoryRecords[0].checkedBy}
               </div>
             </div>
@@ -4828,17 +4774,17 @@ function InventoryManagement_OLD() {
                   }}>
                     {category.name}
                   </h3>
-                  <div style={{overflowX: 'auto'}}>
-                    <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr style={{background: '#f9fafb', borderBottom: '2px solid #e5e7eb'}}>
-                          <th style={{padding: '12px', textAlign: 'left', fontWeight: 600, color: '#2b4c66'}}>Sản phẩm</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Đơn vị</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Số lượng</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Alert</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Trạng thái</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Nhập Hàng</th>
-                          <th style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>Mua</th>
+                        <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
+                          <th style={{ padding: '12px', textAlign: 'left', fontWeight: 600, color: '#2b4c66' }}>Sản phẩm</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>Đơn vị</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>Số lượng</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>Alert</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>Trạng thái</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>Nhập Hàng</th>
+                          <th style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>Mua</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -4850,15 +4796,15 @@ function InventoryManagement_OLD() {
                               borderBottom: '1px solid #f1f4f7',
                               background: hasAlert ? '#fff5f5' : '#fff'
                             }}>
-                              <td style={{padding: '12px', fontWeight: 600, color: '#2b4c66'}}>{item.name}</td>
-                              <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>{item.unit}</td>
-                              <td style={{padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66'}}>
+                              <td style={{ padding: '12px', fontWeight: 600, color: '#2b4c66' }}>{item.name}</td>
+                              <td style={{ padding: '12px', textAlign: 'center', color: '#6b7a86' }}>{item.unit}</td>
+                              <td style={{ padding: '12px', textAlign: 'center', fontWeight: 600, color: '#2b4c66' }}>
                                 {currentValue || '0'}
                               </td>
-                              <td style={{padding: '12px', textAlign: 'center', color: '#6b7a86'}}>
+                              <td style={{ padding: '12px', textAlign: 'center', color: '#6b7a86' }}>
                                 {alerts[item.id] ? `< ${alerts[item.id]} ${item.unit}` : '-'}
                               </td>
-                              <td style={{padding: '12px', textAlign: 'center'}}>
+                              <td style={{ padding: '12px', textAlign: 'center' }}>
                                 {hasAlert ? (
                                   <span style={{
                                     background: '#fee2e2',
@@ -4883,7 +4829,7 @@ function InventoryManagement_OLD() {
                                   </span>
                                 )}
                               </td>
-                              <td style={{padding: '12px', textAlign: 'center'}}>
+                              <td style={{ padding: '12px', textAlign: 'center' }}>
                                 <button
                                   onClick={() => handleInputInventory(item.id)}
                                   style={{
@@ -4899,7 +4845,7 @@ function InventoryManagement_OLD() {
                                   Nhập
                                 </button>
                               </td>
-                              <td style={{padding: '12px', textAlign: 'center'}}>
+                              <td style={{ padding: '12px', textAlign: 'center' }}>
                                 <button
                                   onClick={() => {
                                     if (item.purchaseLink && item.purchaseLink.trim() !== '') {
@@ -4933,11 +4879,11 @@ function InventoryManagement_OLD() {
           </div>
         )}
 
-        <div style={{marginTop: 24, display: 'flex', justifyContent: 'center'}}>
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
           <button
             onClick={() => navigate('/admin')}
             className="login-button"
-            style={{padding: '12px 36px'}}
+            style={{ padding: '12px 36px' }}
           >
             Quay lại
           </button>
@@ -4976,7 +4922,7 @@ function InventoryManagement_OLD() {
               Nhập số lượng
             </h3>
             {inputItemId && (
-              <div style={{marginBottom: 16, color: '#6b7a86', fontSize: '14px'}}>
+              <div style={{ marginBottom: 16, color: '#6b7a86', fontSize: '14px' }}>
                 Sản phẩm: <strong>{INVENTORY_CATEGORIES[Object.keys(INVENTORY_CATEGORIES).find(key => 
                   INVENTORY_CATEGORIES[key].items.some(item => item.id === inputItemId)
                 )].items.find(item => item.id === inputItemId).name}</strong>
@@ -4986,8 +4932,8 @@ function InventoryManagement_OLD() {
                 )].items.find(item => item.id === inputItemId).unit}
               </div>
             )}
-            <div style={{marginBottom: 20}}>
-              <label style={{display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 600, color: '#2b4c66'}}>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 600, color: '#2b4c66' }}>
                 Số lượng nhập:
               </label>
               <input
@@ -5011,7 +4957,7 @@ function InventoryManagement_OLD() {
                 }}
               />
             </div>
-            <div style={{display: 'flex', gap: 12, justifyContent: 'flex-end'}}>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button
                 onClick={() => {
                   setShowingInputModal(false);
@@ -5145,9 +5091,9 @@ function PenaltyManagement() {
             // Xóa các key không cần thiết nếu có
             const keysToRemove = ['old_penaltyRecords', 'temp_penaltyRecords'];
             keysToRemove.forEach(key => {
-              try { localStorage.removeItem(key); } catch {}
+              try { localStorage.removeItem(key); } catch { }
             });
-          } catch {}
+          } catch { }
         }
         return; // Quan trọng: return ngay sau khi set state từ API
       }
@@ -5245,7 +5191,7 @@ function PenaltyManagement() {
           if (name.toLowerCase() === 'kiett' || name.toLowerCase() === 'mamaboo') return;
           list.push(name);
         });
-        setStaffs(list.sort((a,b)=>a.localeCompare(b,'vi')));
+        setStaffs(list.sort((a, b) => a.localeCompare(b, 'vi')));
       } catch (e) {
         console.error('Error fetching staff list:', e);
       } finally {
@@ -5319,7 +5265,7 @@ function PenaltyManagement() {
         });
         const text = await res.text();
         let parsed = {};
-        try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch {}
+        try { parsed = JSON.parse(text); if (typeof parsed.body === 'string') parsed = JSON.parse(parsed.body); } catch { }
         
         if (res.ok && parsed.ok) {
           // Thành công, reload records từ API
@@ -5393,7 +5339,7 @@ function PenaltyManagement() {
 
   if (loading) {
     return (
-      <div className="login-page" style={{justifyContent:'center', alignItems:'center'}}>
+      <div className="login-page" style={{ justifyContent: 'center', alignItems: 'center' }}>
         <div>Đang tải...</div>
       </div>
     );
@@ -5401,8 +5347,8 @@ function PenaltyManagement() {
 
   return (
     <div className="login-page" style={{
-      justifyContent:'center', 
-      alignItems:'center', 
+      justifyContent: 'center',
+      alignItems: 'center',
       padding: isMobile ? '16px 24px' : '16px 48px'
     }}>
       <div className="login-container" style={{
@@ -5413,15 +5359,15 @@ function PenaltyManagement() {
         marginLeft: 'auto',
         marginRight: 'auto'
       }}>
-        <h2 className="login-title" style={{color: '#e67e22'}}>Quản lý hình phạt</h2>
+        <h2 className="login-title" style={{ color: '#e67e22' }}>Quản lý hình phạt</h2>
         <div className="login-underline" style={{ background: '#e67e22' }}></div>
 
-        <div style={{marginTop:24, display:'flex', justifyContent:'flex-start', gap:12, flexWrap:'wrap'}}>
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <button 
             type="button"
             className="login-button" 
             onClick={() => setShowForm(true)}
-            style={{padding:'12px 36px'}}
+            style={{ padding: '12px 36px' }}
           >
             Tạo
           </button>
@@ -5431,16 +5377,16 @@ function PenaltyManagement() {
         {showForm && (
           <div 
             style={{
-              position:'fixed',
-              top:0,
-              left:0,
-              right:0,
-              bottom:0,
-              background:'rgba(0,0,0,0.5)',
-              display:'flex',
-              alignItems:'center',
-              justifyContent:'center',
-              zIndex:1000
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1000
             }}
             onClick={(e) => {
               if (e.target === e.currentTarget) {
@@ -5459,18 +5405,18 @@ function PenaltyManagement() {
               onSubmit={handleSubmit} 
               onClick={(e) => e.stopPropagation()}
               style={{
-                background:'#fff',
-                borderRadius:12,
-                padding:24,
-                boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
-                width:'90%',
-                maxWidth:500,
-                maxHeight:'90vh',
-                overflow:'auto'
+                background: '#fff',
+                borderRadius: 12,
+                padding: 24,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                width: '90%',
+                maxWidth: 500,
+                maxHeight: '90vh',
+                overflow: 'auto'
               }}
             >
-              <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
-                <h3 style={{margin:0, color:'#1c222f', fontSize:'20px', fontWeight:700}}>Thêm mới</h3>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <h3 style={{ margin: 0, color: '#1c222f', fontSize: '20px', fontWeight: 700 }}>Thêm mới</h3>
                 <button
                   type="button"
                   onClick={() => {
@@ -5484,31 +5430,31 @@ function PenaltyManagement() {
                     });
                   }}
                   style={{
-                    background:'transparent',
-                    border:'none',
-                    fontSize:'24px',
-                    cursor:'pointer',
-                    color:'#6b7a86',
-                    padding:0,
-                    width:30,
-                    height:30,
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center'
+                    background: 'transparent',
+                    border: 'none',
+                    fontSize: '24px',
+                    cursor: 'pointer',
+                    color: '#6b7a86',
+                    padding: 0,
+                    width: 30,
+                    height: 30,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}
                 >
                   ×
                 </button>
               </div>
               
-              <div style={{display:'flex', flexDirection:'column', gap:16}}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Nhân viên *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Nhân viên *</label>
                   <select
                     value={formData.staffName}
                     onChange={(e) => setFormData(prev => ({ ...prev, staffName: e.target.value }))}
                     required
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   >
                     <option value="">-- Chọn nhân viên --</option>
                     {staffs.map(name => (
@@ -5518,12 +5464,12 @@ function PenaltyManagement() {
                 </div>
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Mức độ phạt *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Mức độ phạt *</label>
                   <select
                     value={formData.penaltyLevel}
                     onChange={(e) => setFormData(prev => ({ ...prev, penaltyLevel: e.target.value, customAmount: e.target.value !== 'custom' ? '' : prev.customAmount }))}
                     required
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   >
                     <option value="">-- Chọn mức độ --</option>
                     {Object.entries(PENALTY_RATES)
@@ -5542,7 +5488,7 @@ function PenaltyManagement() {
                 
                 {formData.penaltyLevel === 'custom' && (
                   <div>
-                    <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Giá phạt (VND) *</label>
+                    <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Giá phạt (VND) *</label>
                     <input
                       type="number"
                       value={formData.customAmount}
@@ -5551,36 +5497,36 @@ function PenaltyManagement() {
                       min="0"
                       step="0.01"
                       placeholder="Nhập giá phạt..."
-                      style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                     />
                   </div>
                 )}
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Ngày phạt *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Ngày phạt *</label>
                   <input
                     type="date"
                     value={formData.date}
                     onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                     required
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <label style={{display:'block', marginBottom:8, fontWeight:600, color:'#2b4c66'}}>Lý do phạt *</label>
+                  <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#2b4c66' }}>Lý do phạt *</label>
                   <textarea
                     value={formData.reason}
                     onChange={(e) => setFormData(prev => ({ ...prev, reason: e.target.value }))}
                     required
                     rows={4}
                     placeholder="Nhập lý do phạt..."
-                    style={{width:'100%', padding:'10px 12px', border:'1px solid #e6eef5', borderRadius:8, fontSize:'16px', resize:'vertical', fontFamily:'inherit'}}
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid #e6eef5', borderRadius: 8, fontSize: '16px', resize: 'vertical', fontFamily: 'inherit' }}
                   />
                 </div>
 
-                <div style={{display:'flex', gap:12, marginTop:8}}>
-                  <button type="submit" className="login-button" style={{flex:1, padding:'12px', minWidth:0, width:'auto'}} disabled={submitting}>
+                <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                  <button type="submit" className="login-button" style={{ flex: 1, padding: '12px', minWidth: 0, width: 'auto' }} disabled={submitting}>
                     {submitting ? 'Đang lưu...' : 'Thêm'}
                   </button>
                   <button 
@@ -5595,7 +5541,7 @@ function PenaltyManagement() {
                         reason: ''
                       });
                     }}
-                    style={{flex:1, padding:'12px', background:'#6b7a86', color:'#fff', border:'none', borderRadius:8, cursor:'pointer', fontWeight:600, minWidth:0, width:'auto'}}
+                    style={{ flex: 1, padding: '12px', background: '#6b7a86', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, minWidth: 0, width: 'auto' }}
                   >
                     Hủy
                   </button>
@@ -5607,29 +5553,29 @@ function PenaltyManagement() {
 
         {/* Filter section */}
         {records.length > 0 && (
-          <div style={{marginTop:24, marginBottom:16}}>
+          <div style={{ marginTop: 24, marginBottom: 16 }}>
             <div style={{
-              display:'flex', 
-              gap:12, 
-              flexWrap:'wrap',
+              display: 'flex',
+              gap: 12,
+              flexWrap: 'wrap',
               flexDirection: isMobile ? 'column' : 'row',
               alignItems: isMobile ? 'stretch' : 'center'
             }}>
               <div style={{
-                display:'flex', 
-                alignItems:'center', 
-                gap:8,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
                 flexDirection: isMobile ? 'column' : 'row',
                 width: isMobile ? '100%' : 'auto'
               }}>
                 <label style={{
-                  fontWeight:600, 
-                  color:'#2b4c66', 
-                  fontSize:'14px',
+                  fontWeight: 600,
+                  color: '#2b4c66',
+                  fontSize: '14px',
                   marginBottom: isMobile ? 8 : 0,
                   width: isMobile ? '100%' : 'auto'
                 }}>Lọc theo chu kỳ lương:</label>
-                <div style={{width: isMobile ? '100%' : 'auto', minWidth: 200}}>
+                <div style={{ width: isMobile ? '100%' : 'auto', minWidth: 200 }}>
                   <select
                     value={filterPeriod}
                     onChange={(e) => setFilterPeriod(e.target.value)}
@@ -5657,20 +5603,20 @@ function PenaltyManagement() {
                 </div>
               </div>
               <div style={{
-                display:'flex', 
-                alignItems:'center', 
-                gap:8,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
                 flexDirection: isMobile ? 'column' : 'row',
                 width: isMobile ? '100%' : 'auto'
               }}>
                 <label style={{
-                  fontWeight:600, 
-                  color:'#2b4c66', 
-                  fontSize:'14px',
+                  fontWeight: 600,
+                  color: '#2b4c66',
+                  fontSize: '14px',
                   marginBottom: isMobile ? 8 : 0,
                   width: isMobile ? '100%' : 'auto'
                 }}>Lọc theo nhân viên:</label>
-                <div style={{width: isMobile ? '100%' : 'auto', minWidth: 200}}>
+                <div style={{ width: isMobile ? '100%' : 'auto', minWidth: 200 }}>
                   <StaffFilterDropdown 
                     options={staffs} 
                     value={filterStaff} 
@@ -5755,47 +5701,47 @@ function PenaltyManagement() {
                 textShadow: '0 2px 4px rgba(0,0,0,0.08)',
                 letterSpacing: '-0.5px'
               }}>
-                {Number(totalPenaltyFund).toLocaleString('vi-VN')} <span style={{fontSize: '20px', fontWeight: 600}}>VND</span>
+                {Number(totalPenaltyFund).toLocaleString('vi-VN')} <span style={{ fontSize: '20px', fontWeight: 600 }}>VND</span>
               </div>
             </div>
           );
         })()}
 
         {records.length > 0 && (
-          <div style={{marginTop:records.length > 0 ? 0 : 24, width:'100%', overflowX:'auto'}}>
-            <h3 style={{marginBottom:16, color:'#1c222f', fontSize: isMobile ? '18px' : '20px'}}>Danh sách đã thêm</h3>
-            <div className="roster-scroll" style={{width:'100%', overflowX:'auto'}}>
+          <div style={{ marginTop: records.length > 0 ? 0 : 24, width: '100%', overflowX: 'auto' }}>
+            <h3 style={{ marginBottom: 16, color: '#1c222f', fontSize: isMobile ? '18px' : '20px' }}>Danh sách đã thêm</h3>
+            <div className="roster-scroll" style={{ width: '100%', overflowX: 'auto' }}>
               <table className="roster-table" style={{ 
                 borderCollapse: 'separate', 
-                borderSpacing:0, 
-                borderRadius:10, 
-                boxShadow:'0 3px 14px rgba(0,0,0,0.06)', 
-                margin:'0 auto', 
-                width:'100%',
+                borderSpacing: 0,
+                borderRadius: 10,
+                boxShadow: '0 3px 14px rgba(0,0,0,0.06)',
+                margin: '0 auto',
+                width: '100%',
                 minWidth: isMobile ? 600 : 'auto',
                 tableLayout: 'fixed'
               }}>
                 <thead>
-                  <tr style={{background:'#f7fafc'}}>
+                  <tr style={{ background: '#f7fafc' }}>
                     <th style={{
                       padding: isMobile ? '10px 6px' : '12px 8px', 
-                      borderBottom:'1px solid #eaeef2', 
-                      textAlign:'left',
+                      borderBottom: '1px solid #eaeef2',
+                      textAlign: 'left',
                       fontSize: isMobile ? '13px' : '14px'
                     }}>Nhân viên</th>
                     <th style={{
                       padding: isMobile ? '10px 6px' : '12px 8px', 
-                      borderBottom:'1px solid #eaeef2',
+                      borderBottom: '1px solid #eaeef2',
                       fontSize: isMobile ? '13px' : '14px'
                     }}>Mức độ phạt</th>
                     <th style={{
                       padding: isMobile ? '10px 6px' : '12px 8px', 
-                      borderBottom:'1px solid #eaeef2',
+                      borderBottom: '1px solid #eaeef2',
                       fontSize: isMobile ? '13px' : '14px'
                     }}>Ngày phạt</th>
                     <th style={{
                       padding: isMobile ? '10px 6px' : '12px 8px', 
-                      borderBottom:'1px solid #eaeef2',
+                      borderBottom: '1px solid #eaeef2',
                       fontSize: isMobile ? '13px' : '14px',
                       maxWidth: isMobile ? '200px' : '300px',
                       wordWrap: 'break-word',
@@ -5837,7 +5783,7 @@ function PenaltyManagement() {
                     if (filtered.length === 0) {
                       return (
                         <tr>
-                          <td colSpan={4} style={{padding:20, textAlign:'center', color:'#6b7a86'}}>
+                          <td colSpan={4} style={{ padding: 20, textAlign: 'center', color: '#6b7a86' }}>
                             Không có dữ liệu phù hợp với bộ lọc
                           </td>
                         </tr>
@@ -5859,28 +5805,28 @@ function PenaltyManagement() {
                       }
                       
                       return (
-                        <tr key={record.id} style={{background:'#fff'}}>
+                        <tr key={record.id} style={{ background: '#fff' }}>
                           <td style={{
                             padding: isMobile ? '8px 6px' : '10px 8px', 
-                            borderBottom:'1px solid #f1f4f7', 
-                            fontWeight:600,
+                            borderBottom: '1px solid #f1f4f7',
+                            fontWeight: 600,
                             fontSize: isMobile ? '13px' : '14px'
                           }}>{record.staffName}</td>
                           <td style={{
                             padding: isMobile ? '8px 6px' : '10px 8px', 
-                            borderBottom:'1px solid #f1f4f7', 
-                            textAlign:'center', 
-                            fontWeight:600,
+                            borderBottom: '1px solid #f1f4f7',
+                            textAlign: 'center',
+                            fontWeight: 600,
                             fontSize: isMobile ? '12px' : '14px'
                           }}>{penaltyLabel}</td>
                           <td style={{
                             padding: isMobile ? '8px 6px' : '10px 8px', 
-                            borderBottom:'1px solid #f1f4f7',
+                            borderBottom: '1px solid #f1f4f7',
                             fontSize: isMobile ? '13px' : '14px'
                           }}>{record.date}</td>
                           <td style={{
                             padding: isMobile ? '8px 6px' : '10px 8px', 
-                            borderBottom:'1px solid #f1f4f7',
+                            borderBottom: '1px solid #f1f4f7',
                             fontSize: isMobile ? '13px' : '14px',
                             wordBreak: 'break-word',
                             wordWrap: 'break-word',
@@ -5898,8 +5844,8 @@ function PenaltyManagement() {
           </div>
         )}
 
-        <div style={{marginTop:24, display:'flex', justifyContent:'center', gap:12}}>
-          <button className="login-button" onClick={() => navigate('/admin')} style={{padding:'12px 36px'}}>
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center', gap: 12 }}>
+          <button className="login-button" onClick={() => navigate('/admin')} style={{ padding: '12px 36px' }}>
             Quay lại
           </button>
         </div>
