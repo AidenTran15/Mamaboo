@@ -144,7 +144,7 @@ function KeToan() {
 
   // Tính tổng lương và giờ
   const computeTotals = (rows, selectedYear, selectedMonth) => {
-    const hoursByShift = { sang: 4, trua: 5, toi: 4 };
+    const hoursByShift = { sang: 4, trua: 4, toi: 4 };
     const rateSingle = 25000; // VND per hour per person when only 1 person in shift
     const rateDouble = 25000; // VND per hour per person when >=2 people in shift
 

@@ -222,7 +222,7 @@ function NhanVien() {
       all.forEach(r => byDate.set(r.date, r));
       
       const norm = (s) => (s || '').toString().trim();
-      const hoursByShift = { sang: 4, trua: 5, toi: 4 };
+      const hoursByShift = { sang: 4, trua: 4, toi: 4 };
       const rateSingle = 25000;
       const rateDouble = 25000;
       const ratePerHour = 20000;
